@@ -1,0 +1,12 @@
+
+# Logging
+logging:
+  # Log file directory
+  dir: "."
+
+  # Logging levels (set to -1 for no logging)
+  # Messages with level higher than the given value will be ignored
+  # See python 'logging' library documentation for default levels """
+  levels:
+    file: -1
+    tty: DEBUG

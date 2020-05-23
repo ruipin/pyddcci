@@ -129,3 +129,6 @@ dmypy.json
 
 # PyCharm
 .idea/
+
+# User config
+data/config.yaml

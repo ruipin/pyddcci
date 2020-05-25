@@ -278,7 +278,7 @@ class Namespace(object, metaclass=ABCMeta):
         # return hash(self) == hash(other)
 
     def __ne__(self, other):
-        return self is not other
+        return not self.__eq__(other)
         # return hash(self) != hash(other)
 
     def __hash__(self):
@@ -437,7 +437,7 @@ class Namespace(object, metaclass=ABCMeta):
         return f"<{nm} {repr(self._dict)}>"
 
     def __str__(self):
-        return str(self.to_dict())
+        return f"<{self._log_name}>"
 
     def repr_dict(self):
         return repr(self._dict)

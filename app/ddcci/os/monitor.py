@@ -62,8 +62,3 @@ class BaseOsMonitor(Namespace, metaclass=ABCMeta):
 
         self._connected = False
         self.log.info("Disconnected.")
-
-
-    # Utilities
-    def __str__(self):
-        return f"<self.log_name>"

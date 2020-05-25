@@ -22,7 +22,6 @@ class BaseOsMonitorInfo(Namespace, metaclass=ABCMeta):
         FIELDS = ()
 
         def __eq__(self, other: 'BaseOsMonitorInfo.SubInfo'):
-            print(self._log_name, other._log_name)
             if self is other: return True
 
             for k in self:
@@ -54,8 +53,6 @@ class BaseOsMonitorInfo(Namespace, metaclass=ABCMeta):
     def __init__(self, adapter : Adapter, monitor : Monitor, *args, **kwargs):
 
         super().__init__(f"{monitor.model}/{monitor.uid}")
-
-        self.primary = None
 
         self.adapter = adapter
         self.adapter.parent = self
@@ -108,15 +105,15 @@ class BaseOsMonitorInfo(Namespace, metaclass=ABCMeta):
     def represents_same_monitor(self, other : 'BaseOsMonitorInfo'):
         if self is other: return True
 
-        if not self.adapter != other.adapter: return False
-        if not self.monitor != other.monitor: return False
+        if self.adapter != other.adapter: return False
+        if self.monitor != other.monitor: return False
 
         return True
 
 
     def update(self, other : 'BaseOsMonitorInfo'):
         assert(self.represents_same_monitor(other))
-        self._dict = other._dict
+        self._dict = dict(other._dict)
 
 
     # Enumerate monitors

@@ -19,8 +19,8 @@ if __name__ == "__main__":
     from app.ddcci.monitor import OS_MONITORS
     print()
 
-    log.debug(OS_MONITORS)
+    log.debug(repr(OS_MONITORS))
     print()
 
     OS_MONITORS.enumerate()
-    log.debug(OS_MONITORS)
+    log.debug(repr(OS_MONITORS))

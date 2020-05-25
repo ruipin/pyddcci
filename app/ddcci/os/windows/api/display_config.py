@@ -6,6 +6,7 @@ from ctypes import windll, byref, sizeof, Structure, Union, WinError, GetLastErr
 from ctypes.wintypes import BOOL, DWORD, WCHAR, LONG, POINTL, RECTL
 
 from . import struct_to_dict
+from .device_path import DevicePath
 
 from . import getLogger, Namespace
 log = getLogger(__name__)
@@ -233,47 +234,20 @@ class DisplayConfigPathInfo(Namespace):
         self.source  = get_display_config_source_device_name(raw_path.sourceInfo.adapterId, raw_path.sourceInfo.id)
 
         self.target  = get_display_config_target_device_name(raw_path.targetInfo.adapterId, raw_path.targetInfo.id)
-        self.monitor = parse_device_path(str(self.target['monitorDevicePath']))
+        self.monitor = DevicePath(str(self.target['monitorDevicePath']))
         if self.monitor['type'] != 'DISPLAY':
             raise ValueError(f"Expected target.monitorDevicePath to have type 'DISPLAY', got '{self.monitor['display']}' instead")
         if self.monitor['guid'] != GUID_DEVINTERFACE_MONITOR:
             raise ValueError(f"Expected target.monitorDevicePath to have GUID 'GUID_DEVINTERFACE_MONITOR', got '{self.monitor['guid']}' instead")
 
         self.adapter_path = get_display_config_adapter_name(raw_path.targetInfo.adapterId, raw_path.targetInfo.id)
-        self.adapter = parse_device_path(self.adapter_path)
+        self.adapter = DevicePath(self.adapter_path)
         if self.adapter['guid'] != GUID_DEVINTERFACE_DISPLAY_ADAPTER:
             raise ValueError(f"Expected target.monitorDevicePath to have GUID 'GUID_DEVINTERFACE_MONITOR', got '{self.adapter['guid']}' instead")
 
 
 ############
 # Implementation
-def parse_device_path(dev_path):
-    """
-    The device paths obtained from display_config are in the format:
-        \\?\DISPLAY#<model>#<UID>#<GUID>
-    """
-
-    # Sanity check prefix, then remove it
-    prefix = "\\\\?\\"
-    if not dev_path.startswith(prefix):
-        raise ValueError(f"Invalid format for dev_path='{dev_path}'. Expected it to start with '{prefix}'.")
-
-    unprefixed_path = dev_path[len(prefix):]
-
-    # Split path by '#'
-    split_path = unprefixed_path.split('#')
-    split_len = len(split_path)
-    if split_len != 4:
-        raise ValueError(f"Invalid format for dev_path='{dev_path}. Expected it to match format '{prefix}<type>#<model>#<ID>#<GUID>'")
-
-    return {
-        'type' : split_path[0],
-        'devid': split_path[1],
-        'uid'  : split_path[2],
-        'guid' : split_path[3]
-    }
-
-
 def win32_display_config_get_device_info(adapter_id : LUID, source_id : ctypes.c_uint32, request_cls):
     if request_cls is DISPLAYCONFIG_SOURCE_DEVICE_NAME:
         request_type = 0x1  # DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME

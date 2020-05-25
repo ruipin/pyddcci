@@ -6,6 +6,7 @@ from abc import abstractmethod, ABC
 from ..monitor_info import BaseOsMonitorInfo
 
 from .api import display_config, display_devices
+from .api.device_path import DevicePath
 from .api.edid import edid_from_monitor_model_and_uid, OSEdidError
 from ...edid import Edid
 
@@ -30,24 +31,27 @@ class WindowsOsMonitorInfo(BaseOsMonitorInfo):
         adapter_device_name_prefix = r'\\.\DISPLAY'
         assert(adapter_device_name.startswith(adapter_device_name_prefix))
         adapter_device_number = int(adapter_device_name[len(adapter_device_name_prefix):])
-        adapter_device = self.__class__.Device(parent=self, name=adapter_device_name, number=adapter_device_number, id=dcp_info.adapter['devid'])
+        adapter_device_id = fr"{dcp_info.adapter['type']}\{dcp_info.adapter['devid']}"
+        adapter_device = self.__class__.Device(parent=self, name=adapter_device_name, number=adapter_device_number, id=adapter_device_id)
 
         # Initialize adapter
-        adapter_d = dict(dcp_info.adapter)
-        del adapter_d['devid']
-        adapter_d['device'] = adapter_device
-
-        adapter = self.__class__.Adapter(**adapter_d)
+        adapter = self.__class__.Adapter(**{
+            'type'  : dcp_info.adapter.type,
+            'uid'   : dcp_info.adapter.uid,
+            'guid'  : dcp_info.adapter.guid,
+            'device': adapter_device
+        })
 
         # Initialize monitor
         monitor_device = self.__class__.Device(parent=self, id=fr"MONITOR\{dcp_info.monitor['devid']}")
 
-        monitor_d = dict(dcp_info.monitor)
-        monitor_d['model'] = monitor_d['devid']
-        del monitor_d['devid']
-        monitor_d['device'] = monitor_device
-
-        monitor = self.__class__.Monitor(**monitor_d)
+        monitor = self.__class__.Monitor(**{
+            'type'  : dcp_info.monitor.type,
+            'model' : dcp_info.monitor.devid,
+            'uid'   : dcp_info.monitor.uid,
+            'guid'  : dcp_info.monitor.guid,
+            'device': monitor_device
+        })
 
         if dcp_info.target['flags']['edidIdsValid']:
             monitor.manufacturer_id = Edid.parse_manufacture_id(dcp_info.target['edidManufactureId'], swap=True)
@@ -106,7 +110,7 @@ class WindowsOsMonitorInfo(BaseOsMonitorInfo):
                 raise RuntimeError(f"Had {attr_x}='{x}', but got res.{attr_y}='{y}'")
 
         _assert_matches('adapter.device.name', self.adapter.device.name, 'DeviceName', res.DeviceName)
-        _assert_matches('adapter', fr"{self.adapter.type}\{self.adapter.device.id}", 'DeviceID', res.DeviceID)
+        _assert_matches('adapter', self.adapter.device.id, 'DeviceID', res.DeviceID)
 
         # Copy interesting data
         def _copy(obj, attr_x, y):
@@ -119,8 +123,17 @@ class WindowsOsMonitorInfo(BaseOsMonitorInfo):
         _copy(self.adapter, 'primary', res.primary)
 
     def _read_GetMonitorInfo_monitor(self):
-        res = display_devices.win32_enum_display_devices_w(self.adapter.device.name, 0)
-        assert(display_devices.win32_enum_display_devices_w(self.adapter.device.name, 1) is None)
+        i = 0
+        while True:
+            res = display_devices.win32_enum_display_devices_w(self.adapter.device.name, i, flags=display_devices.EDD_GET_DEVICE_INTERFACE_NAME)
+            if res is None:
+                raise RuntimeError(f"Could not get the monitor info from GetMonitorInfo for monitor '{self._log_name}'")
+
+            res_id = DevicePath(res.DeviceID)
+            if res_id.type == self.monitor.type and res_id.devid == self.monitor.model and res_id.uid == self.monitor.uid and res_id.guid == self.monitor.guid:
+                break
+
+            i += 1
 
         # Sanity checks
         def _assert_startswith(x, attr_y, y):
@@ -129,7 +142,6 @@ class WindowsOsMonitorInfo(BaseOsMonitorInfo):
 
         device_name_prefix = fr"{self.adapter.device.name}\Monitor"
         _assert_startswith(device_name_prefix, 'DeviceName', res.DeviceName)
-        _assert_startswith(self.monitor.device.id, 'DeviceName', res.DeviceID)
 
         # Copy interesting data
         def _copy(obj, attr_x, y):

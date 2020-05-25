@@ -32,7 +32,7 @@ class BaseOsMonitorList(Sequence, metaclass=ABCMeta):
         infos = self.__class__.OS_MONITOR_INFO_CLASS.enumerate()
 
         # Match with existing monitors
-        new_monitors = []
+        new_monitors = set()
 
         for info in infos:
             # Find a matching monitor
@@ -45,13 +45,15 @@ class BaseOsMonitorList(Sequence, metaclass=ABCMeta):
                 # No matching monitor found. Create new monitor
                 monitor = self.__class__.OS_MONITOR_CLASS(info, parent=self)
 
-            new_monitors.append(monitor)
+            new_monitors.add(monitor)
+
+        assert(len(new_monitors) == len(infos))
 
         # Replace existing array with new one
         old_monitors = self._list
-        self.replace(new_monitors)
+        self.replace(list(new_monitors))
 
         # Notify any monitor that got disconnected
         for monitor in old_monitors:
-            if monitor not in old_monitors:
+            if monitor not in new_monitors:
                 monitor.on_disconnect()

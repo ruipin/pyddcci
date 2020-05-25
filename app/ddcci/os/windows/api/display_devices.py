@@ -74,6 +74,8 @@ class _DISPLAY_DEVICEW(Structure):
 
 ############
 # Module methods
+EDD_GET_DEVICE_INTERFACE_NAME = 0x1
+
 def win32_enum_display_devices_w(name, dev_num, flags=0x0):
     if name is None:
         deviceName = None
@@ -88,7 +90,7 @@ def win32_enum_display_devices_w(name, dev_num, flags=0x0):
     displayDevice = _DISPLAY_DEVICEW()
     displayDevice.cb = sizeof(_DISPLAY_DEVICEW)
 
-    dwFlags = DWORD(flags)  # 0x1 = EDD_GET_DEVICE_INTERFACE_NAME
+    dwFlags = DWORD(flags)
 
     if not windll.user32.EnumDisplayDevicesW(None if deviceName is None else byref(deviceName), iDevNum, byref(displayDevice), dwFlags):
         return None

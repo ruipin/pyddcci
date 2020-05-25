@@ -144,7 +144,7 @@ class Sequence(MutableSequence, metaclass=ABCMeta):
         return f"<{nm} {repr(self._list)}>"
 
     def __str__(self):
-        return str(self._list)
+        return f"<{self._log_name}>"
 
     def repr_list(self):
         return repr(self._list)

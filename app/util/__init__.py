@@ -8,4 +8,7 @@ from .namespace import Namespace
 from . import config
 
 # Initialize logging
-from . import log_init
+from .log_init import getLogger
+
+# ExtendedList utility class
+from .sequence import Sequence

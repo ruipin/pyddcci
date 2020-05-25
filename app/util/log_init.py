@@ -78,6 +78,7 @@ class CustomHandler(logging.Handler):
 
         # Make sure to save configuration when we exit, as long as we didn't fail due to a critical error
         if self.num_critical == 0:
+            print() # Line break
             CFG.save()
 
         # Log success/failure

@@ -5,4 +5,7 @@
 from .util import config as CFG
 
 # Import logger
-from .util.log_init import getLogger
+from .util import getLogger
+
+# Import Namespace, Sequence
+from .util import Namespace, Sequence

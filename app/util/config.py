@@ -19,6 +19,10 @@ class ConfigNamespace(Namespace):
     # Python does not inherit __slots__ automatically
     __slots__ = set.union({'_default'}, Namespace.__slots__)
 
+    # ConfigNamespace is sticky
+    STICKY = True
+    STICKY_DELIMITER = '.'
+
     # These hierarchies will not be dumped to file
     RESERVED_HIERARCHIES = ('app',)
 
@@ -28,49 +32,43 @@ class ConfigNamespace(Namespace):
 
         self._default = Namespace(log_name='default', parent=self)
 
-    def _get(self, key, default=Namespace.NO_DEFAULT):
-        if key in self._dict:
-            return super()._get(key, default=default)
-
-        return self._default.get(key, default=default)
-
-    def _add(self, key, value, delete=False):
-        split_key = key.split('.', 1)
-        key = split_key[0]
-
-        if len(split_key) > 1:
-            new_value = ConfigNamespace(log_name=key, parent=self)
-            new_value[split_key[1]] = value
-            value = new_value
-        elif isinstance(value, dict):
-            new_value = ConfigNamespace(log_name=key, parent=self)
-            new_value.merge(value)
-            value = new_value
-
+    def _get_write_target(self, key):
         if not self._default._frozen:
-            self._default._add(key, value, delete=delete)
+            return self._default
         else:
-            if key in self._default:
-                def_val = self._default[key]
-                if isinstance(def_val, ConfigNamespace) and delete is False and not isinstance(value, ConfigNamespace):
-                    raise ValueError(f"key='{key}' must be a dictionary, or 'delete' must be True")
+            return self
 
-            if self.is_reserved_key(key):
-                raise ValueError(f"key'{key}' is inside a reserved hierarchy")
+    def _sanity_check_key(self, key, delete=False):
+        super()._sanity_check_key(key)
 
-            super()._add(key, value, delete=delete)
+        if self._get_write_target(key) is self._default:
+            return
 
+        if self.is_reserved_key(key):
+            raise ValueError(f"key'{key}' is inside a reserved hierarchy")
+
+    def _get_read_target(self, key):
+        if key not in self._dict:
+            return self._default
+        else:
+            return self
+
+    def _sticky_construct_namespace(self, key):
+        inst = ConfigNamespace(log_name=key, parent=self)
+        if self._default.frozen:
+            inst.freeze()
+        return inst
 
     # Freezing
     def freeze(self):
         self._default.freeze()
-        for k, v in self._default.items():
+        for k, v in self.items():
             if isinstance(v, ConfigNamespace):
                 v.freeze()
 
     def unfreeze(self):
         self._default.unfreeze()
-        for k, v in self._default.items():
+        for k, v in self.items():
             if isinstance(v, ConfigNamespace):
                 v.unfreeze()
 
@@ -97,23 +95,27 @@ class ConfigNamespace(Namespace):
 
 
     # Utilities
-    def all_to_dict(self):
+    def to_dict(self, recursive=True, user=True, default=True):
         d = {}
-        for k, v in self.items():
+
+        for k in self.keys():
+            in_user    = k in self._dict
+            in_default = k in self._default
+
+            v = self._dict[k] if in_user else None
             if isinstance(v, ConfigNamespace):
-                v = v.all_to_dict()
-            d[k] = v
-        return d
-
-    def user_to_dict(self):
-        d = {}
-
-        for k, v in self._dict.items():
-            if self.is_reserved_key(k):
+                if recursive:
+                    v_d = v.to_dict(recursive=True, user=user, default=default)
+                    if v_d:
+                        d[k] = v_d
                 continue
 
-            if isinstance(v, ConfigNamespace):
-                v = v.user_to_dict()
+            if not ((user and in_user) or (default and in_default)):
+                continue
+
+            if not in_user:
+                v = self._default[k]
+                assert(not isinstance(v, ConfigNamespace))
 
             d[k] = v
 
@@ -142,13 +144,16 @@ class MasterConfigNamespace(ConfigNamespace):
 
 
     # Utilities
-    def yaml_str(self, user_only=False):
-        mthd = self.user_to_dict if user_only else self.all_to_dict
-        return yaml.dump(mthd())
+    def yaml_str(self, user=True, default=True):
+        dump = self.to_dict(recursive=True, user=user, default=default)
+        return yaml.dump(dump)
 
-    def debug(self, user_only=False):
-        dump = self.yaml_str(user_only=user_only)
-        self.log.debug(f"Configuration{' (User)' if user_only else ' (All)'}:\n{dump}")
+    def debug(self, user=True, default=True):
+        dump = self.yaml_str(user=user, default=default)
+        typ = 'All'  if user and default else \
+              'User' if user else \
+              'Default'
+        self.log.debug(f"Configuration ({typ}):\n{dump}")
 
 
     # Load/Save
@@ -197,13 +202,12 @@ class MasterConfigNamespace(ConfigNamespace):
     def save(self):
         self.log.info("Saving user configuration...")
         with open(self.__class__.USER_CONFIG_FILE, 'w') as file:
-            yaml_str = self.yaml_str(user_only=True)
+            yaml_str = self.yaml_str(user=True, default=False)
             file.write(yaml_str)
 
 # Initialize
 CONFIG = MasterConfigNamespace("config")
 CONFIG.load()
-
 
 
 ####################

@@ -2,6 +2,7 @@
 # Copyright © 2020 pyddcci Rui Pinheiro
 
 import sys
+import time
 from app import CFG, getLogger
 
 
@@ -35,12 +36,14 @@ if __name__ == "__main__":
     #print()
     #log.debug(f"VCP Code Capabilities: {repr(monitor.get_os_monitor().capabilities.get_vcp_codes())}")
 
-    os_primary = monitor.get_os_monitor()  # converts the filter above into an actual OsMonitor object, which directly corresponds to a hardware monitor
+    contrast = monitor.vcp_read_raw(0x12)
+    print(f"Current Contrast: {contrast}")
 
-    from app.ddcci.os import OsVcpCode
-    code = OsVcpCode(0x12)  # Contrast
-    query = code.read(monitor)
-    print(f"Current Contrast: {query.value}\nMaximum Contrast: {query.maximum}")
+    monitor.vcp_write_raw(0x12, 20)
+
+    time.sleep(1)
+
+    monitor.vcp_write_raw(0x12, contrast)
 
     #print()
     #import time

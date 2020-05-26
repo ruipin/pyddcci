@@ -3,6 +3,7 @@
 
 from abc import ABCMeta, abstractmethod
 from .monitor_info import BaseOsMonitorInfo
+from .vcp_code import VcpReply
 
 from . import getLogger, Namespace
 log = getLogger(__name__)
@@ -66,6 +67,27 @@ class BaseOsMonitor(Namespace, metaclass=ABCMeta):
             self._populate_capabilities()
 
         return self._capabilities
+
+
+    # VCP Query
+    @abstractmethod
+    def _vcp_query(self, code : int) -> VcpReply:
+        pass
+
+    def vcp_query(self, code : int) -> VcpReply:
+        return self._vcp_query(code)
+
+    # VCP Read
+    def vcp_read(self, code : int) -> int:
+        return self._vcp_query(code).current
+
+    # VCP Write
+    @abstractmethod
+    def _vcp_write(self, code : int, value: int) -> None:
+        pass
+
+    def vcp_write(self, code : int, value: int) -> None:
+        return self._vcp_write(code, value)
 
 
     # Connection events

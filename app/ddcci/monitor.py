@@ -4,7 +4,7 @@
 import re
 from typing import Union, List
 
-from .os import OsMonitorList
+from .os import OsMonitorList, VcpReply
 from .monitor_filter import BaseMonitorFilter, RegexMonitorFilter
 
 from . import Namespace, Sequence, getLogger
@@ -41,7 +41,19 @@ class Monitor(Namespace):
         self.filter = filter
 
 
+    # Os Monitor
     def get_os_monitor(self, enumerate=True):
         if enumerate:
             OS_MONITORS.enumerate()
         return self.filter.find_one(OS_MONITORS)
+
+
+    # Raw VCP access
+    def vcp_query_raw(self, code : int) -> VcpReply:
+        return self.get_os_monitor().vcp_query(code)
+
+    def vcp_read_raw(self, code : int) -> int:
+        return self.get_os_monitor().vcp_read(code)
+
+    def vcp_write_raw(self, code : int, value : int) -> None:
+        return self.get_os_monitor().vcp_write(code, value)

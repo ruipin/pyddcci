@@ -3,7 +3,7 @@
 
 import winreg
 
-from app.ddcci.edid import Edid
+from ...generic.edid import Edid
 
 from . import getLogger
 log = getLogger(__name__)

@@ -1,14 +1,12 @@
 # SPDX-License-Identifier: GPLv3-or-later
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-from abc import abstractmethod, ABC
-
 from ..monitor_info import BaseOsMonitorInfo
 
 from .api import display_config, display_devices
 from .api.device_path import DevicePath
 from .api.edid import edid_from_monitor_model_and_uid, OSEdidError
-from ...edid import Edid
+from app.ddcci.os.generic.edid import Edid
 
 from . import getLogger
 log = getLogger(__name__)

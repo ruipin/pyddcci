@@ -25,6 +25,8 @@ class BaseOsMonitor(Namespace, metaclass=ABCMeta):
         self._set_device_info(info)
         self._initialize()
 
+        self._capabilities = None
+
         self._connected = False
         self.on_connect()
 
@@ -44,6 +46,28 @@ class BaseOsMonitor(Namespace, metaclass=ABCMeta):
         self.log_name = info.get_monitor_name(spaces=False)
 
 
+    # Capabilities
+    @abstractmethod
+    def _get_capabilities_string(self) -> str:
+        pass
+
+    def _populate_capabilities(self):
+        self.log.info("Populating capabilities... (might take a few seconds)")
+
+        cap_str = self._get_capabilities_string()
+
+        from .generic.capabilities import OsMonitorCapabilities
+        capabilities = OsMonitorCapabilities(cap_str, parent=self)
+        self._capabilities = capabilities
+
+    @property
+    def capabilities(self):
+        if self._capabilities is None:
+            self._populate_capabilities()
+
+        return self._capabilities
+
+
     # Connection events
     @property
     def connected(self):
@@ -55,6 +79,7 @@ class BaseOsMonitor(Namespace, metaclass=ABCMeta):
 
         self._connected = True
         self.log.info("Connected.")
+
 
     def on_disconnect(self):
         if not self._connected:

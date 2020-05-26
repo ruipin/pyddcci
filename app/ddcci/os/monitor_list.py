@@ -22,8 +22,8 @@ class BaseOsMonitorList(Sequence, metaclass=ABCMeta):
     OS_MONITOR_CLASS      = BaseOsMonitor
     OS_MONITOR_INFO_CLASS = BaseOsMonitorInfo
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name=None):
+        super().__init__(log_name=name)
         self.enumerate()
 
 

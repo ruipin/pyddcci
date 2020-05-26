@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPLv3-or-later
 # Copyright © 2020 pyddcci Rui Pinheiro
 
+import re
 from abc import ABCMeta
 
 class Namespace(object, metaclass=ABCMeta):
@@ -194,6 +195,9 @@ class Namespace(object, metaclass=ABCMeta):
         if tgt is not self:
             return tgt._get(key, default=default)
 
+        if not self._is_field(key):
+            raise ValueError(f"{self.__class__.__name__} does not contain field '{key}'")
+
         if default is Namespace.NO_DEFAULT and self.__class__.DEFAULT_TO_NONE:
             default = None
 
@@ -251,9 +255,12 @@ class Namespace(object, metaclass=ABCMeta):
 
     def keys(self):
         if self._has_fixed_fields() and self.__class__.DEFAULT_TO_NONE:
-            return (self.__class__.FIELDS or ()) + (self.__class__.FIELDS_NOT_NONE or ())
+            for k in (self.__class__.FIELDS or ()) + (self.__class__.FIELDS_NOT_NONE or ()):
+                yield k
+            return
 
-        return self._dict.keys()
+        for k in self._dict.keys():
+            yield k
 
     def items(self):
         if self._has_fixed_fields() and self.__class__.DEFAULT_TO_NONE:
@@ -261,7 +268,8 @@ class Namespace(object, metaclass=ABCMeta):
                 yield k, self[k]
             return
 
-        return self._dict.items()
+        for k, v in self._dict.items():
+            yield k, v
 
     def values(self):
         if self._has_fixed_fields() and self.__class__.DEFAULT_TO_NONE:
@@ -269,7 +277,8 @@ class Namespace(object, metaclass=ABCMeta):
                 yield self[k]
             return
 
-        return self._dict.values()
+        for val in self._dict.values():
+            yield val
 
 
     # Comparison
@@ -425,6 +434,17 @@ class Namespace(object, metaclass=ABCMeta):
 
 
     # Printing
+    @property
+    def short_class_name(self):
+        # Assume camelcase
+        res = re.sub('[^A-Z0-9]', '', self.__class__.__name__)
+
+        if res:
+            return res
+
+        # Otherwise, do nothing
+        return self.__class__.__name__
+
     def __repr__(self):
         if self._parent is not None:
             nm = self.hierarchy
@@ -434,10 +454,10 @@ class Namespace(object, metaclass=ABCMeta):
             if nm != cnm:
                 nm = f"{cnm}:{nm}"
 
-        return f"<{nm} {repr(self._dict)}>"
+        return f"<{nm}:{repr(self._dict)}>"
 
     def __str__(self):
-        return f"<{self._log_name}>"
+        return f"<{self.short_class_name}:{self._log_name}>"
 
     def repr_dict(self):
         return repr(self._dict)

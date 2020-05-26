@@ -16,6 +16,13 @@ log = getLogger(__name__)
 #############
 # Base class
 class BaseMonitorFilter(Namespace, metaclass=ABCMeta):
+    """
+    Base class for filtering OsMonitor objects
+    Implementations should define <match>, which returns True if a specific OsMonitor matches the current filter.
+
+    These filters can then be used in the Monitor class in order to select which monitors to act on
+    """
+
     __slots__ = Namespace.__slots__
 
     # Filtering
@@ -109,5 +116,55 @@ class RegexMonitorFilter(BaseMonitorFilter):
             return f"{prefix}{{<{'> && <'.join([str(x.pattern) for x in self.filters])}>}}{suffix}"
 
 
+#############
+# Regex class
+class OsMonitorMonitorFilter(BaseMonitorFilter):
+    __slots__ = RegexMonitorFilter.__slots__
+
+    def __init__(self, os_monitor : OsMonitor, parent=None):
+        super().__init__(f"{os_monitor.log_name}Filter", parent=parent)
+
+        self.os_monitor = os_monitor
+
+    def match(self, os_monitor : OsMonitor):
+        return os_monitor is self.os_monitor
+
+    # Custom implementation to avoid an expensive search when we already know which monitor we want
+    def find(self, _):
+        if not self.os_monitor.connected:
+            return []
+
+        return [self.os_monitor]
+
+    # It is possible to convert this to a regex filter
+    def get_regexes(self) -> List[re.Pattern]:
+        m = self.os_monitor.info.monitor
+
+        result = []
+
+        def _add(result, to_add):
+            if isinstance(to_add, str):
+                result.append(re.compile(fr"^{re.escape(to_add)}$"))
+
+        _add(result, m.model          )
+        _add(result, m.serial         )
+        _add(result, m.uid            )
+        _add(result, m.manufacturer_id)
+        _add(result, m.product_id     )
+
+        return result
+
+    def to_regex_filter(self) -> RegexMonitorFilter:
+        return RegexMonitorFilter(self.get_regexes(), parent=self.parent)
 
 
+
+# Factory
+def create_monitor_filter_from(filter : Union[str, re.Pattern, List[Union[str, re.Pattern]], BaseMonitorFilter, OsMonitor], parent=None):
+    if isinstance(filter, BaseMonitorFilter):
+        return filter
+
+    if isinstance(filter, OsMonitor):
+        return OsMonitorMonitorFilter(filter, parent=parent)
+
+    return RegexMonitorFilter(filter, parent=parent)

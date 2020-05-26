@@ -5,7 +5,7 @@ import re
 from typing import Union, List
 
 from .os import OsMonitorList, VcpReply
-from .monitor_filter import BaseMonitorFilter, RegexMonitorFilter
+from . import monitor_filter
 
 from . import Namespace, Sequence, getLogger
 log = getLogger(__name__)
@@ -32,9 +32,8 @@ class Monitor(Namespace):
 
     __slots__ = Namespace.__slots__
 
-    def __init__(self, filter : Union[str, re.Pattern, List[Union[str, re.Pattern]], BaseMonitorFilter], parent=None):
-        if not isinstance(filter, BaseMonitorFilter):
-            filter = RegexMonitorFilter(filter)
+    def __init__(self, filter, parent=None):
+        filter = monitor_filter.create_monitor_filter_from(filter)
 
         super().__init__(filter.get_monitor_name(prefix='', suffix=''), parent=parent)
 

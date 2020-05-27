@@ -11,8 +11,8 @@ log = getLogger(__name__)
 
 
 class OsMonitorCapabilities(Namespace):
-    def __init__(self, capability_string : str, parent : BaseOsMonitor):
-        super().__init__("Capabilities", parent=parent)
+    def __init__(self, capability_string : str, instance_parent : BaseOsMonitor):
+        super().__init__("Capabilities", instance_parent=instance_parent)
 
         self._parse(capability_string)
 

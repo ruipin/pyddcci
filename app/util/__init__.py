@@ -1,17 +1,12 @@
 # SPDX-License-Identifier: GPLv3-or-later
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-# Hierarchied Class
-from .hierarchied import Hierarchied
+# Mixins
+from .mixins import *
 
-# Namespace utility class
-from .namespace import Namespace
+# Namespace
+from .namespace import *
 
-# Load configuration variables
-from . import config
-
-# Initialize logging
-from .log_init import getLogger
-
-# ExtendedList utility class
-from .sequence import Sequence
+# Initialize
+from .init import config as CFG
+from .init import getLogger

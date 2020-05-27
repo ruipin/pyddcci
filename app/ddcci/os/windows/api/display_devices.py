@@ -6,7 +6,7 @@ from ctypes.wintypes import DWORD, WCHAR
 
 from . import struct_to_dict
 
-from . import getLogger
+from app.util import getLogger
 log = getLogger(__name__)
 
 

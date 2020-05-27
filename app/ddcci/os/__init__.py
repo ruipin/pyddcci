@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: GPLv3
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-from .. import getLogger, Namespace, Sequence
-
 # Import base classes first
 from .monitor_info   import BaseOsMonitorInfo
 from .monitor        import BaseOsMonitor

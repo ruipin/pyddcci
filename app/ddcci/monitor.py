@@ -8,8 +8,7 @@ from .os import OsMonitorList
 from .vcp.reply import VcpReply
 from . import monitor_filter
 
-from . import Namespace, Sequence, getLogger
-log = getLogger(__name__)
+from app.util import Namespace
 
 
 ##########
@@ -31,10 +30,10 @@ class Monitor(Namespace):
     It also allows us to be flexible if the monitor information changes.
     """
 
-    def __init__(self, filter, parent=None):
+    def __init__(self, filter, instance_parent=None):
         filter = monitor_filter.create_monitor_filter_from(filter)
 
-        super().__init__(filter.get_monitor_name(prefix='', suffix=''), parent=parent)
+        super().__init__(filter.get_monitor_name(prefix='', suffix=''), instance_parent=instance_parent)
 
         self.filter = filter
 

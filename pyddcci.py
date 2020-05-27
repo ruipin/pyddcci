@@ -3,12 +3,13 @@
 
 import sys
 import time
-from app import CFG, getLogger
+from app.util import CFG, getLogger
 
 
 # app
 # from app.x import y
 
+from app.util import LoggableMixin, HierarchicalMixin, NamedMixin, Namespace
 
 if __name__ == "__main__":
     log = getLogger(CFG.app.name)
@@ -19,10 +20,8 @@ if __name__ == "__main__":
 
     #from app.ddcci.monitor import OS_MONITORS
     #print()
-
     #log.debug(repr(OS_MONITORS))
     #print()
-
     #OS_MONITORS.enumerate()
     #log.debug(repr(OS_MONITORS))
 
@@ -54,6 +53,7 @@ if __name__ == "__main__":
     fifty.add_name("FIFTY")
     log.debug(f"50PCT: {fifty}")
     log.debug(f"Names: {fifty.names}")
+    log.debug(f"FIFTY: {contrast.aliases['FIFTY']}")
 
     #print()
     #import time

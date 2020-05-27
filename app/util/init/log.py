@@ -76,9 +76,9 @@ class CustomHandler(logging.Handler):
     def atexit(self):
         success = True if self.num_error == 0 and self.num_critical == 0 else False
 
-        # Make sure to save configuration when we exit, as long as we didn't fail due to a critical error
-        if self.num_critical == 0:
-            print() # Line break
+        # Make sure to save configuration when we exit, as long as we didn't fail due to a critical error (and this isn't a unit test)
+        if self.num_critical == 0 and not os.environ.get("UNIT_TEST", None):
+            print()  # Line break
             CFG.save()
 
         # Log success/failure

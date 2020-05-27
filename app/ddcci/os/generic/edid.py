@@ -5,14 +5,13 @@ import struct
 import string
 from collections import namedtuple, OrderedDict
 
-from . import getLogger, Namespace
-log = getLogger(__name__)
+from app.util import Namespace, HierarchicalMixin
 
 
 
 ###########
 # Extended Display Identification Data class
-class Edid(Namespace):
+class Edid(Namespace, HierarchicalMixin):
     EDID_FORMAT = OrderedDict([
         # ("endianness"     , ">"  ),  # big-endian
         ("header"          , "8s" ),  # constant header (8 bytes)
@@ -46,8 +45,8 @@ class Edid(Namespace):
 
     UnpackedEdid = namedtuple("UnpackedEdid", tuple(EDID_FORMAT.keys()))
 
-    def __init__(self, in_bytes, parent=None):
-        super().__init__(self.__class__.__name__, parent=parent)
+    def __init__(self, in_bytes, instance_parent=None):
+        super().__init__(instance_parent=instance_parent)
 
         if in_bytes is not None:
             self.decode(in_bytes)
@@ -167,3 +166,4 @@ class Edid(Namespace):
         del self.unpacked
 
         # self.log.debug(f"Decode complete: {self}")
+        self.freeze_schema()

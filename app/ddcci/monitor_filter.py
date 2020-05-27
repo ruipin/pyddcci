@@ -8,9 +8,7 @@ from abc import ABCMeta, abstractmethod
 from .os import OsMonitor
 from .os import OsMonitorList
 
-from . import Namespace, getLogger
-
-log = getLogger(__name__)
+from app.util import Namespace
 
 
 #############
@@ -42,7 +40,7 @@ class BaseMonitorFilter(Namespace, metaclass=ABCMeta):
         len_match = len(match)
 
         if len_match > 1:
-            msg = '\n\t'.join([x.log_name for x in match])
+            msg = '\n\t'.join([x.instance_name for x in match])
             self.log.warn(f"Found more than one monitor, returning None. The following monitors matched this filter:\n\t{msg}")
             return None
 
@@ -61,11 +59,11 @@ class BaseMonitorFilter(Namespace, metaclass=ABCMeta):
 #############
 # Regex class
 class RegexMonitorFilter(BaseMonitorFilter):
-    def __init__(self, filters : Union[str, re.Pattern, List[Union[str, re.Pattern]]], parent=None):
+    def __init__(self, filters : Union[str, re.Pattern, List[Union[str, re.Pattern]]], instance_parent=None):
         if isinstance(filters, str):
             filters = [filters]
 
-        super().__init__('/'.join(filters).replace(' ',''), parent=parent)
+        super().__init__('/'.join(filters).replace(' ',''), instance_parent=instance_parent)
 
         for i, k in enumerate(filters):
             if not isinstance(k, re.Pattern):
@@ -75,7 +73,7 @@ class RegexMonitorFilter(BaseMonitorFilter):
             raise ValueError("'filters' must not be empty")
 
         self.filters = filters
-        self.log_name = self.get_monitor_name()
+        self.instance_name = self.get_monitor_name()
 
         self.freeze()
 
@@ -117,8 +115,8 @@ class RegexMonitorFilter(BaseMonitorFilter):
 #############
 # Regex class
 class OsMonitorMonitorFilter(BaseMonitorFilter):
-    def __init__(self, os_monitor : OsMonitor, parent=None):
-        super().__init__(f"{os_monitor.log_name}Filter", parent=parent)
+    def __init__(self, os_monitor : OsMonitor, instance_parent=None):
+        super().__init__(f"{os_monitor.instance_name}Filter", instance_parent=instance_parent)
 
         self.os_monitor = os_monitor
 
@@ -153,21 +151,21 @@ class OsMonitorMonitorFilter(BaseMonitorFilter):
         return result
 
     def to_regex_filter(self) -> RegexMonitorFilter:
-        return RegexMonitorFilter(self.get_regexes(), parent=self.parent)
+        return RegexMonitorFilter(self.get_regexes(), instance_parent=self.instance_parent)
 
 
     # Utilities / Logging
     def get_monitor_name(self, prefix='', suffix='') -> str:
-        return f"{prefix}{self.os_monitor.log_name}{suffix}"
+        return f"{prefix}{self.os_monitor.instance_name}{suffix}"
 
 
 
 # Factory
-def create_monitor_filter_from(filter : Union[str, re.Pattern, List[Union[str, re.Pattern]], BaseMonitorFilter, OsMonitor], parent=None):
+def create_monitor_filter_from(filter : Union[str, re.Pattern, List[Union[str, re.Pattern]], BaseMonitorFilter, OsMonitor], instance_parent=None):
     if isinstance(filter, BaseMonitorFilter):
         return filter
 
     if isinstance(filter, OsMonitor):
-        return OsMonitorMonitorFilter(filter, parent=parent)
+        return OsMonitorMonitorFilter(filter, instance_parent=instance_parent)
 
-    return RegexMonitorFilter(filter, parent=parent)
+    return RegexMonitorFilter(filter, instance_parent=instance_parent)

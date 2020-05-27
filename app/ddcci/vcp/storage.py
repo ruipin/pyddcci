@@ -5,15 +5,15 @@ from typing import Optional, Hashable, Any, Iterable
 from abc import ABCMeta, abstractmethod
 from ordered_set import OrderedSet
 
-from ...util import Hierarchied
+from app.util import LoggableMixin, HierarchicalMixin
 
 
 
-class VcpStorage(Hierarchied, metaclass=ABCMeta):
+class VcpStorage(LoggableMixin, HierarchicalMixin, metaclass=ABCMeta):
     __slots__ = {"_objs", "_set"}
 
-    def __init__(self, parent=None):
-        super().__init__(parent=parent)
+    def __init__(self, instance_parent=None):
+        super().__init__(instance_parent=instance_parent)
 
         self._objs = {}
         self._set    = set()
@@ -147,13 +147,20 @@ class VcpStorage(Hierarchied, metaclass=ABCMeta):
 
 
 
-class VcpStorageStorable(object, metaclass=ABCMeta):
-    def __init__(self):
-        super().__init__()
+class VcpStorageStorable(metaclass=ABCMeta):
+    def __init__(self, *args, **kwargs):
+        instance_parent = None
+        if not isinstance(self, HierarchicalMixin):
+            instance_parent = kwargs.pop('instance_parent', None)
+
+        super().__init__(*args, **kwargs)
 
         self._names = OrderedSet()
-        if not hasattr(self, '_parent'):
-            self._parent = None
+
+        if not isinstance(self, HierarchicalMixin):
+            self.instance_parent = instance_parent
+
+
 
     @abstractmethod
     def vcp_storage_key(self) -> int:
@@ -177,8 +184,8 @@ class VcpStorageStorable(object, metaclass=ABCMeta):
 
         self._names.add(new_name)
 
-        if isinstance(self._parent, VcpStorage):
-            self._parent[new_name] = self.vcp_storage_key()
+        if isinstance(self.instance_parent, VcpStorage):
+            self.instance_parent[new_name] = self.vcp_storage_key()
 
     def add_names(self, names : Iterable[Hashable]):
         for name in names:
@@ -190,8 +197,8 @@ class VcpStorageStorable(object, metaclass=ABCMeta):
 
         self._names.remove(name)
 
-        if isinstance(self._parent, VcpStorage):
-            del self._parent[name]
+        if isinstance(self.instance_parent, VcpStorage):
+            del self.instance_parent[name]
 
     def remove_names(self, names : Iterable[Hashable]):
         for name in names:

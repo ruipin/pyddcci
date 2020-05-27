@@ -10,23 +10,21 @@ from .storage import VcpStorageStorable
 from .value_storage import VcpValueStorage
 from .value import VcpValue
 
-from . import Namespace, getLogger
-
-log = getLogger(__name__)
+from app.util import Namespace, HierarchicalMixin, NamedMixin
 
 
-class VcpCode(Namespace, VcpStorageStorable):
-    def __init__(self, code : int, parent=None):
-        super().__init__(f"VcpCode0x{code:X}", parent=parent)
+class VcpCode(Namespace, VcpStorageStorable, HierarchicalMixin, NamedMixin):
+    def __init__(self, code : int, instance_parent: HierarchicalMixin = None):
+        super().__init__(instance_name=f"VcpCode0x{code:X}", instance_parent=instance_parent)
 
         self.code = code
 
-        self._aliases = VcpValueStorage(parent=self)
+        self._aliases = VcpValueStorage(instance_parent=self)
 
         self.type = None
         self.description = None
 
-        self.freeze()
+        self.freeze_schema()
 
 
     # Code

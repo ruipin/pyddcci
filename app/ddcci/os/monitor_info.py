@@ -3,61 +3,76 @@
 
 from abc import ABCMeta, abstractmethod
 
-from . import getLogger, Namespace
-log = getLogger(__name__)
+from typing import Optional
+from dataclasses import dataclass, fields
+from app.util import NamespaceMap, LoggableHierarchicalMixin
 
 
-class BaseOsMonitorInfo(Namespace, metaclass=ABCMeta):
+class BaseOsMonitorInfo(NamespaceMap, LoggableHierarchicalMixin, metaclass=ABCMeta):
     """
     Class that represents information about a given Monitor as supplied by the OS
     This is a base class, and should be inherited by a OS-specific class
     """
 
-    class SubInfo(Namespace):
-        DEFAULT_TO_NONE = True
-        FIELDS = ()
+    class SubInfo:
+        def __eq__(self, other):
+            for f in fields(self):
+                v_self  = getattr(self, f.name)
+                v_other = getattr(other, f.name)
 
-        def __eq__(self, other: 'BaseOsMonitorInfo.SubInfo'):
-            if self is other: return True
-
-            for k in self:
-                self_v  = self[k]
-                other_v = other[k]
-
-                if k in (self.__class__.FIELDS_NOT_NONE or ()) and self_v is None or other_v is None:
+                if v_self is None or v_other is None:
                     continue
 
-                if self_v != other_v:
+                if v_self != v_other:
                     return False
-
             return True
 
-    class Adapter(SubInfo):
-        FIELDS_NOT_NONE = ('type', 'uid', 'guid', 'device')
-        FIELDS          = ('name', 'model', 'primary')
+        def __ne__(self, other):
+            return not self.__eq__(other)
 
-    class Monitor(SubInfo):
-        FIELDS_NOT_NONE = ('type', 'model', 'uid', 'guid', 'device')
-        FIELDS          = ('name', 'manufacturer_id', 'product_id', 'serial')
-
+    @dataclass(eq=False, order=False)
     class Device(SubInfo):
-        FIELDS_NOT_NONE = ('id',)
-        FIELDS          = ('name', 'number')
+        id     : str
+        name   : Optional[str] = None
+        number : Optional[int] = None
+
+    @dataclass(eq=False, order=False)
+    class Adapter(SubInfo):
+        type   : str
+        uid    : str
+        guid   : str
+        device : 'BaseOsMonitorInfo.Device'
+        name   : Optional[str]  = None
+        model  : Optional[str]  = None
+        primary: Optional[bool] = None
+
+    @dataclass(eq=False, order=False)
+    class Monitor(SubInfo):
+        type            : str
+        uid             : str
+        guid            : str
+        device          : 'BaseOsMonitorInfo.Device'
+        name            : Optional[str] = None
+        model           : Optional[str]  = None
+        manufacturer_id : Optional[int] = None
+        product_id      : Optional[int] = None
+        serial          : Optional[str] = None
+
 
 
     # Constructor
     def __init__(self, adapter : Adapter, monitor : Monitor, *args, **kwargs):
 
-        super().__init__(f"{monitor.model}/{monitor.uid}")
+        super().__init__()
 
         self.adapter = adapter
-        self.adapter.parent = self
+        self.adapter.instance_parent = self
 
         self.monitor = monitor
-        self.monitor.parent = self
+        self.monitor.instance_parent = self
 
         self._post_initialize(*args, **kwargs)
-        self.freeze()
+        self.freeze_schema()
 
 
     def _post_initialize(self, *args, **kwargs):
@@ -104,8 +119,8 @@ class BaseOsMonitorInfo(Namespace, metaclass=ABCMeta):
     def update(self, other : 'BaseOsMonitorInfo'):
         assert(self.represents_same_monitor(other))
 
-        with self.unfreeze(temporary=True):
-            self._dict = dict(other._dict)
+        with self.unfreeze_schema(temporary=True):
+            self.__dict__ = dict(other.__dict__)
 
 
     # Enumerate monitors

@@ -5,7 +5,7 @@ import winreg
 
 from ...generic.edid import Edid
 
-from . import getLogger
+from app.util import getLogger
 log = getLogger(__name__)
 
 

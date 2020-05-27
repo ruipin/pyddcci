@@ -8,9 +8,6 @@ from .api.device_path import DevicePath
 from .api.edid import edid_from_monitor_model_and_uid, OSEdidError
 from app.ddcci.os.generic.edid import Edid
 
-from . import getLogger
-log = getLogger(__name__)
-
 
 ########
 # OS Monitor Information
@@ -26,8 +23,8 @@ class WindowsOsMonitorInfo(BaseOsMonitorInfo):
         adapter_device_name_prefix = r'\\.\DISPLAY'
         assert(adapter_device_name.startswith(adapter_device_name_prefix))
         adapter_device_number = int(adapter_device_name[len(adapter_device_name_prefix):])
-        adapter_device_id = fr"{dcp_info.adapter['type']}\{dcp_info.adapter['devid']}"
-        adapter_device = self.__class__.Device(parent=self, name=adapter_device_name, number=adapter_device_number, id=adapter_device_id)
+        adapter_device_id = fr"{dcp_info.adapter.type}\{dcp_info.adapter.devid}"
+        adapter_device = self.__class__.Device(name=adapter_device_name, number=adapter_device_number, id=adapter_device_id)
 
         # Initialize adapter
         adapter = self.__class__.Adapter(**{
@@ -38,7 +35,7 @@ class WindowsOsMonitorInfo(BaseOsMonitorInfo):
         })
 
         # Initialize monitor
-        monitor_device = self.__class__.Device(parent=self, id=fr"MONITOR\{dcp_info.monitor['devid']}")
+        monitor_device = self.__class__.Device(id=fr"MONITOR\{dcp_info.monitor.devid}")
 
         monitor = self.__class__.Monitor(**{
             'type'  : dcp_info.monitor.type,
@@ -109,10 +106,10 @@ class WindowsOsMonitorInfo(BaseOsMonitorInfo):
 
         # Copy interesting data
         def _copy(obj, attr_x, y):
-            x = obj[attr_x]
+            x = getattr(obj, attr_x)
             if x is not None and x != y:
                 raise RuntimeError(f"Had {attr_x}='{x}', but got '{y}'")
-            obj[attr_x] = y
+            setattr(obj, attr_x, y)
 
         _copy(self.adapter, 'model', str(res.DeviceString))
         _copy(self.adapter, 'primary', res.primary)
@@ -122,7 +119,7 @@ class WindowsOsMonitorInfo(BaseOsMonitorInfo):
         while True:
             res = display_devices.win32_enum_display_devices_w(self.adapter.device.name, i, flags=display_devices.EDD_GET_DEVICE_INTERFACE_NAME)
             if res is None:
-                raise RuntimeError(f"Could not get the monitor info from GetMonitorInfo for monitor '{self._log_name}'")
+                raise RuntimeError(f"Could not get the monitor info from GetMonitorInfo for monitor '{self._instance_name}'")
 
             res_id = DevicePath(res.DeviceID)
             if res_id.type == self.monitor.type and res_id.devid == self.monitor.model and res_id.uid == self.monitor.uid and res_id.guid == self.monitor.guid:
@@ -140,10 +137,10 @@ class WindowsOsMonitorInfo(BaseOsMonitorInfo):
 
         # Copy interesting data
         def _copy(obj, attr_x, y):
-            x = obj[attr_x]
+            x = getattr(obj, attr_x)
             if x is not None and x != y:
                 raise RuntimeError(f"Had {attr_x}='{x}', but got '{y}'")
-            obj[attr_x] = y
+            setattr(obj, attr_x, y)
 
         _copy(self.monitor.device, 'name', str(res.DeviceName))
         _copy(self.monitor.device, 'number', int(self.monitor.device.name[len(device_name_prefix):]))

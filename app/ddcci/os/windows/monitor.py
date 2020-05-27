@@ -6,10 +6,6 @@ from ..monitor import BaseOsMonitor
 from app.ddcci.vcp.enums import VcpCodeType
 from app.ddcci.vcp.reply import VcpReply
 
-from . import getLogger
-log = getLogger(__name__)
-
-
 
 ##########
 # OS Monitor class

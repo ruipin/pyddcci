@@ -8,8 +8,8 @@ from ctypes.wintypes import BOOL, DWORD, WCHAR, LONG, POINTL, RECTL
 from . import struct_to_dict
 from .device_path import DevicePath
 
-from . import getLogger, Namespace
-log = getLogger(__name__)
+from dataclasses import dataclass
+from typing import Dict, Any
 
 
 #############
@@ -225,22 +225,28 @@ class DISPLAYCONFIG_ADAPTER_NAME(Structure):
 GUID_DEVINTERFACE_MONITOR         = '{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}'
 GUID_DEVINTERFACE_DISPLAY_ADAPTER = '{5b45201d-f2f2-4f3b-85bb-30ff1f953599}'
 
-class DisplayConfigPathInfo(Namespace):
-    def __init__(self, raw_path, parent=None):
-        super().__init__(self.__class__.__name__, parent=parent)
+@dataclass(init=False)
+class DisplayConfigPathInfo:
+    source  : str
+    target  : Dict[str, Any]
+    monitor : DevicePath
+    adapter : DevicePath
+
+    def __init__(self, raw_path):
+        super().__init__()
 
         self.source  = get_display_config_source_device_name(raw_path.sourceInfo.adapterId, raw_path.sourceInfo.id)
 
         self.target  = get_display_config_target_device_name(raw_path.targetInfo.adapterId, raw_path.targetInfo.id)
         self.monitor = DevicePath(str(self.target['monitorDevicePath']))
-        if self.monitor['type'] != 'DISPLAY':
+        if self.monitor.type != 'DISPLAY':
             raise ValueError(f"Expected target.monitorDevicePath to have type 'DISPLAY', got '{self.monitor['display']}' instead")
-        if self.monitor['guid'] != GUID_DEVINTERFACE_MONITOR:
+        if self.monitor.guid != GUID_DEVINTERFACE_MONITOR:
             raise ValueError(f"Expected target.monitorDevicePath to have GUID 'GUID_DEVINTERFACE_MONITOR', got '{self.monitor['guid']}' instead")
 
-        self.adapter_path = get_display_config_adapter_name(raw_path.targetInfo.adapterId, raw_path.targetInfo.id)
-        self.adapter = DevicePath(self.adapter_path)
-        if self.adapter['guid'] != GUID_DEVINTERFACE_DISPLAY_ADAPTER:
+        adapter_path = get_display_config_adapter_name(raw_path.targetInfo.adapterId, raw_path.targetInfo.id)
+        self.adapter = DevicePath(adapter_path)
+        if self.adapter.guid != GUID_DEVINTERFACE_DISPLAY_ADAPTER:
             raise ValueError(f"Expected target.monitorDevicePath to have GUID 'GUID_DEVINTERFACE_MONITOR', got '{self.adapter['guid']}' instead")
 
 

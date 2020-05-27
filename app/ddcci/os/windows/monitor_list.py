@@ -6,10 +6,6 @@ from .monitor import WindowsOsMonitor
 
 from ..monitor_list import BaseOsMonitorList
 
-from . import getLogger
-log = getLogger(__name__)
-
-
 
 ##########
 # OS Monitor class

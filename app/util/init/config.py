@@ -5,32 +5,30 @@ import os
 import yaml
 from ordered_set import OrderedSet
 
-from . import Namespace
-from . import args as ARGS
-from . import version as VERSION
-
+from . import version, args
+from .. import NamespaceMap, LoggableHierarchicalNamedMixin
 
 
 ##########
 # Config Namespace Class
-class ConfigNamespace(Namespace):
+class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
     """ Storage class for configuration settings """
 
     # ConfigNamespace is sticky
-    STICKY = True
-    STICKY_DELIMITER = '.'
+    NAMESPACE__STICKY = True
+    NAMESPACE__STICKY__DELIMITER = '.'
 
     # These hierarchies will not be dumped to file
     RESERVED_HIERARCHIES = ('app',)
 
     # Constructor
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, instance_name, *args, **kwargs):
+        super().__init__(*args, instance_name=instance_name, **kwargs)
 
-        self._default = Namespace(log_name='default', parent=self)
+        self._default = NamespaceMap()
 
     def _get_write_target(self, key):
-        if not self._default._frozen:
+        if not self._default.frozen_schema:
             return self._default
         else:
             return self
@@ -38,36 +36,28 @@ class ConfigNamespace(Namespace):
     def _sanity_check_key(self, key, delete=False):
         super()._sanity_check_key(key)
 
-        if self._get_write_target(key) is self._default:
+        if self._get_write_target(key) is self.get('_default', None):
             return
 
         if self.is_reserved_key(key):
             raise ValueError(f"key'{key}' is inside a reserved hierarchy")
 
     def _get_read_target(self, key):
-        if key not in self._dict:
+        if key not in self.__dict__:
             return self._default
         else:
             return self
 
-    def _sticky_construct_namespace(self, key):
-        inst = ConfigNamespace(log_name=key, parent=self)
-        if self._default.frozen:
-            inst.freeze()
-        return inst
+    @classmethod
+    def _sticky_construct_class(cls) -> type:
+        return ConfigMap
 
     # Freezing
-    def freeze(self):
-        self._default.freeze()
+    def freeze_default(self):
+        self._default.freeze_map()
         for k, v in self.items():
-            if isinstance(v, ConfigNamespace):
-                v.freeze()
-
-    def unfreeze(self):
-        self._default.unfreeze()
-        for k, v in self.items():
-            if isinstance(v, ConfigNamespace):
-                v.unfreeze()
+            if isinstance(v, ConfigMap):
+                v.freeze_map()
 
 
     # Iteration
@@ -81,7 +71,7 @@ class ConfigNamespace(Namespace):
         return len(self.keys())
 
     def keys(self):
-        return OrderedSet.union(self._default.keys(), self._dict.keys())
+        return OrderedSet.union(self._default.keys(), self.__dict__.keys())
 
     def items(self):
         for k in self.keys():
@@ -92,17 +82,17 @@ class ConfigNamespace(Namespace):
 
 
     # Utilities
-    def to_dict(self, recursive=True, user=True, default=True):
+    def asdict(self, recursive=True, user=True, default=True):
         d = {}
 
         for k in self.keys():
-            in_user    = k in self._dict
+            in_user    = k in self.__dict__
             in_default = k in self._default
 
-            v = self._dict[k] if in_user else None
-            if isinstance(v, ConfigNamespace):
+            v = self.__dict__[k] if in_user else None
+            if isinstance(v, ConfigMap):
                 if recursive:
-                    v_d = v.to_dict(recursive=True, user=user, default=default)
+                    v_d = v.asdict(recursive=True, user=user, default=default)
                     if v_d:
                         d[k] = v_d
                 continue
@@ -112,7 +102,7 @@ class ConfigNamespace(Namespace):
 
             if not in_user:
                 v = self._default[k]
-                assert(not isinstance(v, ConfigNamespace))
+                assert(not isinstance(v, ConfigMap))
 
             d[k] = v
 
@@ -122,23 +112,23 @@ class ConfigNamespace(Namespace):
         self_hier = f"{self.hierarchy}.{key}"
 
         for v in self.__class__.RESERVED_HIERARCHIES:
-            if self_hier.startswith(f"{CONFIG.log_name}.{v}.") or self_hier == v:
+            if self_hier.startswith(f"{CONFIG.instance_name}.{v}.") or self_hier == v:
                 return True
 
         return False
 
 
-class MasterConfigNamespace(ConfigNamespace):
+class MasterConfigMap(ConfigMap):
     """ Storage class for configuration settings """
 
     # Constants
-    USER_CONFIG_FILE = os.path.join(ARGS.HOME, 'data', 'config.yaml')
-    DEFAULT_CONFIG_FILE = os.path.join(ARGS.HOME, 'data', 'config.default.yaml')
+    USER_CONFIG_FILE = os.path.join(args.HOME, 'data', 'config.yaml')
+    DEFAULT_CONFIG_FILE = os.path.join(args.HOME, 'data', 'config.default.yaml')
 
 
     # Utilities
     def yaml_str(self, user=True, default=True):
-        dump = self.to_dict(recursive=True, user=user, default=default)
+        dump = self.asdict(recursive=True, user=user, default=default)
         return yaml.dump(dump)
 
     def debug(self, user=True, default=True):
@@ -151,6 +141,7 @@ class MasterConfigNamespace(ConfigNamespace):
 
     # Load/Save
     def load_path(self, file_path):
+        print(file_path)
         with open(file_path, 'r') as file:
             yaml_d = yaml.load(file, Loader=yaml.FullLoader)
 
@@ -158,33 +149,30 @@ class MasterConfigNamespace(ConfigNamespace):
             self.merge(yaml_d)
 
     def load(self):
-        if self.frozen:
-            self.unfreeze()
-
         # Load default file
         self.load_path(self.__class__.DEFAULT_CONFIG_FILE)
 
         # Add command-line arguments
-        for k in vars(ARGS.ARGS):
-            v = getattr(ARGS, k)
+        for k in vars(args.ARGS):
+            v = getattr(args, k)
             if v is not None:
-                self[k] = getattr(ARGS, k)
+                self[k] = getattr(args, k)
 
         # Add app information
         self['app'] = {
-            'name': ARGS.NAME,
+            'name': args.NAME,
             'version': {
-                'revision': VERSION.GIT_REVISION,
-                'version': VERSION.VERSION,
-                'full': VERSION.VERSION_STRING
+                'revision': version.GIT_REVISION,
+                'version': version.VERSION,
+                'full': version.VERSION_STRING
             },
             'dirs': {
-                'home': ARGS.HOME,
+                'home': args.HOME,
             }
         }
 
         # Freeze all values so far - they'll be the default values
-        self.freeze()
+        self.freeze_default()
 
         # Load user config if it exists
         user_path = self.__class__.USER_CONFIG_FILE
@@ -199,7 +187,7 @@ class MasterConfigNamespace(ConfigNamespace):
             file.write(yaml_str)
 
 # Initialize
-CONFIG = MasterConfigNamespace("config")
+CONFIG = MasterConfigMap("config")
 CONFIG.load()
 
 
@@ -223,5 +211,5 @@ def __getitem__(key):
 
 
 # Cleanup
-del ARGS
-del VERSION
+del args
+del version

@@ -6,21 +6,21 @@ from ordered_set import OrderedSet
 
 from .storage import VcpStorageStorable
 
-from . import Namespace
+from app.util import Namespace, HierarchicalMixin, NamedMixin
 
 
-class VcpValue(Namespace, VcpStorageStorable):
+class VcpValue(Namespace, VcpStorageStorable, HierarchicalMixin, NamedMixin):
     """
     Class that represents a valid value for a given VcpCode, including name aliases
     """
 
-    def __init__(self, value : int, parent):
-        super().__init__(fr"VcpValue0x{value:X}", parent=parent)
+    def __init__(self, value : int, instance_parent : HierarchicalMixin):
+        super().__init__(instance_name=fr"VcpValue0x{value:X}", instance_parent=instance_parent)
 
         self._value = value
         self._names = OrderedSet()
 
-        self.freeze()
+        self.freeze_schema()
 
 
     # Value

@@ -5,21 +5,20 @@ from abc import ABCMeta, abstractmethod
 from .monitor_info import BaseOsMonitorInfo
 from app.ddcci.vcp.reply import VcpReply
 
-from . import getLogger, Namespace
-log = getLogger(__name__)
+from app.util import Namespace, LoggableHierarchicalNamedMixin
 
 
 
 ##############
 # Monitor class
-class BaseOsMonitor(Namespace, metaclass=ABCMeta):
+class BaseOsMonitor(Namespace, LoggableHierarchicalNamedMixin, metaclass=ABCMeta):
     """
     Represents a monitor reported by the Operating System
     This is a base class, and should be inherited by a OS-specific class
     """
 
-    def __init__(self, info : BaseOsMonitorInfo, *args, parent=None, **kwargs):
-        super().__init__(parent=parent)
+    def __init__(self, info : BaseOsMonitorInfo, *args, instance_parent=None, **kwargs):
+        super().__init__(instance_parent=instance_parent)
 
         self._set_device_info(info)
 
@@ -41,11 +40,9 @@ class BaseOsMonitor(Namespace, metaclass=ABCMeta):
     def _set_device_info(self, info : BaseOsMonitorInfo):
         self._info = info
 
-        info.unfreeze()
-        info.parent = self
-        info.freeze()
+        info.instance_parent = self
 
-        self.log_name = info.get_monitor_name(spaces=False)
+        self.instance_name = info.get_monitor_name(spaces=False)
 
 
     # Capabilities
@@ -59,7 +56,7 @@ class BaseOsMonitor(Namespace, metaclass=ABCMeta):
         cap_str = self._get_capabilities_string()
 
         from .generic.capabilities import OsMonitorCapabilities
-        capabilities = OsMonitorCapabilities(cap_str, parent=self)
+        capabilities = OsMonitorCapabilities(cap_str, instance_parent=self)
         self._capabilities = capabilities
 
     @property

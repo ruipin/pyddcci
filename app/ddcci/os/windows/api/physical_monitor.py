@@ -10,9 +10,6 @@ from typing import Dict
 from . import struct_to_dict
 from . import monitor_info
 
-from . import getLogger
-log = getLogger(__name__)
-
 
 #############
 # CTypes Definitions/Types

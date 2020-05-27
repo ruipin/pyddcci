@@ -12,4 +12,4 @@ class VcpValueStorage(VcpStorage):
         return isinstance(obj, VcpValue)
 
     def _create_value(self, value : int) -> VcpValue:
-        return VcpValue(value, parent=self)
+        return VcpValue(value, instance_parent=self)

@@ -17,7 +17,7 @@ else:
 
 ###################
 # Script home
-HOME = os.path.realpath(os.path.join(__file__, '../../..'))
+HOME = os.path.realpath(os.path.join(__file__, '../../../..'))
 
 
 ###################

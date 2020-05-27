@@ -6,14 +6,13 @@ from abc import ABCMeta
 from . import BaseOsMonitorInfo
 from . import BaseOsMonitor
 
-from . import getLogger, Sequence
-log = getLogger(__name__)
+from app.util import getLogger, NamespaceList, LoggableHierarchicalNamedMixin
 
 
 
 ##############
 # MonitorList class
-class BaseOsMonitorList(Sequence, metaclass=ABCMeta):
+class BaseOsMonitorList(NamespaceList, LoggableHierarchicalNamedMixin, metaclass=ABCMeta):
     """
     List of OS Monitors
     This is a base class, and should be inherited by a OS-specific class
@@ -23,7 +22,7 @@ class BaseOsMonitorList(Sequence, metaclass=ABCMeta):
     OS_MONITOR_INFO_CLASS = BaseOsMonitorInfo
 
     def __init__(self, name=None):
-        super().__init__(log_name=name)
+        super().__init__(instance_name=name)
 
         self.enumerate()
 
@@ -44,7 +43,7 @@ class BaseOsMonitorList(Sequence, metaclass=ABCMeta):
 
             else:
                 # No matching monitor found. Create new monitor
-                monitor = self.__class__.OS_MONITOR_CLASS(info, parent=self)
+                monitor = self.__class__.OS_MONITOR_CLASS(info, instance_parent=self)
 
             new_monitors.add(monitor)
 

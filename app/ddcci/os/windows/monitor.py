@@ -3,7 +3,8 @@
 
 from .api.physical_monitor import OsMonitorPhysicalHandle
 from ..monitor import BaseOsMonitor
-from ..vcp_code import VcpCodeType, VcpReply
+from app.ddcci.vcp.enums import VcpCodeType
+from app.ddcci.vcp.reply import VcpReply
 
 from . import getLogger
 log = getLogger(__name__)
@@ -16,9 +17,6 @@ class WindowsOsMonitor(BaseOsMonitor):
     """
     Windows implementation of BaseOsMonitor
     """
-
-    __slots__ = BaseOsMonitor.__slots__
-
 
     # Physical Monitor Handle
     def get_physical_handle(self) -> OsMonitorPhysicalHandle:

@@ -24,6 +24,7 @@ class BaseOsMonitorList(Sequence, metaclass=ABCMeta):
 
     def __init__(self, name=None):
         super().__init__(log_name=name)
+
         self.enumerate()
 
 
@@ -57,3 +58,8 @@ class BaseOsMonitorList(Sequence, metaclass=ABCMeta):
         for monitor in old_monitors:
             if monitor not in new_monitors:
                 monitor.on_disconnect()
+
+        # Notify any monitor that just got connected
+        for monitor in self:
+            if not monitor.connected:
+                monitor.on_connect()

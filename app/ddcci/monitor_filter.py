@@ -23,8 +23,6 @@ class BaseMonitorFilter(Namespace, metaclass=ABCMeta):
     These filters can then be used in the Monitor class in order to select which monitors to act on
     """
 
-    __slots__ = Namespace.__slots__
-
     # Filtering
     @abstractmethod
     def match(self, os_monitor : OsMonitor) -> bool:
@@ -63,8 +61,6 @@ class BaseMonitorFilter(Namespace, metaclass=ABCMeta):
 #############
 # Regex class
 class RegexMonitorFilter(BaseMonitorFilter):
-    __slots__ = BaseMonitorFilter.__slots__
-
     def __init__(self, filters : Union[str, re.Pattern, List[Union[str, re.Pattern]]], parent=None):
         if isinstance(filters, str):
             filters = [filters]
@@ -80,6 +76,8 @@ class RegexMonitorFilter(BaseMonitorFilter):
 
         self.filters = filters
         self.log_name = self.get_monitor_name()
+
+        self.freeze()
 
     def _match_single(self, filter : re.Pattern, key : str, value : Any) -> bool:
         if value is None:
@@ -119,12 +117,12 @@ class RegexMonitorFilter(BaseMonitorFilter):
 #############
 # Regex class
 class OsMonitorMonitorFilter(BaseMonitorFilter):
-    __slots__ = RegexMonitorFilter.__slots__
-
     def __init__(self, os_monitor : OsMonitor, parent=None):
         super().__init__(f"{os_monitor.log_name}Filter", parent=parent)
 
         self.os_monitor = os_monitor
+
+        self.freeze()
 
     def match(self, os_monitor : OsMonitor):
         return os_monitor is self.os_monitor
@@ -156,6 +154,11 @@ class OsMonitorMonitorFilter(BaseMonitorFilter):
 
     def to_regex_filter(self) -> RegexMonitorFilter:
         return RegexMonitorFilter(self.get_regexes(), parent=self.parent)
+
+
+    # Utilities / Logging
+    def get_monitor_name(self, prefix='', suffix='') -> str:
+        return f"{prefix}{self.os_monitor.log_name}{suffix}"
 
 
 

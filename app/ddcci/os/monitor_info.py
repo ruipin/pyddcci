@@ -13,10 +13,6 @@ class BaseOsMonitorInfo(Namespace, metaclass=ABCMeta):
     This is a base class, and should be inherited by a OS-specific class
     """
 
-    __slots__ = Namespace.__slots__
-
-    FROZEN_ALLOW_SET_PARENT = True
-
     class SubInfo(Namespace):
         DEFAULT_TO_NONE = True
         FIELDS = ()
@@ -61,7 +57,6 @@ class BaseOsMonitorInfo(Namespace, metaclass=ABCMeta):
         self.monitor.parent = self
 
         self._post_initialize(*args, **kwargs)
-
         self.freeze()
 
 
@@ -96,11 +91,6 @@ class BaseOsMonitorInfo(Namespace, metaclass=ABCMeta):
         return res
 
 
-    # Freezing
-    def unfreeze(self, recursive=True):
-        raise NotImplementedError(f"{self.__class__.__name__}.unfreeze() is not allowed")
-
-
     # Comparison
     def represents_same_monitor(self, other : 'BaseOsMonitorInfo'):
         if self is other: return True
@@ -113,7 +103,9 @@ class BaseOsMonitorInfo(Namespace, metaclass=ABCMeta):
 
     def update(self, other : 'BaseOsMonitorInfo'):
         assert(self.represents_same_monitor(other))
-        self._dict = dict(other._dict)
+
+        with self.unfreeze(temporary=True):
+            self._dict = dict(other._dict)
 
 
     # Enumerate monitors

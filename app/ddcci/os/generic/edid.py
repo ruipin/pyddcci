@@ -13,8 +13,6 @@ log = getLogger(__name__)
 ###########
 # Extended Display Identification Data class
 class Edid(Namespace):
-    __slots__ = Namespace.__slots__
-
     EDID_FORMAT = OrderedDict([
         # ("endianness"     , ">"  ),  # big-endian
         ("header"          , "8s" ),  # constant header (8 bytes)

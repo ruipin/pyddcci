@@ -1,22 +1,14 @@
 # SPDX-License-Identifier: GPLv3-or-later
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-import re
 from abc import ABCMeta
 
-class Namespace(object, metaclass=ABCMeta):
+from .hierarchied import Hierarchied
+
+class Namespace(Hierarchied, metaclass=ABCMeta):
     """
     Class implementing a namespace that can be accessed like a dictionary or using attributes
-
-    Classes inheriting should make sure they inherit __slots__, e.g.
-    >>> __slots__ = Namespace.__slots__
-
-    To add new slots, make sure to also inherit the existing slots, e.g.
-    >>> __slots__ = set.union({'_banana'}, Namespace.__slots__)
     """
-
-    # Tell Python to omit the built-in __dict__
-    __slots__ = {'_dict', '_hash', '_log', '_log_name', '_frozen', '_parent'}
 
     # If True, then attributes that do not exist return None by default
     DEFAULT_TO_NONE = False
@@ -33,19 +25,16 @@ class Namespace(object, metaclass=ABCMeta):
     # If True, STICK=TRUE will eagerly convert values into namespace by calling 'to_dict' if it exists
     STICKY_EAGER = False
 
-    # If True, allows changing the parent when frozen
-    FROZEN_ALLOW_SET_PARENT = False
-    # If True, allows changing the log name when frozen
-    FROZEN_ALLOW_SET_LOG_NAME = False
+    # If True, allows changing private attributes when frozen
+    FROZEN_ALLOW_PRIVATE = False
 
 
     # Constructor
     def __init__(self, log_name=None, parent=None, frozen=False, **kwargs):
+        super().__init__(log_name=log_name, parent=parent)
+
         self._hash     = None
-        self._log_name = self.__class__.__name__ if log_name is None else log_name
-        self._log      = None
         self._frozen   = False
-        self._parent   = parent
 
         self._dict     = {}
         self.merge(kwargs)
@@ -80,17 +69,13 @@ class Namespace(object, metaclass=ABCMeta):
     def _sanity_check_key(self, key : str, *, delete=False):
         if not key:
             raise ValueError(f"key must be defined")
-        elif key[0] == '_' and key in self.__class__.__slots__:
-            raise ValueError(f"key='{key}' is reserved")
-        elif key[0] != '_' and f"_{key}" in self.__class__.__slots__:
-            raise ValueError(f"key='{key}' is reserved")
         elif not self._is_field(key):
             raise ValueError(f"{self.__class__.__name__} does not contain field '{key}'")
 
     def _get_write_target(self, key):
         return self
 
-    def _add(self, key : str, value):
+    def _set(self, key : str, value):
         """ Add a new attribute."""
 
         # Handle @property.setter
@@ -101,7 +86,7 @@ class Namespace(object, metaclass=ABCMeta):
                 return value
 
         # Sanity checks
-        if self._frozen:
+        if self.frozen:
             raise TypeError(f"{repr(self)} is frozen")
         self._sanity_check_key(key)
 
@@ -124,7 +109,7 @@ class Namespace(object, metaclass=ABCMeta):
         if not self.__class__.STICKY or not isinstance(value, Namespace):
             tgt : Namespace = self._get_write_target(key)
             if tgt is not self:
-                return tgt._add(key, value)
+                return tgt._set(key, value)
 
         # Check if field can be None
         if value is None:
@@ -137,11 +122,20 @@ class Namespace(object, metaclass=ABCMeta):
         self._dict[key] = value
         return value
 
-    def _remove(self, key):
+    def _set_private(self, key: str, value):
+        if key != '_frozen' and not self.__class__.FROZEN_ALLOW_PRIVATE and self.frozen:
+            raise TypeError(f"{repr(self)} is frozen")
+
+        self.__dict__[key] = value
+        return value
+
+    def _remove(self, key, fail=True):
         """ Remove an attribute.
         Keys may not start with '_' """
 
         # Sanity checks
+        if self.frozen:
+            raise TypeError(f"{repr(self)} is frozen")
         self._sanity_check_key(key, delete=True)
 
         # Sticky
@@ -168,7 +162,21 @@ class Namespace(object, metaclass=ABCMeta):
 
         # Remove from dictionary
         self._hash = None
-        del self._dict[key]
+        try:
+            del self._dict[key]
+        except KeyError:
+            if fail:
+                raise
+
+    def _remove_private(self, key: str, fail=True):
+        if not self.__class__.FROZEN_ALLOW_PRIVATE and self.frozen:
+            raise TypeError(f"{repr(self)} is frozen")
+
+        try:
+            del self.__dict__[key]
+        except KeyError:
+            if fail:
+                raise
 
     def _sticky_construct_namespace(self, key):
         return Namespace(log_name=key, parent=self)
@@ -212,33 +220,45 @@ class Namespace(object, metaclass=ABCMeta):
 
     def __getitem__(self, key : str):
         """ Get an attribute using dictionary syntax obj[key] """
+        if key is None or key[0] == '_':
+            raise KeyError(key)
         return self._get(key)
 
     def __setitem__(self, key : str, value):
         """ Modify an attribute using dictionary syntax obj[key] = value """
-        self._add(key, value)
+        if key is None or key[0] == '_':
+            raise KeyError(key)
+        self._set(key, value)
 
     def __delitem__(self, key : str):
         """ Delete an attribute using dictionary syntax """
+        if key is None or key[0] == '_':
+            raise KeyError(key)
         self._remove(key)
 
     def __getattr__(self, key : str):
         """ Get an attribute, redirected to the internal dictionary """
         try:
-            return self._get(key)
+            if key and key[0] == '_':
+                return self.__dict__[key]
+            else:
+                return self._get(key)
         except KeyError:
             raise AttributeError(f"Attribute '{key}' does not exist")
 
     def __setattr__(self, key : str, value):
         """ Set an attribute, redirected to the internal dictionary """
-        if key in self.__slots__:
-            object.__setattr__(self, key, value)
+        if key and key[0] == '_':
+            self._set_private(key, value)
         else:
-            self._add(key, value)
+            self._set(key, value)
 
     def __delattr__(self, key):
         """ Delete an attribute using attribute syntax """
-        self._remove(key)
+        if key and key[0] == '_':
+            self._remove_private(key)
+        else:
+            self._remove(key)
 
     def __contains__(self, m):
         return self._get(m, default=None) is not None
@@ -299,74 +319,50 @@ class Namespace(object, metaclass=ABCMeta):
         # return self._hash
 
 
-    # Accessors
-    def get_bool(self, attr_name : str, default=NO_DEFAULT):
-        v = self._get(attr_name, default=default)
-        if v is False or v == 0 or v == '0':
-            return False
-        elif v is True or v == 1 or v == '1':
-            return True
-        elif default == Namespace.NO_DEFAULT:
-            raise ValueError(f"{attr_name}='{v}' is not a valid bool")
-        else:
-            return default
-
-    def get_int(self, attr_name : str, default=NO_DEFAULT):
-        v = self._get(attr_name, default=default)
-
-        # Try to convert to a normal integer
-        try:
-            try:
-                return int(v, 0)
-            except TypeError:
-                return int(v)
-        except ValueError:
-            pass
-
-        # Return default (or fail)
-        if default == Namespace.NO_DEFAULT:
-            raise ValueError(f"{attr_name}='{v}' is not a valid integer")
-        else:
-            return default
-
-    def get_str(self, attr_name : str, default=NO_DEFAULT):
-        v = self._get(attr_name, default=default)
-        if v is default:
-            return v
-        else:
-            return str(v)
-
-    def get_list(self, attr_name : str, default=NO_DEFAULT):
-        v = self._get(attr_name, default=default)
-
-        if v is default:
-            return v
-        elif isinstance(v, list):
-            return v
-        else:
-            raise ValueError(f"{attr_name}={v} is not a valid list")
-
-
     # Freezing
-    def freeze(self, recursive=True):
+    def freeze(self, recursive=False, temporary=False):
         """ Freezes this object, so new attributes cannot be added """
+        if temporary:
+            return self.__class__.TemporaryFreeze(self, True, recursive)
         if recursive:
             for obj in self.values():
                 if hasattr(obj, 'frozen') and not obj.frozen:
                     obj.freeze()
         self._frozen = True
 
-    def unfreeze(self, recursive=True):
+    def unfreeze(self, recursive=False, temporary=False):
         """ Unfreezes this object, so new attributes can be added """
+        if temporary:
+            return self.__class__.TemporaryFreeze(self, False, recursive)
         if recursive:
             for obj in self.values():
                 if hasattr(obj, 'frozen') and obj.frozen:
                     obj.unfreeze()
         self._frozen = False
 
+    class TemporaryFreeze(object):
+        def __init__(self, obj, freeze, recursive):
+            self.obj = obj
+            self.freeze = freeze
+            self.recursive = recursive
+
+            if self.freeze:
+                self.obj.freeze(recursive=self.recursive)
+            else:
+                self.obj.unfreeze(recursive=self.recursive)
+
+        def __enter__(self):
+            pass
+
+        def __exit__(self, _, __, ___):
+            if self.freeze:
+                self.obj.unfreeze(recursive=self.recursive)
+            else:
+                self.obj.freeze(recursive=self.recursive)
+
     @property
     def frozen(self):
-        return self._frozen
+        return self.__dict__.get('_frozen', False)
     @frozen.setter
     def frozen(self, val):
         if val:
@@ -389,75 +385,12 @@ class Namespace(object, metaclass=ABCMeta):
 
     def merge(self, d):
         for k, v in d.items():
-            self._add(k, v)
-
-
-    # Logging
-    @property
-    def log(self):
-        """ Returns a logger for the current object. If self.name is 'None', uses the class name """
-        if self._log is None:
-            from .log_init import getLogger
-            self._log = getLogger(getattr(self, 'log_name', self), parent=self._parent)
-        return self._log
-
-    @property
-    def log_name(self):
-        return self._log_name
-    @log_name.setter
-    def log_name(self, new_name):
-        if self._log_name == new_name:
-            return
-        if not self.__class__.FROZEN_ALLOW_SET_LOG_NAME and self._frozen:
-            raise RuntimeError("Object is frozen!")
-        self._log_name = new_name
-        self._log = None
-
-
-    # Parent
-    @property
-    def parent(self):
-        return self._parent
-    @parent.setter
-    def parent(self, new_parent):
-        if not self.__class__.FROZEN_ALLOW_SET_PARENT and self._frozen:
-            raise RuntimeError("Object is frozen!")
-        self._parent = new_parent
-        self._log = None
-
-    @property
-    def hierarchy(self):
-        hier = self._log_name
-        if self._parent is not None:
-            hier = f"{self._parent.hierarchy}.{hier}"
-        return hier
+            self[k] = v
 
 
     # Printing
-    @property
-    def short_class_name(self):
-        # Assume camelcase
-        res = re.sub('[^A-Z0-9]', '', self.__class__.__name__)
-
-        if res:
-            return res
-
-        # Otherwise, do nothing
-        return self.__class__.__name__
-
     def __repr__(self):
-        if self._parent is not None:
-            nm = self.hierarchy
-        else:
-            nm = self._log_name
-            cnm = self.__class__.__name__
-            if nm != cnm:
-                nm = f"{cnm}:{nm}"
-
-        return f"<{nm}:{repr(self._dict)}>"
-
-    def __str__(self):
-        return f"<{self.short_class_name}:{self._log_name}>"
+        return f"<{self._repr_name}:{repr(self._dict)},{repr(self.__dict__)}>"
 
     def repr_dict(self):
         return repr(self._dict)

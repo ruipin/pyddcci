@@ -3,7 +3,7 @@
 
 from abc import ABCMeta, abstractmethod
 from .monitor_info import BaseOsMonitorInfo
-from .vcp_code import VcpReply
+from app.ddcci.vcp.reply import VcpReply
 
 from . import getLogger, Namespace
 log = getLogger(__name__)
@@ -18,20 +18,18 @@ class BaseOsMonitor(Namespace, metaclass=ABCMeta):
     This is a base class, and should be inherited by a OS-specific class
     """
 
-    __slots__ = Namespace.__slots__
-
-    def __init__(self, info : BaseOsMonitorInfo, parent=None):
+    def __init__(self, info : BaseOsMonitorInfo, *args, parent=None, **kwargs):
         super().__init__(parent=parent)
 
         self._set_device_info(info)
-        self._initialize()
 
         self._capabilities = None
 
         self._connected = False
-        self.on_connect()
 
-    def _initialize(self):
+        self._post_initialize(*args, **kwargs)
+
+    def _post_initialize(self):
         pass
 
 
@@ -42,7 +40,10 @@ class BaseOsMonitor(Namespace, metaclass=ABCMeta):
 
     def _set_device_info(self, info : BaseOsMonitorInfo):
         self._info = info
+
+        info.unfreeze()
         info.parent = self
+        info.freeze()
 
         self.log_name = info.get_monitor_name(spaces=False)
 

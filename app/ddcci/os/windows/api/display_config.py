@@ -226,8 +226,6 @@ GUID_DEVINTERFACE_MONITOR         = '{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}'
 GUID_DEVINTERFACE_DISPLAY_ADAPTER = '{5b45201d-f2f2-4f3b-85bb-30ff1f953599}'
 
 class DisplayConfigPathInfo(Namespace):
-    __slots__ = Namespace.__slots__
-
     def __init__(self, raw_path, parent=None):
         super().__init__(self.__class__.__name__, parent=parent)
 

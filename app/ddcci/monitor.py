@@ -4,7 +4,8 @@
 import re
 from typing import Union, List
 
-from .os import OsMonitorList, VcpReply
+from .os import OsMonitorList
+from .vcp.reply import VcpReply
 from . import monitor_filter
 
 from . import Namespace, Sequence, getLogger
@@ -30,14 +31,14 @@ class Monitor(Namespace):
     It also allows us to be flexible if the monitor information changes.
     """
 
-    __slots__ = Namespace.__slots__
-
     def __init__(self, filter, parent=None):
         filter = monitor_filter.create_monitor_filter_from(filter)
 
         super().__init__(filter.get_monitor_name(prefix='', suffix=''), parent=parent)
 
         self.filter = filter
+
+        self.freeze()
 
 
     # Os Monitor

@@ -2,9 +2,7 @@
 # Copyright © 2020 pyddcci Rui Pinheiro
 
 from enum import Enum
-from . import Namespace, getLogger
 
-log = getLogger(__name__)
 
 
 class VcpControlType(Enum):
@@ -25,16 +23,3 @@ class VcpCodeType(Enum):
 
     # Set Parameter VCP code. Sending a command of this type changes some aspect of the monitor's operation.
     VCP_SET_PARAMETER = 1
-
-
-class VcpReply(Namespace):
-    """
-    Represents a response to the "Get VCP Feature & VCP Feature Reply" command defined in the DDC/CI standard
-    """
-
-    __slots__ = Namespace.__slots__
-
-    FIELDS_NOT_NONE = ('command', 'type', 'current', 'maximum')
-
-    def __init__(self, command : int, *, type : VcpCodeType, current : int, maximum : int):
-        super().__init__(f"Vcp{hex(command)}Reply", command=command, type=type, current=current, maximum=maximum)

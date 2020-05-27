@@ -19,9 +19,6 @@ class WindowsOsMonitorInfo(BaseOsMonitorInfo):
     Windows implementation of BaseOsMonitorInfo
     """
 
-    __slots__ = BaseOsMonitorInfo.__slots__
-
-
     # Initialization
     def __init__(self, dcp_info):
         # Initialize adapter device

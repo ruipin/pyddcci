@@ -7,8 +7,6 @@ log = getLogger(__name__)
 
 
 class DevicePath(Namespace):
-    __slots__ = Namespace.__slots__
-
     def __init__(self, path : str, parent=None):
         super().__init__(path, parent=parent)
 

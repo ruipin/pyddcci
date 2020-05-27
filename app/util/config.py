@@ -16,9 +16,6 @@ from . import version as VERSION
 class ConfigNamespace(Namespace):
     """ Storage class for configuration settings """
 
-    # Python does not inherit __slots__ automatically
-    __slots__ = set.union({'_default'}, Namespace.__slots__)
-
     # ConfigNamespace is sticky
     STICKY = True
     STICKY_DELIMITER = '.'
@@ -133,10 +130,6 @@ class ConfigNamespace(Namespace):
 
 class MasterConfigNamespace(ConfigNamespace):
     """ Storage class for configuration settings """
-
-    # Python does not inherit __slots__ automatically
-    __slots__ = ConfigNamespace.__slots__
-
 
     # Constants
     USER_CONFIG_FILE = os.path.join(ARGS.HOME, 'data', 'config.yaml')

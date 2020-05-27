@@ -27,23 +27,33 @@ if __name__ == "__main__":
     #log.debug(repr(OS_MONITORS))
 
 
-    from app.ddcci.monitor import Monitor
-    monitor = Monitor('Primary')
-
-    #print()
-    #log.debug(monitor)
+    #from app.ddcci.monitor import Monitor
+    #monitor = Monitor('Primary')
+    #contrast = monitor.vcp_read_raw(0x12)
+    #print(f"Current Contrast: {contrast}")
+    #monitor.vcp_write_raw(0x12, 20)
+    #time.sleep(1)
+    #monitor.vcp_write_raw(0x12, contrast)
 
     #print()
     #log.debug(f"VCP Code Capabilities: {repr(monitor.get_os_monitor().capabilities.get_vcp_codes())}")
 
-    contrast = monitor.vcp_read_raw(0x12)
-    print(f"Current Contrast: {contrast}")
+    print()
+    from app.ddcci.vcp.code_storage import VcpCodeStorage
+    codes = VcpCodeStorage()
 
-    monitor.vcp_write_raw(0x12, 20)
+    contrast = codes.set("Constrast", 0x12)
+    log.debug(f"Contrast: {contrast}")
+    print(contrast.aliases)
 
-    time.sleep(1)
-
-    monitor.vcp_write_raw(0x12, contrast)
+    contrast.aliases.set("50PCT", 50)
+    contrast.aliases.set("20PCT", 20)
+    contrast.aliases.set("HALF", 50)
+    print(contrast.aliases)
+    fifty = contrast.aliases['50PCT']
+    fifty.add_name("FIFTY")
+    log.debug(f"50PCT: {fifty}")
+    log.debug(f"Names: {fifty.names}")
 
     #print()
     #import time

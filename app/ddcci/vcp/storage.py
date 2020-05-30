@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: GPLv3
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-from typing import Optional, Hashable, Any, Iterable
+import re
+
+from typing import Optional, Hashable, Any, Iterable, List
 from abc import ABCMeta, abstractmethod
 from ordered_set import OrderedSet
 
@@ -15,7 +17,8 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, metaclass=ABCMeta):
     def __init__(self, instance_parent=None):
         super().__init__(instance_parent=instance_parent)
 
-        self._objs = {}
+        self._objs   = {}
+        self._attrs  = {}
         self._set    = set()
 
 
@@ -33,11 +36,20 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, metaclass=ABCMeta):
     def _create_value(self, value : int) -> 'VcpStorageStorable':
         pass
 
+    @staticmethod
+    def to_key(key : Hashable):
+        if not isinstance(key, str):
+            return key
+
+        new_key = key.lower()
+        new_key = re.sub('[^a-z0-9]+', '', new_key)
+        if len(new_key) > 0:
+            return new_key
+        return key
 
     # Accesses
-    def get(self, key : Hashable, add=True):
-        # Transparently accept value objects
-        key = self._transparent_value(key)
+    def get(self, name : Hashable, add=True):
+        key = self.to_key(name)
 
         # Search for the object
         obj = self._objs.get(key, None)
@@ -86,28 +98,35 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, metaclass=ABCMeta):
         if isinstance(name, int):
             raise ValueError(f"'name'={name} must not be an integer")
 
+        # Convert to key
+        key = self.to_key(name)
+
         # Wrap 'remove' if value is None
         if value is None:
-            return self.remove(name)
+            return self.remove(key)
 
         # Transparently accept value objects
         value = self._transparent_value(value)
 
         # Check if name already exists
-        obj = self._objs.get(name, None)
+        obj = self._objs.get(key, None)
         if obj is not None:
             if obj.vcp_storage_key() == value:
                 return
-
             obj.remove_name(name)
 
         # Find a VcpValue if already present, otherwise create one
         obj = self.add(value)
 
-        self._objs[name]  = obj
+        self._objs[key] = obj
         obj.add_name(name)
 
         return obj
+
+
+    def contains(self, name : Hashable):
+        return self.to_key(name) in self._objs
+
 
 
     # Magic methods
@@ -123,8 +142,8 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, metaclass=ABCMeta):
         """ Delete an attribute using dictionary syntax """
         self.remove(key)
 
-    def __contains__(self, m):
-        return self._objs.__contains__(m)
+    def __contains__(self, key : Hashable):
+        return self.contains(key)
 
 
     # Iteration
@@ -144,6 +163,11 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, metaclass=ABCMeta):
 
     def values(self):
         return iter(self._set)
+
+    def names(self):
+        for k in self.keys():
+            if isinstance(k, str):
+                yield k
 
 
     # Printing
@@ -220,7 +244,13 @@ class VcpStorageStorable(metaclass=ABCMeta):
         if isinstance(other, self.__class__):
             return other is self
 
-        return other == self.vcp_storage_key()
+        if isinstance(other, int):
+            return other == self.vcp_storage_key()
+
+        if isinstance(other, str):
+            return other in self.names
+
+        return False
 
     def __hash__(self):
         return self.vcp_storage_key()

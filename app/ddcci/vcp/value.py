@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: GPLv3
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-from typing import Union, Iterable, Hashable
 from ordered_set import OrderedSet
 
 from .storage import VcpStorageStorable
@@ -9,7 +8,7 @@ from .storage import VcpStorageStorable
 from app.util import Namespace, HierarchicalMixin, NamedMixin
 
 
-class VcpValue(Namespace, VcpStorageStorable, HierarchicalMixin, NamedMixin):
+class VcpValue(VcpStorageStorable, Namespace, HierarchicalMixin, NamedMixin):
     """
     Class that represents a valid value for a given VcpCode, including name aliases
     """

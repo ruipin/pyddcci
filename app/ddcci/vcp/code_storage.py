@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPLv3
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Hashable
 
 from .enums import *
 from .code import VcpCode
@@ -9,6 +9,7 @@ from .storage import VcpStorage
 
 
 class VcpCodeStorage(VcpStorage):
+    # Superclass abstract methods
     def _is_storable_value(self, obj : Any) -> bool:
         return isinstance(obj, VcpCode)
 
@@ -16,7 +17,7 @@ class VcpCodeStorage(VcpStorage):
         return VcpCode(code, instance_parent=self)
 
 
-
+    # Add from dictionary
     def _add_dictionary_key(self, value: int, details: Dict[str, Any], category: Optional[str]):
         name = details["name"]
 
@@ -33,16 +34,27 @@ class VcpCodeStorage(VcpStorage):
 
             sub_values = details.get('values', None)
 
+            verify = details.get('verify', False)
+
             # Add code
             code = self.add(value)
             code.add_name(name)
             code.type = type
             code.description = description
             code.category = category
+            code.verify = verify
 
             if aliases is not None:
                 for alias in aliases:
                     self.set(alias, value)
+
+            if sub_values is not None:
+                for value, names in sub_values.items():
+                    if isinstance(names, str):
+                        code.add_value(names, value)
+                    else:
+                        for nm in names:
+                            code.add_value(nm, value)
 
         except Exception as e:
             self.log.exception(f"Failed to add dictionary key '{name}'")
@@ -70,7 +82,7 @@ VCP_SPEC = VcpCodeStorage()
 
 _manufacturer_vcps = {}
 for i in range(0xE0, 0xFF):
-    _manufacturer_vcps[i] = {"name": f"Manufacturer Specific {i:X}"}
+    _manufacturer_vcps[i] = {"name": f"Manufacturer Specific 0x{i:X}"}
 
 VCP_SPEC.add_dictionary({
     # Preset Operations
@@ -384,8 +396,8 @@ VCP_SPEC.add_dictionary({
             "type": "NC",
             "aliases": ["Application", "Preset"],
             "values": {
-                0x00: "Stand", 0x01: "Productivity", 0x02: "Mixed", 0x03: "Movie", 0x04: "User", 0x05: "Games", 0x06: "Sports", 0x07: "Professional",
-                0x08: "Standard", 0x09: "Low power", 0x0A: "Demonstration", 0xF0: "Dynamic Contrast"}
+                0x00: ["Stand", "Default"], 0x01: "Productivity", 0x02: "Mixed", 0x03: ["Movie", "Cinema"], 0x04: "User", 0x05: ["Games", "Gaming"],
+                0x06: "Sports", 0x07: "Professional", 0x08: "Standard", 0x09: "Low power", 0x0A: "Demonstration", 0xF0: "Dynamic Contrast"}
         }
     },
 
@@ -611,6 +623,7 @@ VCP_SPEC.add_dictionary({
             "name": "Input Select",
             "aliases": "Input",
             "type": "NC",
+            "verify": True,
             "values": {
                 0x01: ["RGB 1", "Analog 1"], 0x02: ["RGB 2", "Analog 2"],
                 0x03: ["DVI 1", "Digital 1"], 0x04: ["DVI 2", "Digital 2"],

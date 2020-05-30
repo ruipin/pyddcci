@@ -8,12 +8,12 @@ from abc import ABCMeta, abstractmethod
 from .os import OsMonitor
 from .os import OsMonitorList
 
-from app.util import Namespace
+from app.util import Namespace, LoggableMixin, HierarchicalMixin, NamedMixin
 
 
 #############
 # Base class
-class BaseMonitorFilter(Namespace, metaclass=ABCMeta):
+class BaseMonitorFilter(Namespace, LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta):
     """
     Base class for filtering OsMonitor objects
     Implementations should define <match>, which returns True if a specific OsMonitor matches the current filter.
@@ -63,7 +63,7 @@ class RegexMonitorFilter(BaseMonitorFilter):
         if isinstance(filters, str):
             filters = [filters]
 
-        super().__init__('/'.join(filters).replace(' ',''), instance_parent=instance_parent)
+        super().__init__(instance_name='/'.join(filters).replace(' ',''), instance_parent=instance_parent)
 
         for i, k in enumerate(filters):
             if not isinstance(k, re.Pattern):
@@ -75,11 +75,16 @@ class RegexMonitorFilter(BaseMonitorFilter):
         self.filters = filters
         self.instance_name = self.get_monitor_name()
 
-        self.freeze()
+        self.freeze_schema()
 
     def _match_single(self, filter : re.Pattern, key : str, value : Any) -> bool:
         if value is None:
             return False
+
+        if callable(getattr(value, 'items', None)):
+            for sub_key, sub_value in value.items():
+                if self._match_single(filter, sub_key, sub_value):
+                    return True
 
         if callable(getattr(value, 'items', None)):
             for sub_key, sub_value in value.items():
@@ -116,7 +121,7 @@ class RegexMonitorFilter(BaseMonitorFilter):
 # Regex class
 class OsMonitorMonitorFilter(BaseMonitorFilter):
     def __init__(self, os_monitor : OsMonitor, instance_parent=None):
-        super().__init__(f"{os_monitor.instance_name}Filter", instance_parent=instance_parent)
+        super().__init__(instance_name=f"{os_monitor.instance_name}Filter", instance_parent=instance_parent)
 
         self.os_monitor = os_monitor
 

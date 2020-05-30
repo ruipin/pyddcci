@@ -1,12 +1,20 @@
 # SPDX-License-Identifier: GPLv3-or-later
 # Copyright © 2020 pyddcci Rui Pinheiro
 
+import time
+from typing import Optional
+
 from abc import ABCMeta, abstractmethod
 from .monitor_info import BaseOsMonitorInfo
 from app.ddcci.vcp.reply import VcpReply
 
 from app.util import Namespace, LoggableHierarchicalNamedMixin
 
+
+##############
+# VcpError exception class
+class VcpError(RuntimeError):
+    pass
 
 
 ##############
@@ -73,11 +81,22 @@ class BaseOsMonitor(Namespace, LoggableHierarchicalNamedMixin, metaclass=ABCMeta
         pass
 
     def vcp_query(self, code : int) -> VcpReply:
-        return self._vcp_query(code)
+        # self.log.debug(f"VCP Query: 0x{code:X}")
+        try:
+            return self._vcp_query(code)
+        except Exception as e:
+            raise VcpError(f"Failed to query VCP Code 0x{code:X}") from e
 
     # VCP Read
-    def vcp_read(self, code : int) -> int:
+    def _vcp_read(self, code : int) -> int:
         return self._vcp_query(code).current
+
+    def vcp_read(self, code : int) -> int:
+        # self.log.debug(f"VCP Read: 0x{code:X}")
+        try:
+            return self._vcp_read(code)
+        except Exception as e:
+            raise VcpError(f"Failed to read VCP Code 0x{code:X}") from e
 
     # VCP Write
     @abstractmethod
@@ -85,8 +104,40 @@ class BaseOsMonitor(Namespace, LoggableHierarchicalNamedMixin, metaclass=ABCMeta
         pass
 
     def vcp_write(self, code : int, value: int) -> None:
-        return self._vcp_write(code, value)
+        # self.log.debug(f"VCP Write: 0x{code:X} <= 0x{value:X}")
+        try:
+            self._vcp_write(code, value)
+        except Exception as e:
+            raise VcpError(f"Failed to write VCP 0x{code:X} <= 0x{value:X}") from e
 
+    def verify(self, code: int, value: Optional[int], timeout: int):
+        if value is None:
+            wait_msg = f"Waiting for VCP 0x{code:X} to become readable..."
+        else:
+            wait_msg = f"Waiting for VCP 0x{code:X} == 0x{value:X}..."
+
+        for i in range(timeout, 0, -1):
+            msg = f"{i:2}s - {wait_msg}"
+
+            try:
+                new_val = self.vcp_read(code)
+                self.log.debug(f"{msg} Read 0x{new_val:X}.")
+
+                if value is None:
+                    self.log.info(f"VCP 0x{code:X} is readable again.")
+                    break
+                elif new_val == value:
+                    self.log.info(f"Verified 0x{code:X} == 0x{new_val:X}.")
+                    break
+            except VcpError:
+                self.log.debug(f"{msg} Read failed.")
+
+            time.sleep(1)
+        else:
+            raise VcpError(f"Timeout verifying VCP 0x{code:X}")
+
+    def wait_for_readable(self, code: int, timeout: int):
+        self.verify(code, None, timeout)
 
     # Connection events
     @property

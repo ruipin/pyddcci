@@ -30,6 +30,10 @@ class BaseOsMonitorInfo(NamespaceMap, LoggableHierarchicalMixin, metaclass=ABCMe
         def __ne__(self, other):
             return not self.__eq__(other)
 
+        def items(self):
+            for f in fields(self):
+                yield f.name, getattr(self, f.name)
+
     @dataclass(eq=False, order=False)
     class Device(SubInfo):
         id     : str

@@ -13,17 +13,18 @@ from .value import VcpValue
 from app.util import Namespace, HierarchicalMixin, NamedMixin
 
 
-class VcpCode(Namespace, VcpStorageStorable, HierarchicalMixin, NamedMixin):
+class VcpCode(VcpStorageStorable, Namespace, HierarchicalMixin, NamedMixin):
     def __init__(self, code : int, instance_parent: HierarchicalMixin = None):
         super().__init__(instance_name=f"VcpCode0x{code:X}", instance_parent=instance_parent)
 
         self.code = code
 
-        self._aliases = VcpValueStorage(instance_parent=self)
+        self._values = VcpValueStorage(instance_parent=self)
 
         self.type = None
         self.description = None
         self.category = None
+        self.verify = False
 
         self.freeze_schema()
 
@@ -38,33 +39,32 @@ class VcpCode(Namespace, VcpStorageStorable, HierarchicalMixin, NamedMixin):
     def type(self):
         return self._type
     @type.setter
-    def type(self, new_value : Union[None, VcpControlType]):
-        self._type = new_value
+    def type(self, new_type : Union[None, VcpControlType]):
+        self._type = new_type
 
 
     # Aliases
     @property
-    def aliases(self):
-        return self._aliases
+    def values(self):
+        return self._values
 
-    def add_aliases(self, new_value_name : Hashable, new_value : int):
+    def add_value(self, new_value_name : Hashable, new_value : int):
         self._values[new_value_name] = new_value
 
 
-    # Restrictions
-    @property
-    def maximum(self) -> int:
-        return self._maximum
-    @maximum.setter
-    def maximum(self, new_maximum):
-        new_maximum = self[new_maximum]
 
-    @property
-    def allowed(self) -> Union[Set[int], range]:
-        if self._type is not VcpControlType.VCP_NON_CONTINUOUS:
-            return range(0, self.maximum+1)
-        return self._allowed
+    # Magic methods (wrap Value Storage)
+    def __getitem__(self, key : Hashable):
+        """ Get an attribute using dictionary syntax obj[key] """
+        return self.values.get(key)
 
-    def is_allowed(self, value):
-        value = self.get_value_for(value)
-        return value in self.allowed
+    def __setitem__(self, key : Hashable, value : int):
+        """ Modify an attribute using dictionary syntax obj[key] = value """
+        self.values.set(key, value)
+
+    def __delitem__(self, key : Hashable):
+        """ Delete an attribute using dictionary syntax """
+        self.values.remove(key)
+
+    def __contains__(self, key : Hashable):
+        return self.values.contains(key)

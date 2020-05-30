@@ -43,8 +43,8 @@ class LoggableMixin(object):
         if self.__log is None:
             from ..init import getLogger
             parent = self.instance_parent if isinstance(self, HierarchicalMixin) else None
-            self._log = getLogger(self.__log_name__, parent=parent)
-        return self._log
+            self.__log = getLogger(self.__log_name__, parent=parent)
+        return self.__log
 
     @property
     def __log_name__(self) -> str:

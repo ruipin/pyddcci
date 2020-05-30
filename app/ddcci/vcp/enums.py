@@ -6,14 +6,17 @@ from enum import Enum
 
 
 class VcpControlType(Enum):
+    # Table controls - these are not supported by this application
+    VCP_TABLE = "T"
+
     # Controls that accept only specific values.
     # The valid values of these controls do not need to be continuous in value.
     # Non-continuous controls can be “read and write”, “read-only”or “write-only”
-    VCP_NON_CONTINUOUS = 0
+    VCP_NON_CONTINUOUS = "NC"
 
     # Controls that accept any value from zero to a maximum value specific for each control.
     # All continuous controls are read and write enabled.
-    VCP_CONTINUOUS = 1
+    VCP_CONTINUOUS = "C"
 
 
 class VcpCodeType(Enum):

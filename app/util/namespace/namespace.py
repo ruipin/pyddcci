@@ -72,7 +72,7 @@ class Namespace(object):
         if not self.frozen_schema:
             return False
 
-        if key in self.__dict:
+        if key in self.__namespace:
             return False
 
         if self.__class__.NAMESPACE__FROZEN_SCHEMA__ALLOW_PRIVATE and key and key[0] == '_':

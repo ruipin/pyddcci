@@ -8,7 +8,7 @@ from .storage import VcpStorage
 
 
 class VcpValueStorage(VcpStorage):
-    def _is_value(self, obj : Any) -> bool:
+    def _is_storable_value(self, obj : Any) -> bool:
         return isinstance(obj, VcpValue)
 
     def _create_value(self, value : int) -> VcpValue:

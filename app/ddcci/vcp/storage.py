@@ -21,11 +21,11 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, metaclass=ABCMeta):
 
     # Utility methods
     @abstractmethod
-    def _is_value(self, obj : Any) -> bool:
+    def _is_storable_value(self, obj : Any) -> bool:
         pass
 
     def _transparent_value(self, obj : Any) -> int:
-        if self._is_value(obj):
+        if self._is_storable_value(obj):
             return obj.vcp_storage_key()
         return obj
 
@@ -144,6 +144,12 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, metaclass=ABCMeta):
 
     def values(self):
         return iter(self._set)
+
+
+    # Printing
+    def __repr__(self):
+        return f"<{self._LoggableMixin__repr_name}:{repr(self._set)}>"
+
 
 
 

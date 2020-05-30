@@ -23,6 +23,7 @@ class VcpCode(Namespace, VcpStorageStorable, HierarchicalMixin, NamedMixin):
 
         self.type = None
         self.description = None
+        self.category = None
 
         self.freeze_schema()
 
@@ -56,7 +57,7 @@ class VcpCode(Namespace, VcpStorageStorable, HierarchicalMixin, NamedMixin):
         return self._maximum
     @maximum.setter
     def maximum(self, new_maximum):
-        new_maximum = self.to_vcp_value(new_maximum)
+        new_maximum = self[new_maximum]
 
     @property
     def allowed(self) -> Union[Set[int], range]:

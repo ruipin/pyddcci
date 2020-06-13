@@ -4,7 +4,7 @@
 from ctypes import windll, byref, sizeof, Structure, WinError
 from ctypes.wintypes import RECT, DWORD, WCHAR
 
-from . import struct_to_dict
+from . import struct_asdict
 
 from app.util import getLogger
 log = getLogger(__name__)
@@ -21,10 +21,10 @@ class MONITORINFOEXW(Structure):
         ('dwFlags'  , DWORD                ),
         ('szDevice' , WCHAR * CCHDEVICENAME)
     ]
-    def to_dict(self):
-        return struct_to_dict(self)
+    def asdict(self):
+        return struct_asdict(self)
     def __repr__(self):
-        return repr(self.to_dict())
+        return repr(self.asdict())
 
     def is_primary(self):
         return self.dwFlags.value & 0x1  # MONITORINFOF_PRIMARY

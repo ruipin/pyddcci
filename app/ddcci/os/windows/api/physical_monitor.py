@@ -7,7 +7,7 @@ from ctypes.wintypes import BOOL, HMONITOR, HDC, RECT, DWORD, WCHAR, HANDLE, BYT
 
 from typing import Dict
 
-from . import struct_to_dict
+from . import struct_asdict
 from . import monitor_info
 
 
@@ -21,10 +21,10 @@ class _PHYSICAL_MONITOR(Structure):
         ('handle', HANDLE),
         ('description', WCHAR * PHYSICAL_MONITOR_DESCRIPTION_SIZE)
     ]
-    def to_dict(self):
-        return struct_to_dict(self)
+    def asdict(self):
+        return struct_asdict(self)
     def __repr__(self):
-        return repr(self.to_dict())
+        return repr(self.asdict())
 
 
 

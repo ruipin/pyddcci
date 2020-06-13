@@ -2,6 +2,7 @@
 # Copyright © 2020 pyddcci Rui Pinheiro
 
 from typing import Any
+from dataclasses import is_dataclass, asdict as dataclass_asdict
 
 from .. import LoggableMixin, HierarchicalMixin, NamedMixin
 from ..enter_exit_call import EnterExitCall
@@ -166,7 +167,7 @@ class Namespace(object):
 
                 sub_namespace : Namespace = self[self_key]
                 if not isinstance(sub_namespace, Namespace):
-                    raise ValueError(f"Cannot delete delimited key '{key}', as '{self_key}' is not a member of class '{sticky_cls.__name__}")
+                    raise ValueError(f"Cannot delete delimited key '{key}', as '{self_key}' is not a member of class '{self._sticky_construct_class().__name__}")
 
                 sub_namespace.__remove(sub_key)
                 return
@@ -368,15 +369,30 @@ class Namespace(object):
 
 
     # Utilities
-    def asdict(self, recursive=True):
+    def asdict(self, recursive=True, private=False, protected=True, public=True):
         if not recursive:
             return dict(self.__namespace)
 
         d = {}
-        for k, v in self._dict.items():
+        for k, v in self.__namespace.items():
+            if k[0] == '_':
+                if '__' in k:
+                    if not private:
+                        continue
+                elif not protected:
+                    continue
+
+            if k[0] != '_' and not public:
+                continue
+
             if isinstance(v, Namespace):
-                v = v.to_dict(recursive=recursive)
+                v = v.asdict(recursive=recursive, private=private, protected=protected, public=public)
+
+            if not private and is_dataclass(v) and not isinstance(v, type):
+                v = dataclass_asdict(v)
+
             d[k] = v
+
         return d
 
     def merge(self, d):

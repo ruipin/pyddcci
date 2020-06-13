@@ -7,7 +7,9 @@ from .os import OsMonitorList, OsMonitor
 from .vcp.code import VcpCode
 from .vcp.value import VcpValue
 from .vcp.reply import VcpReply
-from app.ddcci.vcp.code.code_storage import VCP_SPEC, VcpCodeStorage
+from .vcp.code.code_storage import VcpCodeStorage
+from .vcp.vcp_spec import VCP_SPEC
+
 from . import monitor_filter
 
 from app.util import Namespace, LoggableMixin, HierarchicalMixin, NamedMixin

@@ -2,6 +2,7 @@
 # Copyright © 2020 pyddcci Rui Pinheiro
 
 from typing import Any
+from dataclasses import is_dataclass, asdict as dataclass_asdict
 
 from . import Namespace
 
@@ -158,15 +159,30 @@ class NamespaceMap(Namespace):
 
 
     # Utilities
-    def asdict(self, recursive=True):
+    def asdict(self, recursive=True, private=False, protected=True, public=True):
         if not recursive:
             return dict(self.__namespace)
 
         d = {}
-        for k, v in self._dict.items():
+        for k, v in self.__dict__.items():
+            if k[0] == '_':
+                if '__' in k:
+                    if not private:
+                        continue
+                elif not protected:
+                    continue
+
+            if k[0] != '_' and not public:
+                continue
+
             if isinstance(v, Namespace):
-                v = v.to_dict(recursive=recursive)
+                v = v.asdict(recursive=recursive, private=private, protected=protected, public=public)
+
+            if not private and is_dataclass(v) and not isinstance(v, type):
+                v = dataclass_asdict(v)
+
             d[k] = v
+
         return d
 
     def merge(self, d):

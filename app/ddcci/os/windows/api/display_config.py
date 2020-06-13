@@ -5,7 +5,7 @@ import ctypes
 from ctypes import windll, byref, sizeof, Structure, Union, WinError, GetLastError
 from ctypes.wintypes import BOOL, DWORD, WCHAR, LONG, POINTL, RECTL
 
-from . import struct_to_dict
+from . import struct_asdict
 from .device_path import DevicePath
 
 from dataclasses import dataclass
@@ -21,10 +21,10 @@ class LUID(ctypes.Structure):
         ('LowPart' , DWORD),
         ('HighPart', LONG )
     ]
-    def to_dict(self):
-        return struct_to_dict(self)
+    def asdict(self):
+        return struct_asdict(self)
     def __repr__(self):
-        return repr(self.to_dict())
+        return repr(self.asdict())
 
 class DISPLAYCONFIG_PATH_SOURCE_INFO(Structure):
     _fields_ = [
@@ -33,20 +33,20 @@ class DISPLAYCONFIG_PATH_SOURCE_INFO(Structure):
         ('modeInfoIdx', ctypes.c_uint32),  # union { uint16 cloneGroupId; uint16 sourceModeInfoIdx }
         ('statusFlags', ctypes.c_uint32),
     ]
-    def to_dict(self):
-        return struct_to_dict(self)
+    def asdict(self):
+        return struct_asdict(self)
     def __repr__(self):
-        return repr(self.to_dict())
+        return repr(self.asdict())
 
 class DISPLAYCONFIG_RATIONAL(Structure):
     _fields_ = [
         ('Numerator'  , ctypes.c_uint32),
         ('Denominator', ctypes.c_uint32)
     ]
-    def to_dict(self):
-        return struct_to_dict(self)
+    def asdict(self):
+        return struct_asdict(self)
     def __repr__(self):
-        return repr(self.to_dict())
+        return repr(self.asdict())
 
 class DISPLAYCONFIG_PATH_TARGET_INFO(Structure):
     _fields_ = [
@@ -61,10 +61,10 @@ class DISPLAYCONFIG_PATH_TARGET_INFO(Structure):
         ('targetAvailable' , BOOL                  ),
         ('statusFlags'     , ctypes.c_uint32       )
     ]
-    def to_dict(self):
-        return struct_to_dict(self)
+    def asdict(self):
+        return struct_asdict(self)
     def __repr__(self):
-        return repr(self.to_dict())
+        return repr(self.asdict())
 
 class DISPLAYCONFIG_PATH_INFO(Structure):
     _fields_ = [
@@ -72,20 +72,20 @@ class DISPLAYCONFIG_PATH_INFO(Structure):
         ('targetInfo', DISPLAYCONFIG_PATH_TARGET_INFO),
         ('flags'     , ctypes.c_uint32               )
     ]
-    def to_dict(self):
-        return struct_to_dict(self)
+    def asdict(self):
+        return struct_asdict(self)
     def __repr__(self):
-        return repr(self.to_dict())
+        return repr(self.asdict())
 
 class DISPLAYCONFIG_2DREGION(Structure):
     _fields_ = [
         ('cx', ctypes.c_uint32),
         ('cy', ctypes.c_uint32)
     ]
-    def to_dict(self):
-        return struct_to_dict(self)
+    def asdict(self):
+        return struct_asdict(self)
     def __repr__(self):
-        return repr(self.to_dict())
+        return repr(self.asdict())
 
 class DISPLAYCONFIG_VIDEO_SIGNAL_INFO(Structure):
     _fields_ = [
@@ -97,19 +97,19 @@ class DISPLAYCONFIG_VIDEO_SIGNAL_INFO(Structure):
         ('videoStandard'   , ctypes.c_uint32       ),  # enum { uint32 videoStandard; uint6 vSyncFreqDivider; uint10 reserved }
         ('scanLineOrdering', ctypes.c_uint32       )   # enum DISPLAYCONFIG_SCANLINE_ORDERING
     ]
-    def to_dict(self):
-        return struct_to_dict(self)
+    def asdict(self):
+        return struct_asdict(self)
     def __repr__(self):
-        return repr(self.to_dict())
+        return repr(self.asdict())
 
 class DISPLAYCONFIG_TARGET_MODE(Structure):
     _fields_ = [
         ('targetVideoSignalInfo', DISPLAYCONFIG_VIDEO_SIGNAL_INFO)
     ]
-    def to_dict(self):
-        return struct_to_dict(self)
+    def asdict(self):
+        return struct_asdict(self)
     def __repr__(self):
-        return repr(self.to_dict())
+        return repr(self.asdict())
 
 class DISPLAYCONFIG_SOURCE_MODE(Structure):
     _fields_ = [
@@ -118,10 +118,10 @@ class DISPLAYCONFIG_SOURCE_MODE(Structure):
         ('pixelFormat', ctypes.c_uint32),  # enum DISPLAYCONFIG_PIXELFORMAT
         ('position'   , POINTL         )
     ]
-    def to_dict(self):
-        return struct_to_dict(self)
+    def asdict(self):
+        return struct_asdict(self)
     def __repr__(self):
-        return repr(self.to_dict())
+        return repr(self.asdict())
 
 class DISPLAYCONFIG_DESKTOP_IMAGE_INFO(Structure):
     _fields_ = [
@@ -129,10 +129,10 @@ class DISPLAYCONFIG_DESKTOP_IMAGE_INFO(Structure):
         ('DesktopImageRegion', RECTL ),
         ('DesktopImageClip'  , RECTL )
     ]
-    def to_dict(self):
-        return struct_to_dict(self)
+    def asdict(self):
+        return struct_asdict(self)
     def __repr__(self):
-        return repr(self.to_dict())
+        return repr(self.asdict())
 
 class DISPLAYCONFIG_MODE_INFO_UNION(Union):
     _fields_ = [
@@ -140,10 +140,10 @@ class DISPLAYCONFIG_MODE_INFO_UNION(Union):
         ('sourceMode'      , DISPLAYCONFIG_SOURCE_MODE       ),
         ('desktopImageInfo', DISPLAYCONFIG_DESKTOP_IMAGE_INFO)
     ]
-    def to_dict(self):
-        return struct_to_dict(self)
+    def asdict(self):
+        return struct_asdict(self)
     def __repr__(self):
-        return repr(self.to_dict())
+        return repr(self.asdict())
 
 class DISPLAYCONFIG_MODE_INFO(Structure):
     _fields_ = [
@@ -152,10 +152,10 @@ class DISPLAYCONFIG_MODE_INFO(Structure):
         ('adapterId', LUID                         ),
         ('union'    , DISPLAYCONFIG_MODE_INFO_UNION)
     ]
-    def to_dict(self):
-        return struct_to_dict(self)
+    def asdict(self):
+        return struct_asdict(self)
     def __repr__(self):
-        return repr(self.to_dict())
+        return repr(self.asdict())
 
 
 class DISPLAYCONFIG_DEVICE_INFO_HEADER(Structure):
@@ -165,20 +165,20 @@ class DISPLAYCONFIG_DEVICE_INFO_HEADER(Structure):
         ('adapterId', LUID           ),
         ('id'       , ctypes.c_uint32)
     ]
-    def to_dict(self):
-        return struct_to_dict(self)
+    def asdict(self):
+        return struct_asdict(self)
     def __repr__(self):
-        return repr(self.to_dict())
+        return repr(self.asdict())
 
 class DISPLAYCONFIG_SOURCE_DEVICE_NAME(Structure):
     _fields_ = [
         ('header'           , DISPLAYCONFIG_DEVICE_INFO_HEADER),
         ('viewGdiDeviceName', WCHAR * CCHDEVICENAME           )
     ]
-    def to_dict(self):
-        return struct_to_dict(self)
+    def asdict(self):
+        return struct_asdict(self)
     def __repr__(self):
-        return repr(self.to_dict())
+        return repr(self.asdict())
 
 class DISPLAYCONFIG_TARGET_DEVICE_NAME_FLAGS(ctypes.LittleEndianStructure):
     _fields_ = [
@@ -186,10 +186,10 @@ class DISPLAYCONFIG_TARGET_DEVICE_NAME_FLAGS(ctypes.LittleEndianStructure):
         ('friendlyNameForced', ctypes.c_uint32, 1),
         ('edidIdsValid', ctypes.c_uint32, 1),
     ]
-    def to_dict(self):
-        return struct_to_dict(self)
+    def asdict(self):
+        return struct_asdict(self)
     def __repr__(self):
-        return repr(self.to_dict())
+        return repr(self.asdict())
 
 class DISPLAYCONFIG_TARGET_DEVICE_NAME(Structure):
     _fields_ = [
@@ -202,10 +202,10 @@ class DISPLAYCONFIG_TARGET_DEVICE_NAME(Structure):
         ('monitorFriendlyDeviceName', WCHAR * 64                            ),
         ('monitorDevicePath'        , WCHAR * 128                           )
     ]
-    def to_dict(self):
-        return struct_to_dict(self)
+    def asdict(self):
+        return struct_asdict(self)
     def __repr__(self):
-        return repr(self.to_dict())
+        return repr(self.asdict())
 
 
 class DISPLAYCONFIG_ADAPTER_NAME(Structure):
@@ -213,10 +213,10 @@ class DISPLAYCONFIG_ADAPTER_NAME(Structure):
         ('header'           , DISPLAYCONFIG_DEVICE_INFO_HEADER),
         ('adapterDevicePath', WCHAR * 128                     )
     ]
-    def to_dict(self):
-        return struct_to_dict(self)
+    def asdict(self):
+        return struct_asdict(self)
     def __repr__(self):
-        return repr(self.to_dict())
+        return repr(self.asdict())
 
 
 
@@ -272,7 +272,7 @@ def win32_display_config_get_device_info(adapter_id : LUID, source_id : ctypes.c
     if errno != 0:
         raise WinError(errno)
 
-    # log.debug(f"Result: {struct_to_dict(request)}")
+    # log.debug(f"Result: {struct_asdict(request)}")
     return request
 
 
@@ -282,7 +282,7 @@ def get_display_config_source_device_name(adapter_id, source_id):
 
 def get_display_config_target_device_name(adapter_id, source_id):
     request = win32_display_config_get_device_info(adapter_id, source_id, DISPLAYCONFIG_TARGET_DEVICE_NAME)
-    result = request.to_dict()
+    result = request.asdict()
     del result['header']
     return result
 

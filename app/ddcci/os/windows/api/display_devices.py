@@ -4,7 +4,7 @@
 from ctypes import windll, byref, sizeof, Structure
 from ctypes.wintypes import DWORD, WCHAR
 
-from . import struct_to_dict
+from . import struct_asdict
 
 from app.util import getLogger
 log = getLogger(__name__)
@@ -46,10 +46,10 @@ class _DISPLAY_DEVICEW(Structure):
         ('DeviceKey'   , WCHAR * 128)
     ]
 
-    def to_dict(self):
-        return struct_to_dict(self)
+    def asdict(self):
+        return struct_asdict(self)
     def __repr__(self):
-        return repr(self.to_dict())
+        return repr(self.asdict())
 
     @property
     def active(self):

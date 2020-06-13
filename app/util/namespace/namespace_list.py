@@ -3,6 +3,7 @@
 
 from abc import ABCMeta
 from collections import MutableSequence
+from dataclasses import is_dataclass, asdict as dataclass_asdict
 
 from .namespace import Namespace
 from ..mixins import *
@@ -59,6 +60,9 @@ class NamespaceList(Namespace, MutableSequence, metaclass=ABCMeta):
     def __iter__(self):
         return iter(self._list)
 
+    def __contains__(self, m):
+        return m in self._list
+
 
     # List utilities
     def replace(self, other_list):
@@ -96,5 +100,34 @@ class NamespaceList(Namespace, MutableSequence, metaclass=ABCMeta):
 
 
     # Printing
+    def aslist(self, recursive=True, private=False, protected=True, public=True):
+        if not recursive:
+            return list(self._list)
+
+        l = []
+        for v in self._list:
+
+            if isinstance(v, Namespace):
+                v = v.asdict(recursive=recursive, private=private, protected=protected, public=public)
+
+            if not private and is_dataclass(v) and not isinstance(v, type):
+                v = dataclass_asdict(v)
+
+            l.append(v)
+
+        return l
+
+    def asdict(self, recursive=True, private=False, protected=True, public=True):
+        d = super().asdict(recursive=recursive, private=private, protected=protected, public=public)
+
+        if not recursive:
+            return d
+
+        d['_list'] = self.aslist(recursive=recursive, private=private, protected=protected, public=public)
+        return d
+
+
+
+
     def __repr__(self):
         return f"<{self._Namespace__repr_name}:{repr(self._list)}>"

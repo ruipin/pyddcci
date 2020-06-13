@@ -14,7 +14,7 @@ from app.ddcci.os.monitor_info import BaseOsMonitorInfo
 # OS Monitor Information
 class MockOsMonitorInfo(BaseOsMonitorInfo):
     """
-    Windows implementation of BaseOsMonitorInfo
+    Mock implementation of BaseOsMonitorInfo
     """
 
     # Initialization
@@ -45,7 +45,7 @@ MOCK_MONITORS = []
 fake = Faker()
 
 class MockMonitorData(object):
-    def __init__(self, number : int, primary : bool):
+    def __init__(self, number : int):
         # Adapter
         self.adapter_number = number
 
@@ -60,7 +60,7 @@ class MockMonitorData(object):
             guid    = '{' + fake.uuid4() + '}',
             model   = ' '.join([x.capitalize() for x in fake.words(nb=3)]),
             name    = None,
-            primary = primary,
+            primary = False,
             type    = 'PCI',
             uid     = fake.lexify(text='?????????????')
         )
@@ -95,6 +95,4 @@ def generate_mock_monitors(number, seed):
     global MOCK_MONITORS
     MOCK_MONITORS = []
     for i in range(1, number+1):
-        MOCK_MONITORS.append(MockMonitorData(i, i==1))
-
-generate_mock_monitors(3, 0)
+        MOCK_MONITORS.append(MockMonitorData(i))

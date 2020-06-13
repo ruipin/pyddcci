@@ -26,7 +26,7 @@ class VcpValueStorage(VcpStorageWithFallback):
         if not isinstance(self.instance_parent, VcpCode):
             raise RuntimeError('_get_fallback_storage: self.instance_parent must be of class VcpCode')
 
-        return self.fallback.get(self.instance_parent.vcp_storage_key(), check_fallback=True).values
+        return self.fallback.get(self.instance_parent.vcp_storage_key(), check_fallback=True)._values
 
     def _wrap_fallback_storable(self, name : Hashable, storable : VcpValue) -> 'FallbackVcpValue':
         return FallbackVcpValue(name, self.instance_parent)

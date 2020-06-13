@@ -41,7 +41,7 @@ class BaseMonitorFilter(Namespace, LoggableMixin, HierarchicalMixin, NamedMixin,
 
         if len_match > 1:
             msg = '\n\t'.join([x.instance_name for x in match])
-            self.log.warn(f"Found more than one monitor, returning None. The following monitors matched this filter:\n\t{msg}")
+            self.log.warning(f"Found more than one monitor, returning None. The following monitors matched this filter:\n\t{msg}")
             return None
 
         if len_match == 0:

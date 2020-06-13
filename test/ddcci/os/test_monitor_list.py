@@ -12,11 +12,11 @@ class MonitorListTest(unittest.TestCase):
         monitors = OsMonitorList('Monitors')
 
         monitor_info.generate_mock_monitors(3, 0)
-        old_monitors = monitors.aslist(recursive=False)
         old_mock_monitors = list(monitor_info.MOCK_MONITORS)
 
         monitors.enumerate()
         self.assertEqual(len(monitors), 3)
+        old_monitors = monitors.aslist(recursive=False)
 
         monitors.enumerate()
         self.assertEqual(len(monitors), 3)

@@ -8,7 +8,7 @@ from .vcp.code import VcpCode
 from .vcp.value import VcpValue
 from .vcp.reply import VcpReply
 from .vcp.code.code_storage import VcpCodeStorage
-from .vcp.vcp_spec import VCP_SPEC
+from .vcp import vcp_spec
 
 from . import monitor_filter
 
@@ -45,7 +45,8 @@ class Monitor(Namespace, LoggableMixin, HierarchicalMixin, NamedMixin):
 
         self.filter = filter
 
-        self._codes = VCP_SPEC
+        self._codes = VcpCodeStorage()
+        self._codes.fallback = vcp_spec.VCP_SPEC
 
         self.freeze_schema()
 
@@ -95,7 +96,7 @@ class Monitor(Namespace, LoggableMixin, HierarchicalMixin, NamedMixin):
     def _to_vcp_value(code: VcpCode, value: VCP_VALUE_TYPE) -> VcpValue:
         if isinstance(value, VcpValue):
             return value
-        return code.values.get(value)
+        return code[value]
 
     def vcp_query(self, code: VCP_CODE_TYPE) -> VcpReply:
         code = self._to_vcp_code(code)
@@ -104,7 +105,7 @@ class Monitor(Namespace, LoggableMixin, HierarchicalMixin, NamedMixin):
     def vcp_read(self, code: VCP_CODE_TYPE) -> VcpValue:
         code = self._to_vcp_code(code)
         value = self.vcp_read_raw(code.code)
-        return code.values.get(value)
+        return code[value]
 
     def vcp_write(self, code: VCP_CODE_TYPE, value: VCP_VALUE_TYPE, *args, **kwargs) -> None:
         code = self._to_vcp_code(code)

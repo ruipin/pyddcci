@@ -19,6 +19,14 @@ def wrap_read_method(name):
     f.__name__ = name
     return f
 
+def wrap_property_fget(name):
+    def f(self):
+        obj = self.get_wrapped_storable()
+        res = getattr(obj, name)
+        return self._wrap_method_return_value(res)
+    f.__name__ = name
+    return f
+
 def wrap_write_method(name):
     def f(self, *args, **kwargs):
         obj = self.create_wrapped_storable()
@@ -53,10 +61,16 @@ class FallbackVcpStorageStorable(HierarchicalMixin, NamedMixin, metaclass=ABCMet
                     setattr(cls, mthd_nm, wrap_write_method(mthd_nm))
 
         for attr_nm in wrapped_cls.__dict__:
-            if attr_nm[0:2] == '__' and attr_nm not in cls.__dict__:
+            if attr_nm not in cls.__dict__ and attr_nm not in ('__dict__','__weakref__'):
                 attr = getattr(wrapped_cls, attr_nm)
+
                 if callable(attr):
                     setattr(cls, attr_nm, wrap_read_method(attr_nm))
+
+                elif isinstance(attr, property):
+                    setattr(cls, attr_nm, property(fget=wrap_property_fget(attr_nm)))
+
+    __getattr__ = wrap_read_method('__getattr__')
 
 
 FallbackVcpStorageStorable.wrap_storable_class(FallbackVcpStorageStorable, VcpStorageStorable)

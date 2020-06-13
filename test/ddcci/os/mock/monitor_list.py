@@ -11,7 +11,7 @@ from app.ddcci.os.monitor_list import BaseOsMonitorList
 # OS Monitor class
 class MockOsMonitorList(BaseOsMonitorList):
     """
-    Windows implementation of BaseOsMonitorList
+    Mock implementation of BaseOsMonitorList
     """
 
     OS_MONITOR_INFO_CLASS = MockOsMonitorInfo

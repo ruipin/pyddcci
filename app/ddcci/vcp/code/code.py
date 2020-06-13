@@ -11,7 +11,7 @@ from app.util import Namespace, HierarchicalMixin, NamedMixin
 
 
 class VcpCode(VcpStorageStorable, Namespace, HierarchicalMixin, NamedMixin):
-    WRITE_METHODS = ('add_value', 'type', )
+    WRITE_METHODS = ('add_value', 'type', '__setitem__', '__delitem__')
 
     def __init__(self, code : int, instance_parent: HierarchicalMixin = None):
         super().__init__(instance_name=f"VcpCode0x{code:X}", instance_parent=instance_parent)
@@ -46,9 +46,6 @@ class VcpCode(VcpStorageStorable, Namespace, HierarchicalMixin, NamedMixin):
 
 
     # Aliases
-    @property
-    def values(self):
-        return self._values
     def add_value(self, new_value_name : Hashable, new_value : int):
         self._values[new_value_name] = new_value
 
@@ -57,18 +54,18 @@ class VcpCode(VcpStorageStorable, Namespace, HierarchicalMixin, NamedMixin):
     # Magic methods (wrap Value Storage)
     def __getitem__(self, key : Hashable):
         """ Get an attribute using dictionary syntax obj[key] """
-        return self.values.get(key)
+        return self._values.get(key)
 
     def __setitem__(self, key : Hashable, value : int):
         """ Modify an attribute using dictionary syntax obj[key] = value """
-        self.values.set(key, value)
+        self._values.set(key, value)
 
     def __delitem__(self, key : Hashable):
         """ Delete an attribute using dictionary syntax """
-        self.values.remove(key)
+        self._values.remove(key)
 
     def contains(self, name : Hashable):
-        return self.values.contains(name)
+        return self._values.contains(name)
 
     def __contains__(self, key : Hashable):
         return self.contains(key)

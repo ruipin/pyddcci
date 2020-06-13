@@ -3,7 +3,8 @@
 
 from ordered_set import OrderedSet
 
-from app.ddcci.vcp.storage.storable import VcpStorageStorable
+from ..storage.storage  import VcpStorage
+from ..storage.storable import VcpStorageStorable
 
 from app.util import Namespace, HierarchicalMixin, NamedMixin
 

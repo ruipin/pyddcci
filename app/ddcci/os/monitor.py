@@ -95,7 +95,7 @@ class BaseOsMonitor(Namespace, LoggableHierarchicalNamedMixin, metaclass=ABCMeta
         # self.log.debug(f"VCP Read: 0x{code:X}")
         try:
             return self._vcp_read(code)
-        except Exception as e:
+        except OSError as e:
             raise VcpError(f"Failed to read VCP Code 0x{code:X}") from e
 
     # VCP Write
@@ -107,7 +107,7 @@ class BaseOsMonitor(Namespace, LoggableHierarchicalNamedMixin, metaclass=ABCMeta
         # self.log.debug(f"VCP Write: 0x{code:X} <= 0x{value:X}")
         try:
             self._vcp_write(code, value)
-        except Exception as e:
+        except OSError as e:
             raise VcpError(f"Failed to write VCP 0x{code:X} <= 0x{value:X}") from e
 
     def verify(self, code: int, value: Optional[int], timeout: int):
@@ -121,7 +121,7 @@ class BaseOsMonitor(Namespace, LoggableHierarchicalNamedMixin, metaclass=ABCMeta
 
             try:
                 new_val = self.vcp_read(code)
-                self.log.debug(f"{msg} Read 0x{new_val:X}.")
+                if i != timeout: self.log.debug(f"{msg} Read 0x{new_val:X}.")
 
                 if value is None:
                     self.log.info(f"VCP 0x{code:X} is readable again.")

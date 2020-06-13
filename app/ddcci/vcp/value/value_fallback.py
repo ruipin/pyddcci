@@ -17,7 +17,7 @@ class FallbackVcpValue(FallbackVcpStorageStorable):
     def get_wrapped_storable(self, check_fallback=True) -> VcpValue:
         from ..code.code_fallback import FallbackVcpCode
         if isinstance(self.instance_parent, FallbackVcpCode):
-            obj = self.instance_parent.get_wrapped_storable(check_fallback=check_fallback).values
+            obj = self.instance_parent.get_wrapped_storable(check_fallback=check_fallback)._values
         else:
             obj = self.instance_parent
 
@@ -28,7 +28,7 @@ class FallbackVcpValue(FallbackVcpStorageStorable):
 
         from ..code.code_fallback import FallbackVcpCode
         if isinstance(self.instance_parent, FallbackVcpCode):
-            obj = self.instance_parent.create_wrapped_storable().values
+            obj = self.instance_parent.create_wrapped_storable()._values
         else:
             obj = self.instance_parent
 

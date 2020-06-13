@@ -54,7 +54,7 @@ class VcpStorageStorable(metaclass=ABCMeta):
         if isinstance(self.instance_parent, VcpStorage):
             self.instance_parent[new_name] = self.vcp_storage_key()
 
-    def add_names(self, names : Iterable[Hashable]):
+    def add_names(self, *names : Iterable[Hashable]):
         for name in names:
             self.add_name(name)
 
@@ -68,7 +68,7 @@ class VcpStorageStorable(metaclass=ABCMeta):
         if isinstance(self.instance_parent, VcpStorage):
             del self.instance_parent[name]
 
-    def remove_names(self, names : Iterable[Hashable]):
+    def remove_names(self, *names : Iterable[Hashable]):
         for name in names:
             self.remove_name(name)
 
@@ -86,7 +86,15 @@ class VcpStorageStorable(metaclass=ABCMeta):
             return other == self.vcp_storage_key()
 
         if isinstance(other, str):
-            return other in self.names
+            from .storage import VcpStorage
+            key = VcpStorage.to_key(other)
+
+            for nm in self.names:
+                nm_key = VcpStorage.to_key(nm)
+                if key == nm_key:
+                    return True
+
+            return False
 
         return False
 

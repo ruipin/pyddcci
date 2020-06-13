@@ -52,7 +52,7 @@ class HierarchicalMixin(object):
         if cnm in nm:
             return nm
         else:
-            return f"{cnm}:{nm}"
+            return f"{cnm} {nm}"
 
     def __repr__(self) -> str:
         return f"<{self.__repr_name}>"

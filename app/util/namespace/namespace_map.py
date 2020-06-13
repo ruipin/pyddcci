@@ -19,9 +19,9 @@ class NamespaceMap(Namespace):
     __slots__ = {'_NamespaceMap__frozen_map', '__dict__'}
 
     # Constructor
-    def __init__(self, *, frozen_schema=False, frozen_map=False, **kwargs):
+    def __init__(self, *, frozen_schema=False, frozen_namespace=False, frozen_map=False, **kwargs):
         # Call super-class
-        super_params = {'frozen_schema': frozen_schema}
+        super_params = {'frozen_schema': frozen_schema, 'frozen_namespace': frozen_namespace}
         if isinstance(self, NamedMixin):
             super_params['instance_name'] = kwargs.pop('instance_name', None)
         if isinstance(self, HierarchicalMixin):

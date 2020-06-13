@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: GPLv3
+# Copyright © 2020 pyddcci Rui Pinheiro
+
 import unittest
 
 # This is the class we want to test. So, we need to import it
@@ -19,7 +22,7 @@ class NamedMixinsTest(unittest.TestCase):
         a = Named(instance_name="some")
 
         self.assertEqual(a.instance_name, "some")
-        self.assertEqual(str(a), f"<N:some>")
+        self.assertEqual(str(a), f"<N some>")
 
 
 if __name__ == '__main__':

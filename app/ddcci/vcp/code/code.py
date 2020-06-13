@@ -1,25 +1,27 @@
 # SPDX-License-Identifier: GPLv3
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-from typing import Union, Hashable, Set, Iterable
+from typing import Union, Hashable
 
-from ordered_set import OrderedSet
-
-from .enums import VcpControlType
-from .storage import VcpStorageStorable
-from .value_storage import VcpValueStorage
-from .value import VcpValue
+from ..enums import VcpControlType
+from ..storage.storable import VcpStorageStorable
+from ..storage.storage_with_fallback import VcpStorageWithFallback
 
 from app.util import Namespace, HierarchicalMixin, NamedMixin
 
 
 class VcpCode(VcpStorageStorable, Namespace, HierarchicalMixin, NamedMixin):
+    WRITE_METHODS = ('add_value', 'type', )
+
     def __init__(self, code : int, instance_parent: HierarchicalMixin = None):
         super().__init__(instance_name=f"VcpCode0x{code:X}", instance_parent=instance_parent)
 
         self.code = code
 
-        self._values = VcpValueStorage(instance_parent=self)
+        from ..value import VcpValueStorage
+        self._values = VcpValueStorage(instance_name='values', instance_parent=self)
+        if isinstance(self.instance_parent, VcpStorageWithFallback) and self.instance_parent.fallback is not None:
+            self._values.fallback = self.instance_parent.fallback
 
         self.type = None
         self.description = None
@@ -47,7 +49,6 @@ class VcpCode(VcpStorageStorable, Namespace, HierarchicalMixin, NamedMixin):
     @property
     def values(self):
         return self._values
-
     def add_value(self, new_value_name : Hashable, new_value : int):
         self._values[new_value_name] = new_value
 
@@ -66,5 +67,8 @@ class VcpCode(VcpStorageStorable, Namespace, HierarchicalMixin, NamedMixin):
         """ Delete an attribute using dictionary syntax """
         self.values.remove(key)
 
+    def contains(self, name : Hashable):
+        return self.values.contains(name)
+
     def __contains__(self, key : Hashable):
-        return self.values.contains(key)
+        return self.contains(key)

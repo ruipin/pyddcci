@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: GPLv3
+# Copyright © 2020 pyddcci Rui Pinheiro
+
 import unittest
 
 # This is the class we want to test. So, we need to import it

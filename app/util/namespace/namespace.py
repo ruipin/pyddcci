@@ -14,7 +14,8 @@ class Namespace(object):
 
     # We want to hide some attributes from the dictionary
     # NOTE: We include the log/parent attributes here just in case someone decides to make this class Loggable or Hierarchical
-    __slots__ = {'_Namespace__frozen_schema', '_Namespace__namespace', '_NamedMixin__name', '_HierarchicalMixin__parent', '_LoggableMixin__log'}
+    __slots__ = {'_Namespace__frozen_namespace', '_Namespace__frozen_schema', '_Namespace__namespace', '_NamedMixin__name', '_HierarchicalMixin__parent',
+                 '_LoggableMixin__log'}
 
 
     # Default value for parameters to signal that the function should fail
@@ -25,7 +26,9 @@ class Namespace(object):
     # If True, then attributes that do not exist return None by default
     NAMESPACE__DEFAULT = NO_DEFAULT
 
-    # If True, allows changing private attributes when frozen
+    # If True, allows changing private attributes when the namespace is frozen
+    NAMESPACE__FROZEN_NAMESPACE__ALLOW_PRIVATE = False
+    # If True, allows changing private attributes when the schema is frozen
     NAMESPACE__FROZEN_SCHEMA__ALLOW_PRIVATE = False
 
     # If set to True, this Namespace will automatically convert dictionaries into namespaces
@@ -34,7 +37,7 @@ class Namespace(object):
     NAMESPACE__STICKY__DELIMITER = None
 
     # Constructor
-    def __init__(self, *, frozen_schema=False, **kwargs):
+    def __init__(self, *, frozen_schema=False, frozen_namespace=False, **kwargs):
         # Sanity check: We must come before Named/Hierarchical/Loggable
         def _check_mro(mro, mixin):
             if mixin in mro and mro.index(mixin) < mro.index(Namespace):
@@ -45,7 +48,8 @@ class Namespace(object):
         _check_mro(mro, LoggableMixin)
 
         # Initialize basic state before calling super constructors
-        self.__frozen_schema = False
+        self.__frozen_schema    = False
+        self.__frozen_namespace = False
 
         self.__namespace = {}
 
@@ -60,7 +64,8 @@ class Namespace(object):
         # Finish initialization
         self.merge(kwargs)
 
-        self.__frozen_schema = frozen_schema
+        self.__frozen_schema    = frozen_schema
+        self.__frozen_namespace = frozen_namespace
 
 
     # Utilities
@@ -69,6 +74,10 @@ class Namespace(object):
             raise ValueError(f"key must be defined")
 
     def __is_frozen_key(self, key : str) -> bool:
+        if self.frozen_namespace:
+            if not self.__class__.NAMESPACE__FROZEN_SCHEMA__ALLOW_PRIVATE or not key or key[0] != '_':
+                return True
+
         if not self.frozen_schema:
             return False
 
@@ -107,7 +116,7 @@ class Namespace(object):
 
         # Sanity checks
         if self.__is_frozen_key(key):
-            raise TypeError(f"{str(self)}'s schema is frozen, can't add key '{key}'")
+            raise TypeError(f"{str(self)} is frozen, can't add key '{key}'")
         self.__sanity_check_key(key)
 
         # Sticky
@@ -144,7 +153,7 @@ class Namespace(object):
 
         # Sanity checks
         if self.__is_frozen_key(key):
-            raise TypeError(f"{repr(self)}'s schema is frozen, can't delete key '{key}'")
+            raise TypeError(f"{repr(self)} is frozen, can't delete key '{key}'")
         self.__sanity_check_key(key, delete=True)
 
         # Sticky
@@ -330,6 +339,32 @@ class Namespace(object):
     @frozen_schema.setter
     def frozen_schema(self, val):
         self.freeze_schema(val, temporary=False)
+
+
+    def freeze_namespace(self, freeze=True, *, recursive=False, temporary=False):
+        """ Freezes this object, so new attributes cannot be added """
+        if temporary:
+            return EnterExitCall(
+                self.freeze_namespace, self.freeze_namespace,
+                kwargs_enter={'freeze': freeze, 'recursive': recursive, 'temporary': False},
+                kwargs_exit={'freeze': not freeze, 'recursive': recursive, 'temporary': False})
+
+        if recursive:
+            for obj in self.values():
+                if hasattr(obj, 'freeze_namespace') and obj.freeze_namespace != freeze:
+                    obj.freeze_namespace(freeze=freeze, recursive=True, temporary=False)
+
+        self.__frozen_namespace = freeze
+
+    def unfreeze_namespace(self, recursive=False, temporary=False):
+        return self.freeze_schema(False, recursive=recursive, temporary=temporary)
+
+    @property
+    def frozen_namespace(self):
+        return self.__frozen_namespace
+    @frozen_namespace.setter
+    def frozen_namespace(self, val):
+        self.freeze_namespace(val, temporary=False)
 
 
     # Utilities

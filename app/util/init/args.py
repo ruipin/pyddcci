@@ -21,6 +21,23 @@ HOME = os.path.realpath(os.path.join(__file__, '../../../..'))
 
 
 ###################
+# Unit test
+def is_unit_test():
+    env = os.environ.get("UNIT_TEST", None)
+    if env is not None:
+        env = env.strip()
+    if not env:
+        return False
+
+    if env.lower() in ('false', '0', 'no'):
+        return False
+
+    return True
+
+UNIT_TEST = is_unit_test()
+
+
+###################
 # Argument parser
 _PARSER = argparse.ArgumentParser()
 

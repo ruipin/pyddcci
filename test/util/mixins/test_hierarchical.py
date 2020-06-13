@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: GPLv3
+# Copyright © 2020 pyddcci Rui Pinheiro
+
 import unittest
 
 # This is the class we want to test. So, we need to import it
@@ -54,7 +57,7 @@ class HierarchicalMixinsTest(unittest.TestCase):
 
         self.assertIsNone(a.instance_parent)
 
-        self.assertEqual(str(a), "<HN:name1>")
+        self.assertEqual(str(a), "<HN name1>")
         self.assertEqual(a.instance_hierarchy, "name1")
 
         # Construct child (no name)
@@ -67,7 +70,7 @@ class HierarchicalMixinsTest(unittest.TestCase):
         c = HierNamed(instance_parent=b, instance_name="name3")
 
         self.assertIs(c.instance_parent, b)
-        self.assertEqual(str(c), "<HN:name3>")
+        self.assertEqual(str(c), "<HN name3>")
         self.assertEqual(c.instance_hierarchy, "name1.Hier.name3")
 
         # Test changing parent fails if it is not hierarchic

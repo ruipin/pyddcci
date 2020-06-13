@@ -52,7 +52,7 @@ class NamedMixin(object):
         if nm == cnm:
             return nm
         else:
-            return f"{self.__class__.class_short_name()}:{nm}"
+            return f"{self.__class__.class_short_name()} {nm}"
 
     def __str__(self) -> str:
         return f"<{self.__str_name}>"

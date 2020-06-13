@@ -16,11 +16,11 @@ class NamespaceList(Namespace, MutableSequence, metaclass=ABCMeta):
 
 
     # Constructor
-    def __init__(self, *args, frozen_schema=False, frozen_list=False, **kwargs):
+    def __init__(self, *args, frozen_schema=False, frozen_namespace=False, frozen_list=False, **kwargs):
         """ Initializes a list """
 
         # Call super-class
-        super_params = {'frozen_schema': frozen_schema}
+        super_params = {'frozen_schema': frozen_schema, 'frozen_namespace': frozen_namespace}
         if isinstance(self, LoggableMixin):
             super_params['instance_name'] = kwargs.pop('instance_name', None)
         if isinstance(self, HierarchicalMixin):

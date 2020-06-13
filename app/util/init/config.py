@@ -168,7 +168,8 @@ class MasterConfigMap(ConfigMap):
             },
             'dirs': {
                 'home': args.HOME,
-            }
+            },
+            'test': args.UNIT_TEST
         }
 
         # Freeze all values so far - they'll be the default values

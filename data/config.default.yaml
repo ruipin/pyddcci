@@ -1,3 +1,6 @@
+###############################################################
+# THIS FILE SHOULD NOT BE MODIFIED. USE 'config.yaml' INSTEAD #
+###############################################################
 
 # Logging
 logging:
@@ -19,12 +22,10 @@ monitors:
   capabilities:
     # Toggle for automatic monitor capabilities querying. If disabled, monitors will never be automatically queried for their capabilities.
     automatic: true
-    # Whether to cache queried monitor capabilities to disk
+    # Whether to cache queried monitor capabilities to monitors.yaml
     cache: true
 
   # Configurations related to monitor-specific VCP code/value aliases
   codes:
-    # Whether to automatically export each monitor's VCP code/value aliases when modified
-    automatic_export: false
-    # Whether to automatically import custom VCP code/value aliases
+    # Whether to automatically import custom VCP code/value aliases from monitors.yaml
     automatic_import: true

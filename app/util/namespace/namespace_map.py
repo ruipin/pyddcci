@@ -124,7 +124,7 @@ class NamespaceMap(Namespace):
 
     def __hash__(self):
         """ Calculates a hash of the internal dictionary """
-        return hash(self.__dict__)
+        return hash(frozenset(self.__dict__.items()))
 
 
     # Freezing
@@ -160,10 +160,11 @@ class NamespaceMap(Namespace):
 
     # Utilities
     def asdict(self, recursive=True, private=False, protected=True, public=True):
-        if not recursive:
-            return dict(self.__namespace)
+        if private or protected:
+            d = super().asdict(recursive=recursive, private=private, protected=protected, public=public)
+        else:
+            d = {}
 
-        d = {}
         for k, v in self.__dict__.items():
             if k[0] == '_':
                 if '__' in k:
@@ -175,11 +176,12 @@ class NamespaceMap(Namespace):
             if k[0] != '_' and not public:
                 continue
 
-            if isinstance(v, Namespace):
-                v = v.asdict(recursive=recursive, private=private, protected=protected, public=public)
+            if recursive:
+                if isinstance(v, Namespace):
+                    v = v.asdict(recursive=recursive, private=private, protected=protected, public=public)
 
-            if not private and is_dataclass(v) and not isinstance(v, type):
-                v = dataclass_asdict(v)
+                if not private and is_dataclass(v) and not isinstance(v, type):
+                    v = dataclass_asdict(v)
 
             d[k] = v
 
@@ -192,4 +194,4 @@ class NamespaceMap(Namespace):
 
     # Printing
     def __repr__(self):
-        return f"<{self._Namespace__repr_name}{repr(self.__dict__)}>"
+        return f"<{self._Namespace__repr_name}{repr(self.asdict(recursive=False))}>"

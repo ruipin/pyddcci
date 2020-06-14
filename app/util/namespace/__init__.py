@@ -4,3 +4,4 @@
 from .namespace import Namespace
 from .namespace_map import NamespaceMap
 from .namespace_list import NamespaceList
+from .namespace_set import NamespaceSet

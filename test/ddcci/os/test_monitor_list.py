@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: GPLv3
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-import unittest
+from test import TestCase
 
 from app.ddcci.os import OsMonitorList
 from .mock import monitor_info
 
 
-class MonitorListTest(unittest.TestCase):
+class MonitorListTest(TestCase):
     def test_enumerate(self):
         monitors = OsMonitorList('Monitors')
 

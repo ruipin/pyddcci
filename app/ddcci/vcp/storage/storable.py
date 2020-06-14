@@ -137,7 +137,6 @@ class VcpStorageStorable(metaclass=ABCMeta):
                 d['aliases'] = aliases
 
         storage_key_nm = self.vcp_storage_key_name()
-
         for attr_nm in self.__dict__:
             if attr_nm[0] != '_' and attr_nm != storage_key_nm:
                 attr = getattr(self, attr_nm)
@@ -149,6 +148,23 @@ class VcpStorageStorable(metaclass=ABCMeta):
             d[storage_key_nm] = self.vcp_storage_key()
 
         return d
+
+
+    def _fromdict(self, data : Dict) -> None:
+        self.clear_names()
+
+        if 'name' in data:
+            self.add_name(data['name'])
+
+        if 'aliases' in data:
+            self.add_names(*data['aliases'])
+
+        storage_key_nm = self.vcp_storage_key_name()
+        for attr_nm in self.__dict__:
+            if attr_nm[0] != '_' and attr_nm != storage_key_nm:
+                attr = data.get(attr_nm, None)
+                if attr is not None:
+                    setattr(self, attr_nm, attr)
 
 
     # Printing

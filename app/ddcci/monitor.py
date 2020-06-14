@@ -3,7 +3,7 @@
 
 from typing import Union, NewType, Dict
 
-from .os import OsMonitorList, OsMonitor
+from .os import OS_MONITORS, OsMonitor
 from .vcp.code import VcpCode
 from .vcp.value import VcpValue
 from .vcp.reply import VcpReply
@@ -17,11 +17,6 @@ from app.util import Namespace, LoggableMixin, HierarchicalMixin, NamedMixin, CF
 
 T_VcpCodeIdentifier = NewType('T_VcpCodeIdentifier', Union[VcpCode, T_VcpStorageIdentifier])
 T_VcpValueIdentifier = NewType('T_VcpValueIdentifier', Union[VcpValue, T_VcpStorageIdentifier])
-
-
-##########
-# Global list of OsMonitors
-OS_MONITORS = OsMonitorList('Monitors')
 
 
 
@@ -70,24 +65,52 @@ class Monitor(Namespace, LoggableMixin, HierarchicalMixin, NamedMixin):
     @property
     def codes(self):
         if self._codes is None:
-            self._codes = VcpCodeStorage()
-            self._codes.copy_storage(vcp_spec.VCP_SPEC)
+            try:
+                imported_codes = False
+                if CFG.monitors.codes.automatic_import:
+                    imported_codes = self.import_codes()
 
-            imported_codes = False
-            if CFG.monitors.codes.automatic_import:
-                imported_codes = self.import_codes()
+                if not imported_codes:
+                    self._codes = VcpCodeStorage(instance_parent=self)
+                    self._codes.copy_storage(vcp_spec.VCP_SPEC)
 
-            if not imported_codes and CFG.monitors.capabilities.automatic:
-                self.load_capabilities()
+                    if CFG.monitors.capabilities.automatic:
+                        self.load_capabilities()
+            except AttributeError as e:
+                raise RuntimeError() from e
 
         return self._codes
 
-    def export_codes(self) -> Dict:
-        return self.codes.export(diff=vcp_spec.VCP_SPEC)
+    def _export_codes(self) -> Dict:
+        return self.codes.serialize(diff=vcp_spec.VCP_SPEC)
+
+    def export_codes(self) -> None:
+        from .monitor_config import MONITOR_CONFIG
+        cfg = MONITOR_CONFIG.get(self.filter, add=True)
+        cfg['codes'] = self._export_codes()
+        MONITOR_CONFIG.save()
+
+    def _import_codes(self, data : Dict) -> None:
+        self._codes = VcpCodeStorage.deserialize(data, diff=vcp_spec.VCP_SPEC, instance_parent=self)
 
     def import_codes(self) -> bool:
-        # TODO
-        pass
+        from .monitor_config import MONITOR_CONFIG
+
+        cfg = MONITOR_CONFIG.get(self.filter, add=False)
+
+        if cfg is None:
+            cfg = MONITOR_CONFIG.get(self.get_os_monitor(), add=False)
+
+        if cfg is None:
+            return False
+
+        if 'codes' not in cfg:
+            return False
+
+        self._import_codes(cfg['codes'])
+        return True
+
+
 
 
 

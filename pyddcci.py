@@ -16,4 +16,6 @@ if __name__ == "__main__":
 
     from app.ddcci.monitor import Monitor
     monitor = Monitor('Primary')
-    monitor.codes.asdict()
+    monitor.codes['input']['appl'] = 20
+    monitor.codes['banana'] = 99
+    monitor.export_codes()

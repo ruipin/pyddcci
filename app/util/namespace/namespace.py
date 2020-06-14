@@ -371,9 +371,6 @@ class Namespace(object):
 
     # Utilities
     def asdict(self, recursive=True, private=False, protected=True, public=True):
-        if not recursive:
-            return dict(self.__namespace)
-
         d = {}
         for k, v in self.__namespace.items():
             if k[0] == '_':
@@ -386,11 +383,12 @@ class Namespace(object):
             if k[0] != '_' and not public:
                 continue
 
-            if isinstance(v, Namespace):
-                v = v.asdict(recursive=recursive, private=private, protected=protected, public=public)
+            if recursive:
+                if isinstance(v, Namespace):
+                    v = v.asdict(recursive=recursive, private=private, protected=protected, public=public)
 
-            if not private and is_dataclass(v) and not isinstance(v, type):
-                v = dataclass_asdict(v)
+                if not private and is_dataclass(v) and not isinstance(v, type):
+                    v = dataclass_asdict(v)
 
             d[k] = v
 
@@ -411,4 +409,4 @@ class Namespace(object):
         return self.__class__.__name__
 
     def __repr__(self):
-        return f"<{self.__repr_name}{repr(self.__namespace)}>"
+        return f"<{self.__repr_name}{repr(self.asdict(recursive=False))}>"

@@ -131,4 +131,5 @@ dmypy.json
 .idea/
 
 # User config
-data/config.yaml
+/data/config.yaml
+/data/monitors.yaml

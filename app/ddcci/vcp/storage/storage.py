@@ -173,12 +173,13 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
 
         return storable
 
-    def copy_storage(self, other: 'VcpStorage') -> None:
+    def copy_storage(self, other: 'VcpStorage', if_none=False) -> None:
         assert self.__class__ is other.__class__
 
         # Iterate through all keys in other storage and copy them
-        for storable in other.values():
-            self.copy_storable(storable)
+        if not if_none or len(self) == 0:
+            for storable in other.values():
+                self.copy_storable(storable)
 
 
     # Conversions
@@ -195,6 +196,74 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
                 d[k] = v
 
         return d
+
+
+    # Serialization
+    def serialize(self, diff : 'VcpStorage' = None) -> Union[Dict, str]:
+        if diff is None:
+            return self.asdict()
+
+        d = self.asdict(recursive=False)
+        d_diff = diff.asdict(recursive=False)
+        res = {}
+
+        def _add_default(value_i):
+            if 'default' not in res:
+                res['default'] = str(value_i)
+            else:
+                res['default'] += f',{value_i}'
+
+        # remove values that match
+        for value_i in sorted(d.keys()):
+            value_obj = d[value_i]
+            if value_i not in d_diff:
+                value_d = value_obj.serialize()
+                if len(value_d) != 0:
+                    res[value_i] = value_d
+                else:
+                    _add_default(value_i)
+                continue
+
+            value_d = value_obj.serialize(diff=d_diff[value_i])
+
+            if len(value_d) > 0:
+                res[value_i] = value_d
+            else:
+                _add_default(value_i)
+
+        if 'default' in res and len(res) == 1:
+            res = res['default']
+
+        return res
+
+    def deserialize(self, data : Union[Dict, str], diff : Optional['VcpStorage'] = None) -> None:
+        if isinstance(data, str):
+            data = {'default': data}
+
+        # Parse defaults
+        if 'default' in data:
+            defaults = data.pop('default')
+            defaults_split = defaults.split(',')
+
+            for value_i in defaults_split:
+                value_i = int(value_i)
+
+                if diff is not None and value_i in diff:
+                    self.copy_storable(diff[value_i])
+                    continue
+
+                self.add(value_i)
+
+        # Parse custom codes
+        for value_i, value_d in data.items():
+            value = self.add(value_i)
+
+            value_diff = None
+            if diff is not None and value_i in diff:
+                value_diff = diff[value_i]
+
+            value.deserialize(value_d, diff=value_diff)
+
 
 
     # Printing

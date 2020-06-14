@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPLv3
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-from typing import Union, Dict, Any
+from typing import Union, Dict, Any, Optional
 
 from ..enums import VcpControlType
 from ..storage import VcpStorageStorable, T_VcpStorageIdentifier, T_VcpStorageName, T_VcpStorageKey
@@ -85,7 +85,7 @@ class VcpCode(VcpStorageStorable, HierarchicalMixin, NamedMixin):
 
 
     # Import / Export
-    def export(self, diff : 'VcpCode' = None) -> Dict[str, Any]:
+    def serialize(self, diff : 'VcpCode' = None) -> Union[Dict[str, Any], str]:
         if diff is None:
             return self.asdict()
 
@@ -96,7 +96,7 @@ class VcpCode(VcpStorageStorable, HierarchicalMixin, NamedMixin):
         for k, v in d.items():
             # Values are handled separately
             if k == 'values':
-                values_d = v.export(diff=d_diff['values'] if 'values' in d_diff else None)
+                values_d = v.serialize(diff=d_diff['values'] if 'values' in d_diff else None)
                 if values_d is not None and len(values_d) != 0:
                     res[k] = values_d
                 continue
@@ -112,4 +112,24 @@ class VcpCode(VcpStorageStorable, HierarchicalMixin, NamedMixin):
             if diff_v != v:
                 res[k] = v
 
+        if 'name' in res and len(res) == 1:
+            res = res['name']
+
         return res
+
+    def deserialize(self, data : Union[Dict, str], diff : Optional['VcpCode'] = None) -> None:
+        if isinstance(data, str):
+            data = {'name': data}
+
+        self._fromdict(data)
+
+        values = data.get('values', {})
+        diff_values = diff.values if diff is not None else None
+        self.values.deserialize(values, diff=diff_values)
+
+        if diff is not None:
+            if not self.has_name:
+                self.add_names(*diff.names)
+
+            for attr in ('type', 'description', 'category'):
+                if attr not in data: setattr(self, attr, getattr(diff, attr))

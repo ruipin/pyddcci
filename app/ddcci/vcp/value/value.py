@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPLv3
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-from typing import Dict, Any
+from typing import Dict, Union, Optional
 from ordered_set import OrderedSet
 
 from ..storage import VcpStorageStorable
@@ -33,24 +33,38 @@ class VcpValue(VcpStorageStorable, HierarchicalMixin, NamedMixin):
 
 
     # Import / Export
-    def export(self, diff : 'VcpValue' =None) -> Dict:
+    def serialize(self, diff : 'VcpValue' =None) -> Union[Dict, str]:
         if diff is None:
-            return self.asdict()
+            res = self.asdict()
 
-        d = self.asdict()
-        d_diff = diff.asdict()
-        res = {}
+        else:
+            d = self.asdict()
+            d_diff = diff.asdict()
+            res = {}
 
-        for k, v in d.items():
-            # None keys not present in the diff are omitted
-            if k not in d_diff:
-                if v is not None:
+            for k, v in d.items():
+                # None keys not present in the diff are omitted
+                if k not in d_diff:
+                    if v is not None:
+                        res[k] = v
+                    continue
+
+                # Matching keys are omitted
+                diff_v = d_diff[k]
+                if diff_v != v:
                     res[k] = v
-                continue
 
-            # Matching keys are omitted
-            diff_v = d_diff[k]
-            if diff_v != v:
-                res[k] = v
+        if 'name' in res and len(res) == 1:
+            res = res['name']
 
         return res
+
+    def deserialize(self, data : Union[Dict, str], diff : Optional['VcpValue'] = None) -> None:
+        if isinstance(data, str):
+            data = {'name': data}
+
+        self._fromdict(data)
+
+        if diff is not None:
+            if not self.has_name:
+                self.add_names(*diff.names)

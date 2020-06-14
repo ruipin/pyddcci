@@ -2,7 +2,7 @@
 # Copyright © 2020 pyddcci Rui Pinheiro
 
 import os
-import yaml
+import oyaml as yaml
 from ordered_set import OrderedSet
 
 from . import version, args
@@ -141,7 +141,9 @@ class MasterConfigMap(ConfigMap):
 
     # Load/Save
     def load_path(self, file_path):
-        print(file_path)
+        if not os.path.exists(file_path):
+            return
+
         with open(file_path, 'r') as file:
             yaml_d = yaml.load(file, Loader=yaml.FullLoader)
 
@@ -168,6 +170,7 @@ class MasterConfigMap(ConfigMap):
             },
             'dirs': {
                 'home': args.HOME,
+                'data': os.path.join(args.HOME, 'data')
             },
             'test': args.UNIT_TEST
         }

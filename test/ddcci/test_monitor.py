@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPLv3
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-import unittest
+from test import TestCase
 
 from app.ddcci.monitor import Monitor
 from .os.mock import monitor_info
 
-class MonitorTest(unittest.TestCase):
+class MonitorTest(TestCase):
     def test_change_input(self):
 
         monitor_info.generate_mock_monitors(3,0)
@@ -87,5 +87,28 @@ class MonitorTest(unittest.TestCase):
 
 
         # Export
-        codes = monitor1.export_codes()
+        codes = monitor1._export_codes()
         self.assertEqual(23, len(codes))
+
+
+    def test_codes_export(self):
+        monitor_info.generate_mock_monitors(1, 0)
+        monitor_info.MOCK_MONITORS[0].adapter.primary = True
+
+        monitor1 = Monitor('Primary')
+        self.assertIn('input', monitor1.codes)
+
+        monitor1.codes['apple'] = 98
+        self.assertIn('apple', monitor1.codes)
+
+        self.assertIn('hdmi1', monitor1.codes['input'])
+        monitor1.codes['input']['banana'] = 99
+        self.assertIn('banana', monitor1.codes['input'])
+
+        monitor1.export_codes()
+        monitor1.import_codes()
+
+        self.assertIn('apple', monitor1.codes)
+        self.assertIn('input', monitor1.codes)
+        self.assertIn('hdmi1', monitor1.codes['input'])
+        self.assertIn('banana', monitor1.codes['input'])

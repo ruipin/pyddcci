@@ -8,7 +8,7 @@ from abc import ABCMeta, abstractmethod
 from .monitor_info import BaseOsMonitorInfo
 from app.ddcci.vcp.reply import VcpReply
 
-from app.util import Namespace, LoggableHierarchicalNamedMixin
+from app.util import Namespace, LoggableHierarchicalNamedMixin, CFG
 
 
 ##############
@@ -59,9 +59,27 @@ class BaseOsMonitor(Namespace, LoggableHierarchicalNamedMixin, metaclass=ABCMeta
         pass
 
     def query_capabilities(self):
-        self.log.info("Querying monitor capabilities... (may take a few seconds)")
+        cache = CFG.monitors.capabilities.cache
 
-        cap_str = self._get_capabilities_string()
+        cap_str = None
+        if cache:
+            from ..monitor_config import MONITOR_CONFIG
+            cfg = MONITOR_CONFIG.get(self, add=False)
+            if cfg is not None:
+                cap_str = cfg.get('capabilities', None)
+                self.log.debug("Loaded monitor capabilities from cache")
+
+        if not cap_str:
+            self.log.info("Querying monitor capabilities... (may take a few seconds)")
+            cap_str = self._get_capabilities_string()
+
+            if cache:
+                from ..monitor_config import MONITOR_CONFIG
+                cfg = MONITOR_CONFIG.get(self, add=True)
+                cfg['capabilities'] = cap_str
+                MONITOR_CONFIG.save()
+                self.log.debug("Saved monitor capabilities to cache")
+
 
         from .generic.capabilities import OsMonitorCapabilities
         capabilities = OsMonitorCapabilities(cap_str, instance_parent=self)

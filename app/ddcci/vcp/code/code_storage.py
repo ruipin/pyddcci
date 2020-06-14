@@ -101,39 +101,9 @@ class VcpCodeStorage(VcpStorage):
                         # value.add_name(f'Unknown Value 0x{value_i:X}')
 
 
-    # Import / Export
-    def export(self, diff : 'VcpCodeStorage' = None) -> Union[Dict, str]:
-        if diff is None:
-            return self.asdict()
-
-        d = self.asdict(recursive=False)
-        d_diff = diff.asdict(recursive=False)
-        res = {}
-
-        def _add_default(code_i):
-            if 'default' not in res:
-                res['default'] = str(code_i)
-            else:
-                res['default'] += f',{code_i}'
-
-        # remove codes that match
-        for code_i, code_obj in d.items():
-            if code_i not in d_diff:
-                code_d = code_obj.export()
-                if len(code_d) != 0:
-                    res[code_i] = code_d
-                else:
-                    _add_default(code_i)
-                continue
-
-            code_d = code_obj.export(diff=d_diff[code_i])
-
-            if len(code_d) > 0:
-                res[code_i] = code_d
-            else:
-                _add_default(code_i)
-
-        if 'default' in res and len(res) == 1:
-            res = res['default']
-
-        return res
+    # Serialization
+    @classmethod
+    def deserialize(cls, data : Dict, diff : Optional['VcpCodeStorage'] = None, instance_parent=None) -> 'VcpCodeStorage':
+        self = VcpCodeStorage(instance_parent=instance_parent)
+        super(VcpCodeStorage, self).deserialize(data, diff)
+        return self

@@ -38,22 +38,6 @@ class VcpStorageStorable(metaclass=ABCMeta):
     def vcp_storage_key_name(self) -> str:
         pass
 
-    def asdict(self) -> Dict[str, Any]:
-        d = {}
-
-        if self.has_name:
-            d['name'] = self.name
-
-            if len(self._names) > 1:
-                aliases = []
-                for nm in self._names[1:]:
-                    aliases.append(str(nm))
-                d['aliases'] = aliases
-
-        d[self.vcp_storage_key_name()] = self.vcp_storage_key()
-
-        return d
-
 
     # Name(s)
     @property
@@ -88,6 +72,9 @@ class VcpStorageStorable(metaclass=ABCMeta):
         if isinstance(name, int):
             raise ValueError(f"name={name} cannot be an integer")
 
+        if name not in self._names:
+            return
+
         self._names.remove(name)
 
         from .storage import VcpStorage
@@ -99,8 +86,7 @@ class VcpStorageStorable(metaclass=ABCMeta):
             self.remove_name(name)
 
     def clear_names(self) -> None:
-        for name in set(self._names):
-            self.remove_name(name)
+        self.remove_names(*list(self._names))
 
 
     # Comparison, etc
@@ -126,6 +112,43 @@ class VcpStorageStorable(metaclass=ABCMeta):
 
     def __hash__(self) -> int:
         return self.vcp_storage_key()
+
+
+    # Copying
+    def copy_storable(self, other : 'VcpStorageStorable') -> None:
+        assert self.vcp_storage_key() == other.vcp_storage_key()
+        assert self.__class__ is other.__class__
+
+        self.add_names(*other.names)
+
+
+
+    # Conversion
+    def asdict(self, include_key=False) -> Dict[str, Any]:
+        d = {}
+
+        if self.has_name:
+            d['name'] = self.name
+
+            if len(self._names) > 1:
+                aliases = []
+                for nm in self._names[1:]:
+                    aliases.append(str(nm))
+                d['aliases'] = aliases
+
+        storage_key_nm = self.vcp_storage_key_name()
+
+        for attr_nm in self.__dict__:
+            if attr_nm[0] != '_' and attr_nm != storage_key_nm:
+                attr = getattr(self, attr_nm)
+
+                if attr is not None:
+                    d[attr_nm] = attr
+
+        if include_key:
+            d[storage_key_nm] = self.vcp_storage_key()
+
+        return d
 
 
     # Printing

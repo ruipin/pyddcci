@@ -19,8 +19,8 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
         self._initialize()
 
     def _initialize(self):
-        self._dict : Dict[T_VcpStorageStandardIdentifier, Optional[T_VcpStorageStorable]] = {}
-        self._set  : Set[T_VcpStorageStorable]                                            = set()
+        self._dict : Dict[T_VcpStorageStandardIdentifier, T_VcpStorageStorable] = {}
+        self._set  : Set[T_VcpStorageStorable]                                  = set()
 
 
     # Utility methods
@@ -42,7 +42,7 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
 
 
     # Accesses
-    def get(self, identifier : T_VcpStorageIdentifier, add=True) -> Optional[T_VcpStorageStorable]:
+    def get(self, identifier : T_VcpStorageIdentifier, add=True) -> T_VcpStorageStorable:
         identifier = self.standardise_identifier(identifier)
 
         # Search for the object
@@ -79,7 +79,7 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
         del self._dict[key]
 
         if isinstance(key, int):
-            obj.remove_all_names()
+            obj.clear_names()
             self._set.remove(obj)
         else:
             obj.remove_name(key)
@@ -142,50 +142,57 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
 
 
     # Iteration
-    def _get_set_union(self) -> Set[T_VcpStorageStorable]:
-        return self._set
+    def __iter__(self) -> Iterable[T_VcpStorageStorable]:
+        return self.values()
 
-    def _get_dict_union(self) -> Dict[T_VcpStorageStandardIdentifier, Optional[T_VcpStorageStorable]]:
-        return self._dict
+    def __len__(self) -> int:
+        return len(self._set)
 
-    def __iter__(self, fallback=True) -> Iterable[T_VcpStorageStorable]:
-        s = self._get_set_union() if fallback else self._set
-        return iter(s)
-
-    def __len__(self, fallback=True) -> int:
-        s = self._get_set_union() if fallback else self._set
-        return len(s)
-
-    def keys(self, fallback=True) -> Iterable[T_VcpStorageKey]:
-        for v in self.__iter__(fallback=fallback):
+    def keys(self) -> Iterable[T_VcpStorageKey]:
+        for v in self._set:
             yield v.vcp_storage_key()
 
-    def items(self, fallback=True) -> ItemsView[T_VcpStorageKey, T_VcpStorageStorable]:
-        d = self._get_dict_union() if fallback else self._dict
-        return d.items()
+    def items(self) -> ItemsView[T_VcpStorageKey, T_VcpStorageStorable]:
+        return self._dict.items()
 
-    def values(self, fallback=True) -> Iterable[T_VcpStorageStorable]:
-        s = self._get_set_union() if fallback else self._set
-        return iter(s)
+    def values(self) -> Iterable[T_VcpStorageStorable]:
+        return iter(self._set)
 
-    def names(self, fallback=True) -> Iterable[T_VcpStorageName]:
-        d = self._get_dict_union() if fallback else self._dict
-        for k in d.keys():
+    def names(self) -> Iterable[T_VcpStorageName]:
+        for k in self._dict.keys():
             if isinstance(k, str):
                 yield k
 
 
+    # Copying
+    def copy_storable(self, other_storable: T_VcpStorageStorable) -> T_VcpStorageStorable:
+        identifier = other_storable.vcp_storage_key()
+
+        storable = self.add(identifier)
+        storable.copy_storable(other_storable)
+
+        return storable
+
+    def copy_storage(self, other: 'VcpStorage') -> None:
+        assert self.__class__ is other.__class__
+
+        # Iterate through all keys in other storage and copy them
+        for storable in other.values():
+            self.copy_storable(storable)
+
+
     # Conversions
-    def asdict(self) -> Dict[T_VcpStorageKey, Optional[Dict]]:
+    def asdict(self, recursive=True) -> Dict[T_VcpStorageKey, Any]:
         d = {}
 
-        for k, v in self.items(fallback=False):
+        for k, v in self.items():
             if v is None:
-                d[k] = None
-            elif k == v.vcp_storage_key():
-                _v = v.asdict()
-                del _v[v.vcp_storage_key_name()]
-                d[k] = _v
+                continue
+
+            if k == v.vcp_storage_key():
+                if recursive:
+                    v = v.asdict(include_key=False)
+                d[k] = v
 
         return d
 

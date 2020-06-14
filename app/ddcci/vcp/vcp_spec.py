@@ -552,7 +552,6 @@ VCP_SPEC.add_dictionary({
             "name": "Input Select",
             "aliases": "Input",
             "type": "NC",
-            "verify": True,
             "values": {
                 0x01: ["RGB 1", "Analog 1"], 0x02: ["RGB 2", "Analog 2"],
                 0x03: ["DVI 1", "Digital 1"], 0x04: ["DVI 2", "Digital 2"],

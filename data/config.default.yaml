@@ -14,8 +14,17 @@ logging:
 
 # Monitors
 monitors:
+
+  # Configurations related to the monitor capabilities string
   capabilities:
-    # Whether to scan a monitor's capabilities on first use
-    automatic_scan: true
-    # Whether to automatically export scanned capabilities to config.yaml
-    automatic_export: true
+    # Toggle for automatic monitor capabilities querying. If disabled, monitors will never be automatically queried for their capabilities.
+    automatic: true
+    # Whether to cache queried monitor capabilities to disk
+    cache: true
+
+  # Configurations related to monitor-specific VCP code/value aliases
+  codes:
+    # Whether to automatically export each monitor's VCP code/value aliases when modified
+    automatic_export: false
+    # Whether to automatically import custom VCP code/value aliases
+    automatic_import: true

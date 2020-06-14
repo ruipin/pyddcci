@@ -5,14 +5,11 @@ from typing import Union, Dict, Any
 
 from ..enums import VcpControlType
 from ..storage import VcpStorageStorable, T_VcpStorageIdentifier, T_VcpStorageName, T_VcpStorageKey
-from ..storage.storage_with_fallback import VcpStorageWithFallback
 
 from app.util import Namespace, HierarchicalMixin, NamedMixin
 
 
 class VcpCode(VcpStorageStorable, HierarchicalMixin, NamedMixin):
-    WRITE_METHODS = ('add_value', 'type', '__setitem__', '__delitem__', 'values')
-
     def __init__(self, code : int, instance_parent: HierarchicalMixin = None):
         super().__init__(instance_name=f"VcpCode0x{code:X}", instance_parent=instance_parent)
 
@@ -20,13 +17,10 @@ class VcpCode(VcpStorageStorable, HierarchicalMixin, NamedMixin):
 
         from ..value import VcpValueStorage
         self._values = VcpValueStorage(instance_name='values', instance_parent=self)
-        if isinstance(self.instance_parent, VcpStorageWithFallback) and self.instance_parent.fallback is not None:
-            self._values.fallback = self.instance_parent.fallback
 
-        self.type = None
+        self.type        = None
         self.description = None
-        self.category = None
-        self.verify = False
+        self.category    = None
 
 
     # Code
@@ -34,15 +28,6 @@ class VcpCode(VcpStorageStorable, HierarchicalMixin, NamedMixin):
         return self.code
     def vcp_storage_key_name(self):
         return 'code'
-
-
-    # Type
-    @property
-    def type(self):
-        return self._type
-    @type.setter
-    def type(self, new_type : Union[None, VcpControlType]):
-        self._type = new_type
 
 
     # Aliases
@@ -74,8 +59,57 @@ class VcpCode(VcpStorageStorable, HierarchicalMixin, NamedMixin):
         return self.contains(identifier)
 
 
+    # Copying
+    def copy_storable(self, other : 'VcpCode') -> None:
+        super().copy_storable(other)
+
+        self.type        = other.type
+        self.description = other.description
+        self.category    = other.category
+
+        self.values.copy_storage(other.values)
+
+
     # Conversion
-    def asdict(self) -> Dict[str, Any]:
-        d = super().asdict()
-        d['values'] = self.values.asdict()
+    def asdict(self, recursive=True, **kwargs) -> Dict[str, Any]:
+        d = super().asdict(**kwargs)
+
+        if recursive:
+            values = self.values.asdict()
+            if len(values) > 0:
+                d['values'] = values
+        else:
+            d['values'] = self.values
+
         return d
+
+
+    # Import / Export
+    def export(self, diff : 'VcpCode' = None) -> Dict[str, Any]:
+        if diff is None:
+            return self.asdict()
+
+        d = self.asdict(recursive=False)
+        d_diff = diff.asdict(recursive=False)
+        res = {}
+
+        for k, v in d.items():
+            # Values are handled separately
+            if k == 'values':
+                values_d = v.export(diff=d_diff['values'] if 'values' in d_diff else None)
+                if values_d is not None and len(values_d) != 0:
+                    res[k] = values_d
+                continue
+
+            # None keys not present in the diff are omitted
+            if k not in d_diff:
+                if v is not None:
+                    res[k] = v
+                continue
+
+            # Matching keys are omitted
+            diff_v = d_diff[k]
+            if diff_v != v:
+                res[k] = v
+
+        return res

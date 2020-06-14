@@ -1,26 +1,51 @@
 # SPDX-License-Identifier: GPLv3
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-from typing import Any
+from typing import Any, Dict, Union
 
 from .value import VcpValue
-from .value_fallback import FallbackVcpValue
-from ..storage import VcpStorageWithFallback, T_VcpStorageIdentifier
+from ..storage import VcpStorage, T_VcpStorageIdentifier
 
 
-class VcpValueStorage(VcpStorageWithFallback):
+class VcpValueStorage(VcpStorage):
     def _create_value(self, value : int) -> VcpValue:
         return VcpValue(value, instance_parent=self)
 
-    def _get_fallback_storage(self) -> 'VcpValueStorage':
-        from ..code import VcpCode
-        if not isinstance(self.instance_parent, VcpCode):
-            raise RuntimeError('_get_fallback_storage: self.instance_parent must be of class VcpCode')
 
-        if self.fallback is None:
-            return None
 
-        return self.fallback.get(self.instance_parent.vcp_storage_key(), check_fallback=True)._values
+    # Import / Export
+    def export(self, diff : 'VcpValueStorage' = None) -> Union[Dict, str]:
+        if diff is None:
+            return self.asdict()
 
-    def _wrap_fallback_storable(self, identifier : T_VcpStorageIdentifier, storable : VcpValue) -> 'FallbackVcpValue':
-        return FallbackVcpValue(identifier, self.instance_parent)
+        d = self.asdict(recursive=False)
+        d_diff = diff.asdict(recursive=False)
+        res = {}
+
+        def _add_default(value_i):
+            if 'default' not in res:
+                res['default'] = str(value_i)
+            else:
+                res['default'] += f',{value_i}'
+
+        # remove values that match
+        for value_i, value_obj in d.items():
+            if value_i not in d_diff:
+                value_d = value_obj.export()
+                if len(value_d) != 0:
+                    res[value_i] = value_d
+                else:
+                    _add_default(value_i)
+                continue
+
+            value_d = value_obj.export(diff=d_diff[value_i])
+
+            if len(value_d) > 0:
+                res[value_i] = value_d
+            else:
+                _add_default(value_i)
+
+        if 'default' in res and len(res) == 1:
+            res = res['default']
+
+        return res

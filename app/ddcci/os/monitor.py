@@ -58,8 +58,8 @@ class BaseOsMonitor(Namespace, LoggableHierarchicalNamedMixin, metaclass=ABCMeta
     def _get_capabilities_string(self) -> str:
         pass
 
-    def _populate_capabilities(self):
-        self.log.info("Populating capabilities... (might take a few seconds)")
+    def query_capabilities(self):
+        self.log.info("Querying monitor capabilities... (may take a few seconds)")
 
         cap_str = self._get_capabilities_string()
 
@@ -70,7 +70,7 @@ class BaseOsMonitor(Namespace, LoggableHierarchicalNamedMixin, metaclass=ABCMeta
     @property
     def capabilities(self):
         if self._capabilities is None:
-            self._populate_capabilities()
+            self.query_capabilities()
 
         return self._capabilities
 

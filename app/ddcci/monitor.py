@@ -1,18 +1,19 @@
 # SPDX-License-Identifier: GPLv3
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-from typing import Union, NewType
+from typing import Union, NewType, Dict
 
 from .os import OsMonitorList, OsMonitor
 from .vcp.code import VcpCode
 from .vcp.value import VcpValue
 from .vcp.reply import VcpReply
-from .vcp.code.code_storage import VcpCodeStorage, T_VcpStorageIdentifier
+from .vcp.storage import T_VcpStorageIdentifier
+from .vcp.code.code_storage import VcpCodeStorage
 from .vcp import vcp_spec
 
 from . import monitor_filter
 
-from app.util import Namespace, LoggableMixin, HierarchicalMixin, NamedMixin
+from app.util import Namespace, LoggableMixin, HierarchicalMixin, NamedMixin, CFG
 
 T_VcpCodeIdentifier = NewType('T_VcpCodeIdentifier', Union[VcpCode, T_VcpStorageIdentifier])
 T_VcpValueIdentifier = NewType('T_VcpValueIdentifier', Union[VcpValue, T_VcpStorageIdentifier])
@@ -45,8 +46,7 @@ class Monitor(Namespace, LoggableMixin, HierarchicalMixin, NamedMixin):
 
         self.filter = filter
 
-        self._codes = VcpCodeStorage()
-        self._codes.fallback = vcp_spec.VCP_SPEC
+        self._codes = None
 
         self.freeze_schema()
 
@@ -61,6 +61,34 @@ class Monitor(Namespace, LoggableMixin, HierarchicalMixin, NamedMixin):
             raise RuntimeError(f"Could not find monitor for filter '{self.filter.instance_name}'")
 
         return os_monitor
+
+    def load_capabilities(self) -> None:
+        self.codes.load_capabilities(self.get_os_monitor().capabilities)
+
+
+    # Codes
+    @property
+    def codes(self):
+        if self._codes is None:
+            self._codes = VcpCodeStorage()
+            self._codes.copy_storage(vcp_spec.VCP_SPEC)
+
+            imported_codes = False
+            if CFG.monitors.codes.automatic_import:
+                imported_codes = self.import_codes()
+
+            if not imported_codes and CFG.monitors.capabilities.automatic:
+                self.load_capabilities()
+
+        return self._codes
+
+    def export_codes(self) -> Dict:
+        return self.codes.export(diff=vcp_spec.VCP_SPEC)
+
+    def import_codes(self) -> bool:
+        # TODO
+        pass
+
 
 
     # Raw VCP access
@@ -83,14 +111,17 @@ class Monitor(Namespace, LoggableMixin, HierarchicalMixin, NamedMixin):
 
 
     # VCP
-    @property
-    def codes(self) -> VcpCodeStorage:
-        return self._codes
+    def _get_read_only_codes(self):
+        """ Returns a VcpCodeStorage instance to be used internally and not modified """
+        if self._codes is not None:
+            return self.codes
+
+        return vcp_spec.VCP_SPEC
 
     def _to_vcp_code(self, code_id: T_VcpCodeIdentifier) -> VcpCode:
         if isinstance(code_id, VcpCode):
             return code_id
-        return self._codes.get(code_id)
+        return self._get_read_only_codes().get(code_id)
 
     @staticmethod
     def _to_vcp_value(code: VcpCode, value_id: T_VcpValueIdentifier) -> VcpValue:
@@ -112,6 +143,7 @@ class Monitor(Namespace, LoggableMixin, HierarchicalMixin, NamedMixin):
         value = self._to_vcp_value(code, value_id)
         self.vcp_write_raw(code.code, value.value, *args, **kwargs)
 
+
     # Magic methods (wrap VCP read/write)
     def __getitem__(self, code_id: T_VcpCodeIdentifier) -> VcpValue:
         """ Get an attribute using dictionary syntax obj[key] """
@@ -125,4 +157,4 @@ class Monitor(Namespace, LoggableMixin, HierarchicalMixin, NamedMixin):
         raise NotImplementedError('__del_item__ not implemented')
 
     def __contains__(self, code_id : T_VcpCodeIdentifier):
-        return code_id in self.codes
+        return code_id in self._get_read_only_codes()

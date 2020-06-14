@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPLv3
 # Copyright © 2020 pyddcci Rui Pinheiro
 
+from typing import Dict, Any
 from ordered_set import OrderedSet
 
 from ..storage import VcpStorageStorable
@@ -29,3 +30,27 @@ class VcpValue(VcpStorageStorable, HierarchicalMixin, NamedMixin):
         return self._value
     def vcp_storage_key_name(self):
         return 'value'
+
+
+    # Import / Export
+    def export(self, diff : 'VcpValue' =None) -> Dict:
+        if diff is None:
+            return self.asdict()
+
+        d = self.asdict()
+        d_diff = diff.asdict()
+        res = {}
+
+        for k, v in d.items():
+            # None keys not present in the diff are omitted
+            if k not in d_diff:
+                if v is not None:
+                    res[k] = v
+                continue
+
+            # Matching keys are omitted
+            diff_v = d_diff[k]
+            if diff_v != v:
+                res[k] = v
+
+        return res

@@ -1,26 +1,18 @@
 # SPDX-License-Identifier: GPLv3
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Union
 
 from ..enums import *
-from ..storage import T_VcpStorageIdentifier
-from ..storage.storage_with_fallback import VcpStorageWithFallback
+from ..storage.storage import VcpStorage
 
 from .code import VcpCode
 
 
-class VcpCodeStorage(VcpStorageWithFallback):
+class VcpCodeStorage(VcpStorage):
     # Superclass abstract methods
     def _create_value(self, code : int) -> VcpCode:
         return VcpCode(code, instance_parent=self)
-
-    def _get_fallback_storage(self) -> 'VcpCodeStorage':
-        return self.fallback
-
-    def _wrap_fallback_storable(self, identifier : T_VcpStorageIdentifier, storable : VcpCode) -> 'FallbackVcpCode':
-        from .code_fallback import FallbackVcpCode
-        return FallbackVcpCode(identifier, self)
 
 
     # Add from dictionary
@@ -40,15 +32,12 @@ class VcpCodeStorage(VcpStorageWithFallback):
 
             sub_values = details.get('values', None)
 
-            verify = details.get('verify', False)
-
             # Add code
             code : VcpCode = self.add(value)
             code.add_name(name)
             code.type = type
             code.description = description
             code.category = category
-            code.verify = verify
 
             if aliases is not None:
                 for alias in aliases:
@@ -81,11 +70,11 @@ class VcpCodeStorage(VcpStorageWithFallback):
 
 
     # Capabilities
-    def import_capabilities(self, capabilities):
+    def load_capabilities(self, capabilities):
         cap_codes = capabilities.get_vcp_codes()
 
         # Remove codes that do not exist
-        for key in self.keys():
+        for key in list(self.keys()):
             if key not in cap_codes:
                 self.remove(key)
 
@@ -95,22 +84,56 @@ class VcpCodeStorage(VcpStorageWithFallback):
             code = None
             if code_i not in self:
                 code = self.add(code_i)
-                code.add_name(f'Unknown Code 0x{code_i:X}')
+                # code.add_name(f'Unknown Code 0x{code_i:X}')
 
             # Process values
             if cap_values is not None:
                 if code is None:
                     code = self.get(code_i)
 
-                    from .code_fallback import FallbackVcpCode
-                    if isinstance(code, FallbackVcpCode):
-                        code = code.create_wrapped_storable()
-
-                for value_i in code.values.keys():
+                for value_i in list(code.values.keys()):
                     if value_i not in cap_values:
                         code.values.remove(value_i)
 
-                #for value_i in cap_values:
-                #    if value_i not in code.values:
-                #        value = code.values.add(value_i)
-                #        value.add_name(f'Unknown Value 0x{value_i:X}')
+                for value_i in cap_values:
+                    if value_i not in code.values:
+                        value = code.values.add(value_i)
+                        # value.add_name(f'Unknown Value 0x{value_i:X}')
+
+
+    # Import / Export
+    def export(self, diff : 'VcpCodeStorage' = None) -> Union[Dict, str]:
+        if diff is None:
+            return self.asdict()
+
+        d = self.asdict(recursive=False)
+        d_diff = diff.asdict(recursive=False)
+        res = {}
+
+        def _add_default(code_i):
+            if 'default' not in res:
+                res['default'] = str(code_i)
+            else:
+                res['default'] += f',{code_i}'
+
+        # remove codes that match
+        for code_i, code_obj in d.items():
+            if code_i not in d_diff:
+                code_d = code_obj.export()
+                if len(code_d) != 0:
+                    res[code_i] = code_d
+                else:
+                    _add_default(code_i)
+                continue
+
+            code_d = code_obj.export(diff=d_diff[code_i])
+
+            if len(code_d) > 0:
+                res[code_i] = code_d
+            else:
+                _add_default(code_i)
+
+        if 'default' in res and len(res) == 1:
+            res = res['default']
+
+        return res

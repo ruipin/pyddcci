@@ -12,5 +12,3 @@ from .storable import VcpStorageStorable
 T_VcpStorageStorable = TypeVar('T_VcpStorageStorable', bound=VcpStorageStorable, covariant=True)
 
 from .storage import VcpStorage
-from .storage_with_fallback import VcpStorageWithFallback
-from .fallback_storable import FallbackVcpStorageStorable

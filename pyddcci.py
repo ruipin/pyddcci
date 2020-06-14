@@ -16,5 +16,4 @@ if __name__ == "__main__":
 
     from app.ddcci.monitor import Monitor
     monitor = Monitor('Primary')
-    monitor.codes.import_capabilities(monitor.get_os_monitor().capabilities)
-    print(yaml.dump(monitor.codes.asdict()))
+    monitor.codes.asdict()

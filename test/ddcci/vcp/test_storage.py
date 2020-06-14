@@ -4,18 +4,17 @@
 import unittest
 
 from app.ddcci.vcp.code.code_storage import VcpCodeStorage
-from app.ddcci.vcp.code.code_fallback import FallbackVcpCode
 
 
 class VcpStorageTest(unittest.TestCase):
-    def test_storage_fallback(self):
+    def test_storage(self):
         first = VcpCodeStorage(instance_name='first')
         second = VcpCodeStorage(instance_name='second')
         second.fallback = first
 
         first['apple'] = 0x12
         self.assertIn('apple', first)
-        self.assertIn('apple', second)
+        self.assertNotIn('apple', second)
 
         second['orange'] = 0x21
         self.assertNotIn('orange', first)
@@ -23,6 +22,9 @@ class VcpStorageTest(unittest.TestCase):
 
         first['apple']['TEN'] = 10
         self.assertIn('TEN', first['apple'])
+
+        second.copy_storage(first)
+        self.assertIn('apple', second)
         self.assertIn('TEN', second['apple'])
 
         second['apple']['TEN'].add_name('ONE_ZERO')
@@ -35,17 +37,15 @@ class VcpStorageTest(unittest.TestCase):
 
         first['apple']['TWENTY'] = 20
         self.assertIn('TWENTY', first['apple'])
-        self.assertIn('TWENTY', second['apple'])
+        self.assertNotIn('TWENTY', second['apple'])
 
         second['apple']['TWENTY'] = None
         self.assertIn('TWENTY', first['apple'])
         self.assertNotIn('TWENTY', second['apple'])
 
-
         first['apple'].add_name('appl')
         self.assertIn('appl', first)
-        self.assertIn('appl', second)
-        self.assertNotIsInstance(second['appl'], FallbackVcpCode)
+        self.assertNotIn('appl', second)
 
 
 

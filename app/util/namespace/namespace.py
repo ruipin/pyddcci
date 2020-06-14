@@ -63,7 +63,8 @@ class Namespace(object):
         super().__init__(**super_params)
 
         # Finish initialization
-        self.merge(kwargs)
+        if kwargs:
+            self.merge(kwargs)
 
         self.__frozen_schema    = frozen_schema
         self.__frozen_namespace = frozen_namespace

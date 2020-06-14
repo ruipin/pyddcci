@@ -16,14 +16,5 @@ if __name__ == "__main__":
 
     from app.ddcci.monitor import Monitor
     monitor = Monitor('Primary')
-
-    monitor['input'] = 'dp1'
-
-    prev = monitor['input']
-    log.info(f"Previous Input: {prev}")
-
-    monitor['input'] = 'HDMI 1'
-    log.info(f"Switched to {monitor['input']}")
-
-    monitor['input'] = prev
-    log.info(f"Back to {monitor['input']}")
+    monitor.codes.import_capabilities(monitor.get_os_monitor().capabilities)
+    print(yaml.dump(monitor.codes.asdict()))

@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: GPLv3
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-from typing import Dict, Any, Optional, List, Hashable
+from typing import Dict, Any, Optional, List
 
 from ..enums import *
+from ..storage import T_VcpStorageIdentifier
 from ..storage.storage_with_fallback import VcpStorageWithFallback
 
 from .code import VcpCode
@@ -11,24 +12,15 @@ from .code import VcpCode
 
 class VcpCodeStorage(VcpStorageWithFallback):
     # Superclass abstract methods
-    def _is_storable_value(self, obj : Any) -> bool:
-        return isinstance(obj, VcpCode)
-
     def _create_value(self, code : int) -> VcpCode:
         return VcpCode(code, instance_parent=self)
-
-    def _get_fallback(self) -> 'VcpCodeStorage':
-        return self._fallback if hasattr(self, '_fallback') else None
-
-    def _set_fallback(self, new_fallback: 'VcpCodeStorage') -> None:
-        self._fallback = new_fallback
 
     def _get_fallback_storage(self) -> 'VcpCodeStorage':
         return self.fallback
 
-    def _wrap_fallback_storable(self, name : Hashable, storable : VcpCode) -> 'FallbackVcpCode':
+    def _wrap_fallback_storable(self, identifier : T_VcpStorageIdentifier, storable : VcpCode) -> 'FallbackVcpCode':
         from .code_fallback import FallbackVcpCode
-        return FallbackVcpCode(name, self)
+        return FallbackVcpCode(identifier, self)
 
 
     # Add from dictionary
@@ -51,8 +43,8 @@ class VcpCodeStorage(VcpStorageWithFallback):
             verify = details.get('verify', False)
 
             # Add code
-            code = self.add(value)
-            self[name] = code
+            code : VcpCode = self.add(value)
+            code.add_name(name)
             code.type = type
             code.description = description
             code.category = category
@@ -86,3 +78,39 @@ class VcpCodeStorage(VcpStorageWithFallback):
 
             # Otherwise, add directly
             self._add_dictionary_key(k, v, None)
+
+
+    # Capabilities
+    def import_capabilities(self, capabilities):
+        cap_codes = capabilities.get_vcp_codes()
+
+        # Remove codes that do not exist
+        for key in self.keys():
+            if key not in cap_codes:
+                self.remove(key)
+
+        # Process codes
+        for code_i, cap_values in cap_codes.items():
+            # Add codes that are in the capabilities but not already added
+            code = None
+            if code_i not in self:
+                code = self.add(code_i)
+                code.add_name(f'Unknown Code 0x{code_i:X}')
+
+            # Process values
+            if cap_values is not None:
+                if code is None:
+                    code = self.get(code_i)
+
+                    from .code_fallback import FallbackVcpCode
+                    if isinstance(code, FallbackVcpCode):
+                        code = code.create_wrapped_storable()
+
+                for value_i in code.values.keys():
+                    if value_i not in cap_values:
+                        code.values.remove(value_i)
+
+                #for value_i in cap_values:
+                #    if value_i not in code.values:
+                #        value = code.values.add(value_i)
+                #        value.add_name(f'Unknown Value 0x{value_i:X}')

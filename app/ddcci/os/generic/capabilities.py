@@ -1,18 +1,15 @@
 # SPDX-License-Identifier: GPLv3
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-import string
-
 from .. import BaseOsMonitor
 
-from . import Namespace, getLogger
+from app.util.namespace import NamespaceMap
+from app.util.mixins import LoggableMixin, HierarchicalMixin, NamedMixin
 
-log = getLogger(__name__)
 
-
-class OsMonitorCapabilities(Namespace):
+class OsMonitorCapabilities(NamespaceMap, LoggableMixin, HierarchicalMixin, NamedMixin):
     def __init__(self, capability_string : str, instance_parent : BaseOsMonitor):
-        super().__init__("Capabilities", instance_parent=instance_parent)
+        super().__init__(instance_name="Capabilities", instance_parent=instance_parent)
 
         self._parse(capability_string)
 
@@ -23,15 +20,10 @@ class OsMonitorCapabilities(Namespace):
         if vcp is None:
             return
 
-        for code in self.vcp:
-            if isinstance(code, tuple):
-                yield code[0], code[1]
-
-            else:
-                yield code, None
+        return vcp.items()
 
     def get_vcp_codes(self):
-        return [code for code in self.iter_vcp_codes()]
+        return self.get('vcp', None)
 
 
     # Parsing
@@ -74,7 +66,6 @@ class OsMonitorCapabilities(Namespace):
         stack = []
         result_list = []
         cur = result_list
-        should_split = False
 
         split_len = len(split)
 
@@ -89,7 +80,8 @@ class OsMonitorCapabilities(Namespace):
                 cur = arr
                 continue
 
-            cur.append(accum)
+            if len(accum) > 0:
+                cur.append(accum)
 
             while next_depth < depth:
                 depth, cur = stack.pop()
@@ -101,6 +93,27 @@ class OsMonitorCapabilities(Namespace):
             self[k] = lst
 
 
+    def _process_vcp_codes(self):
+        vcp = self.get('vcp', None)
+        if vcp is None:
+            return
+
+        vcp_out = {}
+
+        for code in self.vcp:
+            if isinstance(code, tuple):
+                values = []
+                for val in code[1]:
+                    values.append(int(val, 16))
+
+                vcp_out[int(code[0], 16)] = values
+
+            else:
+                vcp_out[int(code, 16)] = None
+
+        self.vcp = vcp_out
+
+
     def _parse(self, capability_string):
         if capability_string is None:
             raise ValueError(f"'capability_string' must not be None")
@@ -109,3 +122,6 @@ class OsMonitorCapabilities(Namespace):
 
         # Split by parentheses
         self._parse_parentheses(capability_string)
+
+        # Post-process VCP codes
+        self._process_vcp_codes()

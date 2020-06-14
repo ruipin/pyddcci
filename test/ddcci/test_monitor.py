@@ -72,3 +72,19 @@ class MonitorTest(unittest.TestCase):
         self.assertEqual(input4, 'rgb 1')
 
 
+
+    def test_capabilities(self):
+        monitor_info.generate_mock_monitors(1, 0)
+        monitor_info.MOCK_MONITORS[0].adapter.primary = True
+
+        monitor1 = Monitor('Primary')
+        caps = monitor1.get_os_monitor().capabilities
+        monitor1.codes.import_capabilities(caps)
+
+        values = monitor1.codes['input'].values
+        self.assertEqual(4, len(values))
+        self.assertEqual(4*2, len([x for x in values.names()]))
+        self.assertEqual(4*3, len({x: y for x, y in values.items()}))
+
+        import yaml
+        print(yaml.dump(monitor1.codes.asdict()))

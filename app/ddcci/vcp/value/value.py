@@ -3,13 +3,12 @@
 
 from ordered_set import OrderedSet
 
-from ..storage.storage  import VcpStorage
-from ..storage.storable import VcpStorageStorable
+from ..storage import VcpStorageStorable
 
-from app.util import Namespace, HierarchicalMixin, NamedMixin
+from app.util import HierarchicalMixin, NamedMixin
 
 
-class VcpValue(VcpStorageStorable, Namespace, HierarchicalMixin, NamedMixin):
+class VcpValue(VcpStorageStorable, HierarchicalMixin, NamedMixin):
     """
     Class that represents a valid value for a given VcpCode, including name aliases
     """
@@ -20,8 +19,6 @@ class VcpValue(VcpStorageStorable, Namespace, HierarchicalMixin, NamedMixin):
         self._value = value
         self._names = OrderedSet()
 
-        self.freeze_schema()
-
 
     # Value
     @property
@@ -30,3 +27,5 @@ class VcpValue(VcpStorageStorable, Namespace, HierarchicalMixin, NamedMixin):
 
     def vcp_storage_key(self):
         return self._value
+    def vcp_storage_key_name(self):
+        return 'value'

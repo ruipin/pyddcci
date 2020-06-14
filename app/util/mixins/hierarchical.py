@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: GPLv3
 # Copyright © 2020 pyddcci Rui Pinheiro
 
+from typing import TypeVar
+
 from . import shorten_name
 from .named import NamedMixin
 
 class HierarchicalMixin(object):
-    def __init__(self, *args, instance_parent: 'HierarchicalMixin' = None, **kwargs):
+    def __init__(self, *args, instance_parent: 'T_Hierarchical' = None, **kwargs):
         super().__init__(*args, **kwargs)
 
         # Sanity check: We must come before Named
@@ -21,16 +23,16 @@ class HierarchicalMixin(object):
 
 
     # Parent
-    def _set_instance_parent(self, new_parent : 'HierarchicalMixin') -> None:
+    def _set_instance_parent(self, new_parent : 'T_Hierarchical') -> None:
         if new_parent is not None and not isinstance(new_parent, HierarchicalMixin):
             raise TypeError("'new_parent' must be a class that extends 'HierarchicalMixin'")
         self.__parent = new_parent
 
     @property
-    def instance_parent(self) -> 'HierarchicalMixin':
+    def instance_parent(self) -> 'T_Hierarchical':
         return self.__parent
     @instance_parent.setter
-    def instance_parent(self, new_parent : 'HierarchicalMixin') -> None:
+    def instance_parent(self, new_parent : 'T_Hierarchical') -> None:
         self._set_instance_parent(new_parent)
 
 
@@ -66,3 +68,5 @@ class HierarchicalMixin(object):
 
     def __str__(self) -> str:
         return f"<{self.__str_name}>"
+
+T_Hierarchical = TypeVar('T_Hierarchical', bound=HierarchicalMixin, covariant=True)

@@ -10,3 +10,12 @@ logging:
   levels:
     file: -1
     tty: DEBUG
+
+
+# Monitors
+monitors:
+  capabilities:
+    # Whether to scan a monitor's capabilities on first use
+    automatic_scan: true
+    # Whether to automatically export scanned capabilities to config.yaml
+    automatic_export: true

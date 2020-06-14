@@ -12,10 +12,3 @@ if __name__ == "__main__":
     log.info("Starting.")
     log.debug('Cmdline= %s', ' '.join(sys.argv))
     CFG.debug()
-
-
-    from app.ddcci.monitor import Monitor
-    monitor = Monitor('Primary')
-    monitor.codes['input']['appl'] = 20
-    monitor.codes['banana'] = 99
-    monitor.export_codes()

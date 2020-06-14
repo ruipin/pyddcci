@@ -91,7 +91,7 @@ class Monitor(Namespace, LoggableMixin, HierarchicalMixin, NamedMixin):
         MONITOR_CONFIG.save()
 
     def _import_codes(self, data : Dict) -> None:
-        self._codes = VcpCodeStorage.deserialize(data, diff=vcp_spec.VCP_SPEC, instance_parent=self)
+        self._codes = VcpCodeStorage.deserialize_construct(data, diff=vcp_spec.VCP_SPEC, instance_parent=self)
 
     def import_codes(self) -> bool:
         from .monitor_config import MONITOR_CONFIG

@@ -29,3 +29,8 @@ monitors:
   codes:
     # Whether to automatically import custom VCP code/value aliases from monitors.yaml
     automatic_import: true
+
+
+# VCP Codes
+vcp:
+  custom_codes: null

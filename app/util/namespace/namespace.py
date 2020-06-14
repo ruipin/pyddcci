@@ -122,7 +122,7 @@ class Namespace(object):
         self.__sanity_check_key(key)
 
         # Sticky
-        if self.__class__.NAMESPACE__STICKY:
+        if self.__class__.NAMESPACE__STICKY and not self._sticky_ignore_key(key):
             if self.__class__.NAMESPACE__STICKY__DELIMITER is not None:
                 split_key = key.split(self.__class__.NAMESPACE__STICKY__DELIMITER, 1)
                 if len(split_key) > 1:
@@ -159,19 +159,20 @@ class Namespace(object):
         self.__sanity_check_key(key, delete=True)
 
         # Sticky
-        if self.__class__.NAMESPACE__STICKY and self.__class__.NAMESPACE__STICKY__DELIMITER is not None:
-            split_key = key.split(self.__class__.NAMESPACE__STICKY__DELIMITER, 1)
-            if len(split_key) > 1:
-                self_key = split_key[0]
-                sub_key  = split_key[1]
-                self.__sanity_check_key(self_key, delete=True)
+        if self.__class__.NAMESPACE__STICKY and not self._sticky_ignore_key(key):
+            if self.__class__.NAMESPACE__STICKY__DELIMITER is not None:
+                split_key = key.split(self.__class__.NAMESPACE__STICKY__DELIMITER, 1)
+                if len(split_key) > 1:
+                    self_key = split_key[0]
+                    sub_key  = split_key[1]
+                    self.__sanity_check_key(self_key, delete=True)
 
-                sub_namespace : Namespace = self[self_key]
-                if not isinstance(sub_namespace, Namespace):
-                    raise ValueError(f"Cannot delete delimited key '{key}', as '{self_key}' is not a member of class '{self._sticky_construct_class().__name__}")
+                    sub_namespace : Namespace = self[self_key]
+                    if not isinstance(sub_namespace, Namespace):
+                        raise ValueError(f"Cannot delete delimited key '{key}', as '{self_key}' is not a member of class '{self._sticky_construct_class().__name__}")
 
-                sub_namespace.__remove(sub_key)
-                return
+                    sub_namespace.__remove(sub_key)
+                    return
 
         # Handle custom target
         tgt : Namespace = self.__get_write_target(key)
@@ -237,6 +238,9 @@ class Namespace(object):
             inst[sub_key] = value
 
         return inst
+
+    def _sticky_ignore_key(self, key : str) -> bool:
+        return False
 
 
     # Dictionary Magic Methods

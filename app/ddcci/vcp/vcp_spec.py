@@ -2,7 +2,7 @@
 # Copyright © 2020 pyddcci Rui Pinheiro
 
 from .code import VcpCodeStorage
-
+from app.util import CFG
 
 ########################
 # Codes from the MCCS specification
@@ -732,3 +732,7 @@ VCP_SPEC.add_dictionary({
     "Manufacturer": _manufacturer_vcps
 })
 
+
+custom_codes = CFG.vcp.custom_codes
+if custom_codes is not None:
+    VCP_SPEC.deserialize(custom_codes)

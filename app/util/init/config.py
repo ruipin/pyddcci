@@ -21,6 +21,9 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
     # These hierarchies will not be dumped to file
     RESERVED_HIERARCHIES = ('app',)
 
+    # These hierarchies will be stored raw
+    RAW_HIERARCHIES = ('vcp.custom_codes',)
+
     # Constructor
     def __init__(self, instance_name, *args, **kwargs):
         super().__init__(*args, instance_name=instance_name, **kwargs)
@@ -108,14 +111,26 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
 
         return d
 
-    def is_reserved_key(self, key):
-        self_hier = f"{self.hierarchy}.{key}"
+    def is_reserved_key(self, key : str) -> bool:
+        key_hier = f"{self.instance_hierarchy}.{key}"
+        key_hier = key_hier.split('.', 1)[1]
 
         for v in self.__class__.RESERVED_HIERARCHIES:
-            if self_hier.startswith(f"{CONFIG.instance_name}.{v}.") or self_hier == v:
+            if key_hier.startswith(f"{v}.") or key_hier == v:
                 return True
 
         return False
+
+    def _sticky_ignore_key(self, key : str) -> bool:
+        key_hier = f"{self.instance_hierarchy}.{key}"
+        key_hier = key_hier.split('.', 1)[1]
+
+        for v in self.__class__.RAW_HIERARCHIES:
+            if key_hier.startswith(f"{v}.") or key_hier == v:
+                return True
+
+        return False
+
 
 
 class MasterConfigMap(ConfigMap):

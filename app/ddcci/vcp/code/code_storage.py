@@ -103,7 +103,7 @@ class VcpCodeStorage(VcpStorage):
 
     # Serialization
     @classmethod
-    def deserialize(cls, data : Dict, diff : Optional['VcpCodeStorage'] = None, instance_parent=None) -> 'VcpCodeStorage':
+    def deserialize_construct(cls, data : Dict, diff : Optional['VcpCodeStorage'] = None, instance_parent=None) -> 'VcpCodeStorage':
         self = VcpCodeStorage(instance_parent=instance_parent)
         super(VcpCodeStorage, self).deserialize(data, diff)
         return self

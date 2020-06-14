@@ -129,6 +129,11 @@ class Namespace(object):
                     key     = split_key[0]
                     sub_key = split_key[1]
                     self._sanity_check_key(key)
+
+                    if key in self:
+                        self[key][sub_key] = value
+                        return
+
                     value = self.__sticky_create_namespace(key, sub_key, value)
 
             if isinstance(value, dict):
@@ -197,14 +202,31 @@ class Namespace(object):
         if self.__is_slots_key(key):
             return super().__getattr__(key)
 
+        # Handle default value
+        if default is Namespace.NO_DEFAULT:
+            default = self.__class__.NAMESPACE__DEFAULT
+
+        # Sticky
+        if self.__class__.NAMESPACE__STICKY and not self._sticky_ignore_key(key):
+            if self.__class__.NAMESPACE__STICKY__DELIMITER is not None:
+                split_key = key.split(self.__class__.NAMESPACE__STICKY__DELIMITER, 1)
+                if len(split_key) > 1:
+                    self_key = split_key[0]
+                    sub_key = split_key[1]
+                    self.__sanity_check_key(self_key, delete=True)
+
+                    if self_key not in self:
+                        if default is Namespace.NO_DEFAULT:
+                            raise KeyError()
+                        else:
+                            return default
+
+                    return self[self_key][sub_key]
+
         # Handle custom target
         tgt: Namespace = self.__get_read_target(key)
         if tgt is not self:
             return tgt.__get(key, default=default)
-
-        # Handle default value
-        if default is Namespace.NO_DEFAULT:
-            default = self.__class__.NAMESPACE__DEFAULT
 
         """ Get an entry from the internal dictionary """
         d = self.__get_access_dict(key)

@@ -28,7 +28,12 @@ def arg_to_log_level(arg):
 
     # Integer
     else:
-        level = int(arg)
+        if arg < 0:
+            level = -1
+        elif arg > 50:
+            level = 0
+        else:
+            level = 50 - int(arg)
 
     return level
 
@@ -77,7 +82,7 @@ class CustomHandler(logging.Handler):
         success = True if self.num_error == 0 and self.num_critical == 0 else False
 
         # Make sure to save configuration when we exit, as long as we didn't fail due to a critical error (and this isn't a unit test)
-        if self.num_critical == 0 and not os.environ.get("UNIT_TEST", None):
+        if self.num_critical == 0 and not os.environ.get("UNIT_TEST", None) and not CFG.app.test:
             print()  # Line break
             CFG.save()
 

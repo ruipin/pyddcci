@@ -57,13 +57,58 @@ def add_arg(name, *args, default=None, **kwargs):
 
 
 # Argument definitions
-add_arg('logging.level.file', '-lv', '--log-verbosity', help='Logfile verbosity. Can be numeric or one of the default logging levels (CRITICAL=50, ERROR=40, WARNING=30, INFO=20, DEBUG=10)')
-add_arg('logging.level.tty' , '-v', '--verbosity', help='Console verbosity. Can be numeric or one of the default logging levels (CRITICAL=50, ERROR=40, WARNING=30, INFO=20, DEBUG=10)')
+add_arg('logging.levels.file', '-lv', '--log-verbosity', action='store', help='Logfile verbosity. Can be numeric or one of the default logging levels (CRITICAL=50, ERROR=40, WARNING=30, INFO=20, DEBUG=10)')
+add_arg('logging.levels.tty' , '-v', '--verbosity', action='store', help='Console verbosity. Can be numeric or one of the default logging levels (CRITICAL=50, ERROR=40, WARNING=30, INFO=20, DEBUG=10)')
+
+
+# CLI commands
+class CommandAction(argparse.Action):
+    GET_PARSER = argparse.ArgumentParser(prefix_chars='+')
+    GET_PARSER.add_argument('+r', '+raw', dest='raw', action='store_const', const=True, default=False)
+
+    SET_PARSER = argparse.ArgumentParser(prefix_chars='+')
+    SET_PARSER.add_argument('+v', '+verify', dest='verify', action='store_const', const=True, default=True)
+    SET_PARSER.add_argument('+nv', '+no_verify', dest='verify', action='store_const', const=False)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if option_string in ('-s', '--set'):
+            typ = 'set'
+            args, unknown = self.__class__.SET_PARSER.parse_known_args(values)
+
+            if len(unknown) != 3:
+                raise ValueError(f"Illegal 'set' command: {values}")
+
+        elif option_string in ('-g', '--get'):
+            typ = 'get'
+            args, unknown = self.__class__.GET_PARSER.parse_known_args(values)
+
+            if len(unknown) != 2:
+                raise ValueError(f"Illegal 'set' command: {values}")
+
+        else:
+            raise ValueError(f"Invalid option_string={option_string}")
+
+        if not hasattr(namespace, self.dest) or getattr(namespace, self.dest) is None:
+            setattr(namespace, self.dest, [])
+
+        getattr(namespace, self.dest).append({
+            'type'  : typ,
+            'args'  : vars(args),
+            'others': unknown
+        })
+
+_PARSER.add_argument('-s', '--set', dest='app.cli.commands', nargs='+', action=CommandAction)
+_PARSER.add_argument('-g', '--get', dest='app.cli.commands', nargs='+', action=CommandAction)
+_PARSER.add_argument('-ie', '--ignore-errors', dest='app.cli.ignore_errors', action='store_const', const=True, default=False)
 
 
 ###################
 # End of argument definitions
 ARGS = _PARSER.parse_args()
+
+if getattr(ARGS, 'app.cli.commands', None) is None:
+    setattr(ARGS, 'app.cli.commands', [])
+
 
 
 ###################

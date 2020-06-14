@@ -142,10 +142,10 @@ class BaseOsMonitor(Namespace, LoggableHierarchicalNamedMixin, metaclass=ABCMeta
                 if i != timeout: self.log.debug(f"{msg} Read 0x{new_val:X}.")
 
                 if value is None:
-                    self.log.info(f"VCP 0x{code:X} is readable again.")
+                    self.log.debug(f"VCP 0x{code:X} is readable again.")
                     break
                 elif new_val == value:
-                    self.log.info(f"Verified 0x{code:X} == 0x{new_val:X}.")
+                    self.log.debug(f"Verified 0x{code:X} == 0x{new_val:X}.")
                     break
             except VcpError:
                 self.log.debug(f"{msg} Read failed.")
@@ -167,7 +167,7 @@ class BaseOsMonitor(Namespace, LoggableHierarchicalNamedMixin, metaclass=ABCMeta
             raise RuntimeError("Called 'on_connect' when already connected")
 
         self._connected = True
-        self.log.info("Connected.")
+        self.log.debug("Connected.")
 
 
     def on_disconnect(self):
@@ -175,4 +175,4 @@ class BaseOsMonitor(Namespace, LoggableHierarchicalNamedMixin, metaclass=ABCMeta
             raise RuntimeError("Called 'on_connect' when already disconnected")
 
         self._connected = False
-        self.log.info("Disconnected.")
+        self.log.debug("Disconnected.")

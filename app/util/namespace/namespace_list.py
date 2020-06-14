@@ -22,7 +22,7 @@ class NamespaceList(Namespace, MutableSequence, metaclass=ABCMeta):
 
         # Call super-class
         super_params = {'frozen_schema': frozen_schema, 'frozen_namespace': frozen_namespace}
-        if isinstance(self, LoggableMixin):
+        if isinstance(self, NamedMixin):
             super_params['instance_name'] = kwargs.pop('instance_name', None)
         if isinstance(self, HierarchicalMixin):
             super_params['instance_parent'] = kwargs.pop('instance_parent', None)

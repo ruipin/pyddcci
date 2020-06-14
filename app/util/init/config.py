@@ -169,14 +169,17 @@ class MasterConfigMap(ConfigMap):
         # Load default file
         self.load_path(self.__class__.DEFAULT_CONFIG_FILE)
 
+        # Initialize app namespace
+        self['app'] = {}
+
         # Add command-line arguments
         for k in vars(args.ARGS):
             v = getattr(args, k)
             if v is not None:
-                self[k] = getattr(args, k)
+                self[k] = v
 
         # Add app information
-        self['app'] = {
+        self['app'].merge({
             'name': args.NAME,
             'version': {
                 'revision': version.GIT_REVISION,
@@ -188,7 +191,7 @@ class MasterConfigMap(ConfigMap):
                 'data': os.path.join(args.HOME, 'data')
             },
             'test': args.UNIT_TEST
-        }
+        })
 
         # Freeze all values so far - they'll be the default values
         self.freeze_default()
@@ -201,6 +204,7 @@ class MasterConfigMap(ConfigMap):
 
     def save(self):
         self.log.info("Saving user configuration...")
+        assert not CONFIG.app.test
         with open(self.__class__.USER_CONFIG_FILE, 'w') as file:
             yaml_str = self.yaml_str(user=True, default=False)
             file.write(yaml_str)

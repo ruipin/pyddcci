@@ -12,7 +12,7 @@ logging:
   # See python 'logging' library documentation for default levels """
   levels:
     file: -1
-    tty: DEBUG
+    tty: INFO
 
 
 # Monitors

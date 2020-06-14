@@ -20,6 +20,7 @@ class BaseMonitorFilter(NamespaceMap, LoggableMixin, HierarchicalMixin, NamedMix
 
     These filters can then be used in the Monitor class in order to select which monitors to act on
     """
+    FILTER_TYPES = {}
 
 
     # Filtering
@@ -64,20 +65,16 @@ class BaseMonitorFilter(NamespaceMap, LoggableMixin, HierarchicalMixin, NamedMix
     @classmethod
     def deserialize(cls, data : Dict, instance_parent=None) -> 'BaseMonitorFilter':
         if 'type' not in data:
-            raise ValueError("Cannot deserialize a MonitorFilter without a 'type' key")
+            raise ValueError(f"'data' dictionary must contain key 'type'")
 
+        data = dict(data)
         typ = data.pop('type')
 
-        if typ == 'info':
-            typ = MonitorInfoMonitorFilter
-        elif typ == 'primary':
-            typ = PrimaryMonitorFilter
-        elif typ == 'regex':
-            typ = RegexMonitorFilter
-        else:
-            raise ValueError(f"Invalid MonitorFilter type '{typ}'")
+        _cls = cls.FILTER_TYPES.get(typ, None)
+        if _cls is None:
+            raise ValueError(f"Invalid filter type {typ}")
 
-        return typ.deserialize(data, instance_parent=instance_parent)
+        return _cls.deserialize(data, instance_parent=instance_parent)
 
 
 
@@ -118,6 +115,7 @@ class PrimaryMonitorFilter(BaseMonitorFilter):
             assert typ == 'primary'
 
         return cls(instance_parent=instance_parent)
+BaseMonitorFilter.FILTER_TYPES['primary'] = PrimaryMonitorFilter
 
 
 class RegexMonitorFilter(BaseMonitorFilter):
@@ -201,6 +199,7 @@ class RegexMonitorFilter(BaseMonitorFilter):
             raise ValueError(f"Invalid 'regex' filter keys: {data}")
 
         return RegexMonitorFilter(regexes, instance_parent=instance_parent)
+BaseMonitorFilter.FILTER_TYPES['regex'] = RegexMonitorFilter
 
 
 
@@ -255,6 +254,7 @@ class MonitorInfoMonitorFilter(BaseMonitorFilter):
             typ = data.pop('type')
             assert typ == 'info'
         return cls(**data)
+BaseMonitorFilter.FILTER_TYPES['info'] = MonitorInfoMonitorFilter
 
 
 

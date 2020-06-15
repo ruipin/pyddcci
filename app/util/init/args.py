@@ -80,6 +80,13 @@ class CommandAction(argparse.Action):
             if len(unknown) != 3:
                 raise ValueError(f"Illegal 'set' command: {values}")
 
+        elif option_string in ('-ms', '--multi-set'):
+            typ = 'multi-set'
+            args, unknown = self.__class__.SET_PARSER.parse_known_args(values)
+
+            if len(unknown) < 3:
+                raise ValueError(f"Illegal 'multi-set' command: {values}")
+
         elif option_string in ('-g', '--get'):
             typ = 'get'
             args, unknown = self.__class__.GET_PARSER.parse_known_args(values)
@@ -106,9 +113,10 @@ class CommandAction(argparse.Action):
             'others': unknown
         })
 
-_PARSER.add_argument('-s', '--set'   , dest='app.cli.commands', nargs='+', action=CommandAction)
-_PARSER.add_argument('-g', '--get'   , dest='app.cli.commands', nargs='+', action=CommandAction)
-_PARSER.add_argument('-t', '--toggle', dest='app.cli.commands', nargs='+', action=CommandAction)
+_PARSER.add_argument('-s' , '--set'      , dest='app.cli.commands', nargs='+', action=CommandAction)
+_PARSER.add_argument('-ms', '--multi-set', dest='app.cli.commands', nargs='+', action=CommandAction)
+_PARSER.add_argument('-g' , '--get'      , dest='app.cli.commands', nargs='+', action=CommandAction)
+_PARSER.add_argument('-t' , '--toggle'   , dest='app.cli.commands', nargs='+', action=CommandAction)
 _PARSER.add_argument('-ie', '--ignore-errors', dest='app.cli.ignore_errors', action='store_const', const=True, default=False)
 
 

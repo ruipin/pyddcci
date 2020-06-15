@@ -7,4 +7,5 @@ from .code import CodeCliCommandMixin
 from .value import ValueCliCommandMixin, ValuesCliCommandMixin
 from .get import GetCliCommand
 from .set import SetCliCommand
+from .multi_set import MultiSetCliCommand
 from .toggle import ToggleCliCommand

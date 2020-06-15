@@ -203,7 +203,7 @@ class MasterConfigMap(ConfigMap):
 
 
     def save(self):
-        self.log.info("Saving user configuration...")
+        self.log.debug("Saving user configuration...")
         assert not CONFIG.app.test
         with open(self.__class__.USER_CONFIG_FILE, 'w') as file:
             yaml_str = self.yaml_str(user=True, default=False)

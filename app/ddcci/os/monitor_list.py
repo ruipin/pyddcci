@@ -6,7 +6,7 @@ from abc import ABCMeta
 from . import BaseOsMonitorInfo
 from . import BaseOsMonitor
 
-from app.util import getLogger, NamespaceList, LoggableHierarchicalNamedMixin
+from app.util import NamespaceList, LoggableHierarchicalNamedMixin, CFG
 
 
 
@@ -25,6 +25,9 @@ class BaseOsMonitorList(NamespaceList, LoggableHierarchicalNamedMixin, metaclass
         super().__init__(instance_name=name)
 
         self.enumerate()
+
+        if CFG.app.cli.list_monitors:
+            self.list_monitors()
 
 
     def enumerate(self):
@@ -62,3 +65,14 @@ class BaseOsMonitorList(NamespaceList, LoggableHierarchicalNamedMixin, metaclass
         for monitor in self:
             if not monitor.connected:
                 monitor.on_connect()
+
+
+    def list_monitors(self):
+        import oyaml as yaml
+
+        lst = []
+
+        for monitor in self:
+            lst.append(monitor.info.asdict(recursive=True, private=False, protected=False, public=True))
+
+        print(yaml.dump(lst))

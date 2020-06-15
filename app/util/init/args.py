@@ -60,6 +60,8 @@ def add_arg(name, *args, default=None, **kwargs):
 add_arg('logging.levels.file', '-lv', '--log-verbosity', action='store', help='Logfile verbosity. Can be numeric or one of the default logging levels (CRITICAL=50, ERROR=40, WARNING=30, INFO=20, DEBUG=10)')
 add_arg('logging.levels.tty' , '-v', '--verbosity', action='store', help='Console verbosity. Can be numeric or one of the default logging levels (CRITICAL=50, ERROR=40, WARNING=30, INFO=20, DEBUG=10)')
 
+add_arg('app.cli.list_monitors', '-l', '--list', '--list-monitors', action='store_const', const=True, default=False)
+
 
 # CLI commands
 class CommandAction(argparse.Action):

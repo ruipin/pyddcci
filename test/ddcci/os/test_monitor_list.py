@@ -4,7 +4,7 @@
 from test import TestCase
 
 from app.ddcci.os import OsMonitorList
-from .mock import monitor_info
+from test.ddcci.os.mock import monitor_info
 
 
 class MonitorListTest(TestCase):
@@ -36,7 +36,3 @@ class MonitorListTest(TestCase):
         for i in range(1, 3):
             self.assertFalse(old_monitors[i].connected)
             self.assertNotIn(old_monitors[i], monitors)
-
-
-if __name__ == '__main__':
-    unittest.main()

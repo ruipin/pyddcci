@@ -4,7 +4,7 @@
 from test import TestCase
 
 from app.ddcci.monitor import Monitor
-from .os.mock import monitor_info
+from test.ddcci.os.mock import monitor_info
 
 class MonitorTest(TestCase):
     def test_change_input(self):

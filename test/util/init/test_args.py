@@ -13,8 +13,8 @@ class ArgsTest(unittest.TestCase):
         parsed1 = args._PARSER.parse_args('-s XYZ 22 +no_verify 3 --get ABC 3 +raw'.split(' '))
         cmds1 = getattr(parsed1, 'app.cli.commands')
         self.assertEqual(len(cmds1), 2)
-        self.assertFalse(cmds1[0]['args'].verify)
-        self.assertTrue(cmds1[1]['args'].raw)
+        self.assertFalse(cmds1[0]['args']['verify'])
+        self.assertTrue(cmds1[1]['args']['raw'])
 
         with self.assertRaises(ValueError):
             args._PARSER.parse_args('-s XYZ +no_verify 3 --get ABC 3'.split(' '))

@@ -51,7 +51,7 @@ def add_arg(name, *args, default=None, **kwargs):
 
     _PARSER.add_argument(*args,
         dest=name,
-        default=os.getenv("PYDDCCI_{}".format(name.upper()), default),
+        default=os.getenv("PYDDCCI_{}".format(name.upper()).replace('.','_'), default),
         **kwargs
     )
 

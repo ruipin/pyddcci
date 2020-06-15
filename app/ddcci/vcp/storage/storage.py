@@ -33,6 +33,15 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
         if isinstance(identifier, T_VcpStorageKey):
             return identifier
 
+        try:
+            if identifier[0:2] == '0x':
+                identifier = int(identifier, 16)
+            else:
+                identifier = int(identifier)
+            return identifier
+        except ValueError:
+            pass
+
         new_identifier = identifier.lower()
         new_identifier = re.sub('[^a-z0-9]+', '', new_identifier)
         if len(new_identifier) > 0:

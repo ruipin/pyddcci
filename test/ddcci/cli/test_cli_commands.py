@@ -15,12 +15,11 @@ class MonitorConfigTest(TestCase):
         super().setUp()
 
         self.orig_stdout = sys.stdout
-        self.stdout = StringIO()
-        sys.stdout = self.stdout
+        sys.stdout = StringIO()
 
     def assertStdoutEqual(self, msg):
-        observed = self.stdout.getvalue()
-        self.stdout.truncate(0)
+        observed = sys.stdout.getvalue()
+        sys.stdout = StringIO()
         self.orig_stdout.write(observed)
 
         self.assertEqual(observed.strip(), msg.strip())
@@ -36,9 +35,20 @@ class MonitorConfigTest(TestCase):
         cli_commands.execute()
         self.assertStdoutEqual('0x0\nHDMI 1\nDP 1')
 
+        cli_commands = CliCommands()
+        parsed = args._PARSER.parse_args('-g primary contrast +raw -t primary contrast 0 100 50 -g primary contrast +raw'.split(' '))
+        cli_commands.from_argparse(getattr(parsed, 'app.cli.commands'))
+
+        cli_commands.execute()
+        self.assertStdoutEqual('0\n100')
+        cli_commands.execute()
+        self.assertStdoutEqual('100\n50')
+        cli_commands.execute()
+        self.assertStdoutEqual('50\n0')
+
 
     def tearDown(self):
-        super().tearDown()
+        self.assertStdoutEqual("")
 
+        super().tearDown()
         sys.stdout = self.orig_stdout
-        print(self.stdout.getvalue())

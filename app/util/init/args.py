@@ -70,6 +70,8 @@ class CommandAction(argparse.Action):
     SET_PARSER.add_argument('+v', '+verify', dest='verify', action='store_const', const=True, default=True)
     SET_PARSER.add_argument('+nv', '+no_verify', dest='verify', action='store_const', const=False)
 
+    TOGGLE_PARSER = SET_PARSER
+
     def __call__(self, parser, namespace, values, option_string=None):
         if option_string in ('-s', '--set'):
             typ = 'set'
@@ -85,6 +87,13 @@ class CommandAction(argparse.Action):
             if len(unknown) != 2:
                 raise ValueError(f"Illegal 'set' command: {values}")
 
+        elif option_string in ('-t', '--toggle'):
+            typ = 'toggle'
+            args, unknown = self.__class__.TOGGLE_PARSER.parse_known_args(values)
+
+            if len(unknown) < 3:
+                raise ValueError(f"Illegal 'toggle' command: {values}")
+
         else:
             raise ValueError(f"Invalid option_string={option_string}")
 
@@ -97,8 +106,9 @@ class CommandAction(argparse.Action):
             'others': unknown
         })
 
-_PARSER.add_argument('-s', '--set', dest='app.cli.commands', nargs='+', action=CommandAction)
-_PARSER.add_argument('-g', '--get', dest='app.cli.commands', nargs='+', action=CommandAction)
+_PARSER.add_argument('-s', '--set'   , dest='app.cli.commands', nargs='+', action=CommandAction)
+_PARSER.add_argument('-g', '--get'   , dest='app.cli.commands', nargs='+', action=CommandAction)
+_PARSER.add_argument('-t', '--toggle', dest='app.cli.commands', nargs='+', action=CommandAction)
 _PARSER.add_argument('-ie', '--ignore-errors', dest='app.cli.ignore_errors', action='store_const', const=True, default=False)
 
 

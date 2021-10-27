@@ -94,15 +94,16 @@ class WindowsOsMonitorInfo(BaseOsMonitorInfo):
 
     # GetMonitorInfo
     def _read_GetMonitorInfo_adapter(self):
-        res = display_devices.win32_enum_display_devices_w(None, self.adapter.device.number - 1)
+        i = 0
+        while True:
+            res = display_devices.win32_enum_display_devices_w(None, i)
+            if res is None:
+                raise RuntimeError(f"Could not get the adapter info from GetMonitorInfo for monitor '{self.adapter.device.name}'")
 
-        # Sanity checks
-        def _assert_matches(attr_x, x, attr_y, y):
-            if x != str(y):
-                raise RuntimeError(f"Had {attr_x}='{x}', but got res.{attr_y}='{y}'")
+            if self.adapter.device.name == res.DeviceName and self.adapter.device.id == res.DeviceID:
+                break
 
-        _assert_matches('adapter.device.name', self.adapter.device.name, 'DeviceName', res.DeviceName)
-        _assert_matches('adapter', self.adapter.device.id, 'DeviceID', res.DeviceID)
+            i += 1
 
         # Copy interesting data
         def _copy(obj, attr_x, y):

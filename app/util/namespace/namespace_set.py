@@ -2,7 +2,7 @@
 # Copyright © 2020 pyddcci Rui Pinheiro
 
 from abc import ABCMeta
-from collections import MutableSet
+from collections.abc import MutableSet
 from ordered_set import OrderedSet
 from dataclasses import is_dataclass, asdict as dataclass_asdict
 

@@ -2,7 +2,7 @@
 # Copyright © 2020 pyddcci Rui Pinheiro
 
 from abc import ABCMeta
-from collections import MutableSequence
+from collections.abc import MutableSequence
 from dataclasses import is_dataclass, asdict as dataclass_asdict
 
 from .namespace import Namespace

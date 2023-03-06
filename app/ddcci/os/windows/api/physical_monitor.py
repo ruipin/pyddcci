@@ -10,6 +10,9 @@ from typing import Dict
 from . import struct_asdict
 from . import monitor_info
 
+from app.util import getLogger
+log = getLogger(__name__)
+
 
 #############
 # CTypes Definitions/Types
@@ -48,7 +51,12 @@ class OsMonitorPhysicalHandle(object):
         virtual_handle = HMONITOR()
 
         def callback(hMonitor : HMONITOR, hdcMonitor : HDC, lprcMonitor : POINTER(RECT), dwData : LPARAM) -> bool:
-            info = monitor_info.win32_get_monitor_info(hMonitor)
+            info = None
+            try:
+                info = monitor_info.win32_get_monitor_info(hMonitor)
+            except Exception as e:
+                log.warn(f"Error calling win32_get_monitor_info({hMonitor}): {e}")
+                return True
 
             if info.szDevice == desired_device_name:
                 virtual_handle.value = hMonitor
@@ -58,7 +66,7 @@ class OsMonitorPhysicalHandle(object):
 
         windll.user32.EnumDisplayMonitors(None, None, _MONITORENUMPROC(callback), None)
 
-        if virtual_handle.value == 0:
+        if not virtual_handle.value:
             raise RuntimeError(f"Could not find a virtual handle for monitor {self.monitor}")
 
         # Get physical monitor count

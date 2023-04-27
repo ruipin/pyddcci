@@ -129,6 +129,18 @@ class Edid(Namespace, HierarchicalMixin):
         }
 
     def decode(self, in_bytes):
+        self.length = len(in_bytes)
+
+        # EDID must be at least 128 bytes long
+        if self.length < self.__class__.EDID_STRUCT_SIZE:
+            raise RuntimeError(fr"EDID is too small, got {self.length}, expected 128+ bytes.")
+
+        # If the EDID is longer than 128 bytes, we ignore everything past 128 bytes as those are the extension blocks
+        # which we don't care about
+        if self.length > self.__class__.EDID_STRUCT_SIZE:
+            in_bytes = in_bytes[0:self.__class__.EDID_STRUCT_SIZE]
+            self.length = self.__class__.EDID_STRUCT_SIZE
+
         # Check checksum and unpack
         self.raw = in_bytes
         self._check_checksum()

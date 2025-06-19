@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPLv3
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-from typing import Union, NewType, Dict
+from typing import Union, Dict
 
 from .os import OS_MONITORS, OsMonitor
 from .vcp.code import VcpCode
@@ -15,10 +15,9 @@ from . import monitor_filter
 
 from app.util import Namespace, LoggableMixin, HierarchicalMixin, NamedMixin, CFG
 
-T_VcpCodeIdentifier = NewType('T_VcpCodeIdentifier', Union[VcpCode, T_VcpStorageIdentifier])
-T_VcpValueIdentifier = NewType('T_VcpValueIdentifier', Union[VcpValue, T_VcpStorageIdentifier])
-
-
+# Can't use NewType on Union types, so we define them directly
+T_VcpCodeIdentifier = Union[VcpCode, T_VcpStorageIdentifier]
+T_VcpValueIdentifier = Union[VcpValue, T_VcpStorageIdentifier]
 
 ##########
 # Monitor class

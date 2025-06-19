@@ -15,6 +15,10 @@ from .os import OS_MONITORS, OsMonitor
 
 
 class MonitorConfigEntry(NamespaceMap, LoggableMixin, HierarchicalMixin):
+    """
+    Represents a single monitor configuration entry, including its filter and additional settings.
+    Used for matching and managing configuration for a specific monitor.
+    """
     def __init__(self, filter : Union[Dict, BaseMonitorFilter], instance_parent=None, **kwargs):
         super().__init__(instance_parent=instance_parent)
 
@@ -74,6 +78,10 @@ class MonitorConfigEntry(NamespaceMap, LoggableMixin, HierarchicalMixin):
 
 
 class MonitorConfig(NamespaceSet, LoggableMixin, HierarchicalMixin, NamedMixin):
+    """
+    Collection of monitor configuration entries, loaded from and saved to a YAML file.
+    Provides methods for loading, saving, and managing monitor configurations.
+    """
     def __init__(self, file_path=os.path.join(CFG.app.dirs.data, 'monitors.yaml'), instance_name=None, instance_parent=None):
         super().__init__(instance_name=instance_name, instance_parent=instance_parent)
 

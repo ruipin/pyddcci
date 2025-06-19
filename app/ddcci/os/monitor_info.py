@@ -10,8 +10,8 @@ from app.util import NamespaceMap, LoggableHierarchicalMixin
 
 class BaseOsMonitorInfo(NamespaceMap, LoggableHierarchicalMixin, metaclass=ABCMeta):
     """
-    Class that represents information about a given Monitor as supplied by the OS
-    This is a base class, and should be inherited by a OS-specific class
+    Base class representing information about a monitor as supplied by the OS.
+    Should be subclassed for OS-specific implementations. Contains nested dataclasses for device, adapter, and monitor info.
     """
 
     class SubInfo:

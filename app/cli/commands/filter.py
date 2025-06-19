@@ -8,6 +8,10 @@ from app.ddcci.monitor import Monitor
 from app.ddcci.monitor_filter import BaseMonitorFilter, create_monitor_filter_from
 
 class FilterCliCommandMixin(metaclass=ABCMeta):
+    """
+    Mixin for CLI commands that operate on a monitor filter.
+    Resolves and validates the filter argument for the command, and creates a Monitor instance.
+    """
     def __init__(self, filter : BaseMonitorFilter, *args, **kwargs):
         self.filter  = filter
         self.monitor = Monitor(filter)

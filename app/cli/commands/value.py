@@ -6,6 +6,10 @@ from abc import ABCMeta
 
 
 class ValueCliCommandMixin(metaclass=ABCMeta):
+    """
+    Mixin for CLI commands that operate on a single VCP value.
+    Resolves and validates the value argument for the command.
+    """
     def __init__(self, value : Union[str, int], *args, **kwargs):
         try:
             self.value = self.code[value]
@@ -25,6 +29,10 @@ class ValueCliCommandMixin(metaclass=ABCMeta):
 
 
 class ValuesCliCommandMixin(metaclass=ABCMeta):
+    """
+    Mixin for CLI commands that operate on multiple VCP values.
+    Resolves and validates the values argument for the command.
+    """
     def __init__(self, values : List[Union[str, int]], **kwargs):
         self.values = []
         for value in values:

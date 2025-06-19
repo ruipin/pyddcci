@@ -9,6 +9,10 @@ from ..os import OsMonitor
 
 
 class PrimaryMonitorFilter(BaseMonitorFilter):
+    """
+    Monitor filter that matches the primary monitor (as reported by the OS).
+    Used for selecting the main display in multi-monitor setups.
+    """
     def __init__(self, instance_parent=None):
         super().__init__(instance_parent=instance_parent)
 

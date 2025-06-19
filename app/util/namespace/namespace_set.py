@@ -13,7 +13,10 @@ from ..enter_exit_call import EnterExitCall
 
 class NamespaceSet(Namespace, MutableSet, metaclass=ABCMeta):
     """
-    list wrapper with extended functionality
+    A set wrapper with extended functionality, supporting both set and namespace behaviors.
+
+    Provides a mutable set with attribute access, freezing, and mixin support. Used for unique collections
+    of configuration or data objects in pyddcci.
     """
 
 

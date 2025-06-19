@@ -9,6 +9,10 @@ from typing import Dict, Any
 from . import CliCommand, FilterCliCommandMixin, CodeCliCommandMixin
 
 class GetCliCommand(FilterCliCommandMixin, CodeCliCommandMixin, CliCommand):
+    """
+    CLI command to get a VCP code value from a monitor.
+    Supports raw and formatted output.
+    """
     def __init__(self, *args, raw : bool = False, **kwargs):
         super().__init__(*args, **kwargs)
 

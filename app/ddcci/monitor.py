@@ -24,13 +24,10 @@ T_VcpValueIdentifier = NewType('T_VcpValueIdentifier', Union[VcpValue, T_VcpStor
 # Monitor class
 class Monitor(Namespace, LoggableMixin, HierarchicalMixin, NamedMixin):
     """
-    Monitor class
+    User-facing monitor class for DDC/CI control.
 
-    This is the 'user-visible' class. It represents a OsMonitor, given a filter.
-    When it needs to operate on the OsMonitor, it will dynamically search for the OsMonitor that matches the filter.
-
-    This allows us to configure/remember monitors independently from whether they are connected.
-    It also allows us to be flexible if the monitor information changes.
+    Represents a logical monitor, selected by a filter, and provides methods to query and set VCP codes and values.
+    Handles dynamic association with OS monitors and supports configuration persistence.
     """
 
 

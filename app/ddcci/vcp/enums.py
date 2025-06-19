@@ -4,8 +4,11 @@
 from enum import Enum
 
 
-
 class VcpControlType(Enum):
+    """
+    Enum for VCP control types.
+    """
+
     # Table controls - these are not supported by this application
     VCP_TABLE = "T"
 
@@ -20,6 +23,10 @@ class VcpControlType(Enum):
 
 
 class VcpCodeType(Enum):
+    """
+    Enum for VCP code types.
+    """
+
     # Momentary VCP code. Sending a command of this type causes the monitor to initiate a self-timed operation and then revert to its original state.
     # Examples include display tests and degaussing.
     VCP_MOMENTARY     = 0

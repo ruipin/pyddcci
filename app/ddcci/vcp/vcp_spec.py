@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: GPLv3
 # Copyright © 2020 pyddcci Rui Pinheiro
 
+"""
+VCP (Virtual Control Panel) code and value specification for DDC/CI monitors.
+Defines the VCP code aliases, types, and descriptions as per the MCCS specification.
+"""
+
 from .code import VcpCodeStorage
 from app.util import CFG
 

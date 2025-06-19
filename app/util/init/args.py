@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: GPLv3-or-later
 # Copyright © 2020 pyddcci Rui Pinheiro
 
+"""
+Argument parsing and CLI option definitions for pyddcci.
+Defines global options, command actions, and wraps argparse for use throughout the application.
+"""
+
 import sys
 import argparse
 import os
@@ -23,6 +28,9 @@ HOME = os.path.realpath(os.path.join(__file__, '../../../..'))
 ###################
 # Unit test
 def is_unit_test():
+    """
+    Return True if running in a unit test environment, else False.
+    """
     env = os.environ.get("UNIT_TEST", None)
     if env is not None:
         env = env.strip()

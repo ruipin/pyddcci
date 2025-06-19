@@ -12,6 +12,12 @@ from app.util import LoggableMixin, HierarchicalMixin, NamedMixin
 
 
 class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta):
+    """
+    Abstract base for a collection of VCP storable objects (codes or values).
+
+    Provides dictionary/set-like access, identifier normalization, and serialization for VCP codes/values.
+    Used as a base for VcpCodeStorage and VcpValueStorage.
+    """
     __slots__ = {"_dict", "_set"}
 
     def __init__(self, instance_parent=None, instance_name=None):

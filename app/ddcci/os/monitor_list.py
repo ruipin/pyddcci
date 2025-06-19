@@ -14,8 +14,8 @@ from app.util import NamespaceList, LoggableHierarchicalNamedMixin, CFG
 # MonitorList class
 class BaseOsMonitorList(NamespaceList, LoggableHierarchicalNamedMixin, metaclass=ABCMeta):
     """
-    List of OS Monitors
-    This is a base class, and should be inherited by a OS-specific class
+    Base class for a list of OS monitors.
+    Should be subclassed for OS-specific implementations. Handles enumeration and management of monitor objects.
     """
 
     OS_MONITOR_CLASS      = BaseOsMonitor

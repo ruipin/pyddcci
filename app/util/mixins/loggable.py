@@ -9,6 +9,12 @@ from .named import NamedMixin
 from .hierarchical import HierarchicalMixin
 
 class LoggableMixin(object):
+    """
+    Mixin that adds a logger to a class.
+
+    Provides a .log property for hierarchical logging, and integrates with instance naming and hierarchy if present.
+    Used throughout pyddcci for consistent, contextual logging.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

@@ -13,7 +13,8 @@ from app.ddcci.os.generic.edid import Edid
 # OS Monitor Information
 class WindowsOsMonitorInfo(BaseOsMonitorInfo):
     """
-    Windows implementation of BaseOsMonitorInfo
+    Windows-specific implementation of BaseOsMonitorInfo.
+    Parses and stores monitor information using Windows APIs and device structures.
     """
 
     # Initialization

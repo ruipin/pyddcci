@@ -7,6 +7,10 @@ from abc import ABCMeta
 from ...ddcci.vcp.code import VcpCode
 
 class CodeCliCommandMixin(metaclass=ABCMeta):
+    """
+    Mixin for CLI commands that operate on a VCP code.
+    Resolves and validates the code argument for the command.
+    """
     def __init__(self, code : Union[str, int], *args, **kwargs):
         try:
             self.code = self.monitor.codes[code]

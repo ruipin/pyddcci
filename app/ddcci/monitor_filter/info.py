@@ -9,6 +9,10 @@ from . import BaseMonitorFilter
 from ..os import OsMonitor
 
 class MonitorInfoMonitorFilter(BaseMonitorFilter):
+    """
+    Monitor filter that matches monitors by model, serial, UID, manufacturer ID, and product ID.
+    Used for precise selection of monitors based on OS-reported information.
+    """
     def __init__(self, model, serial, uid, manufacturer_id, product_id, instance_parent=None):
         super().__init__(instance_parent=instance_parent)
 

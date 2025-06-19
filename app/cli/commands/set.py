@@ -9,6 +9,10 @@ from typing import Dict, Any
 from . import CliCommand, FilterCliCommandMixin, CodeCliCommandMixin, ValueCliCommandMixin
 
 class SetCliCommand(FilterCliCommandMixin, CodeCliCommandMixin, ValueCliCommandMixin, CliCommand):
+    """
+    CLI command to set a VCP code value on a monitor.
+    Supports optional verification after setting the value.
+    """
     def __init__(self, *args, verify : bool = False, **kwargs):
         super().__init__(*args, **kwargs)
 

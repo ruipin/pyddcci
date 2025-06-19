@@ -8,7 +8,9 @@ from dataclasses import dataclass
 @dataclass()
 class VcpReply:
     """
-    Represents a response to the "Get VCP Feature & VCP Feature Reply" command defined in the DDC/CI standard
+    Represents a response to the "Get VCP Feature & VCP Feature Reply" command defined in the DDC/CI standard.
+
+    Contains the command code, type, current value, and maximum value for a VCP feature as reported by the monitor.
     """
     command : int
     type    : VcpCodeType

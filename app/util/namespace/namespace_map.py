@@ -12,7 +12,10 @@ from ..enter_exit_call import EnterExitCall
 
 class NamespaceMap(Namespace):
     """
-    Class implementing a namespace that can be accessed like a dictionary or using attributes
+    A namespace that behaves like a dictionary or object, allowing both attribute and key-based access.
+
+    Extends Namespace to provide a mapping interface, with support for freezing, merging, and mixin extensions.
+    Used for structured configuration and data storage in pyddcci.
     """
 
     # We want to hide some attributes from the dictionary

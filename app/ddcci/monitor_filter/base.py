@@ -13,10 +13,10 @@ from app.util import NamespaceMap, LoggableMixin, HierarchicalMixin, NamedMixin
 # Base class
 class BaseMonitorFilter(NamespaceMap, LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta):
     """
-    Base class for filtering OsMonitor objects
-    Implementations should define <match>, which returns True if a specific OsMonitor matches the current filter.
+    Abstract base class for filtering OsMonitor objects.
 
-    These filters can then be used in the Monitor class in order to select which monitors to act on
+    Subclasses implement match() to select monitors based on criteria. Used for monitor selection in pyddcci.
+    Provides serialization, naming, and logging support.
     """
     FILTER_TYPES = {}
 

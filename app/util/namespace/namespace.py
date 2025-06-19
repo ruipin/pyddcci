@@ -10,7 +10,11 @@ from ..enter_exit_call import EnterExitCall
 
 class Namespace(object):
     """
-    Class implementing a namespace that can be accessed like a dictionary or using attributes
+    A flexible namespace object that can be accessed like a dictionary or using attributes.
+
+    This class provides a dynamic container for attributes, supporting both attribute and dict-style access.
+    It supports freezing (to prevent further modification), recursive merging, and can be extended with mixins
+    for logging, naming, and hierarchy. Used as a base for configuration and data structures throughout pyddcci.
     """
 
     # We want to hide some attributes from the dictionary

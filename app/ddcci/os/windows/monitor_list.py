@@ -11,7 +11,8 @@ from ..monitor_list import BaseOsMonitorList
 # OS Monitor class
 class WindowsOsMonitorList(BaseOsMonitorList):
     """
-    Windows implementation of BaseOsMonitorList
+    Windows-specific implementation of BaseOsMonitorList.
+    Manages enumeration and access to Windows OS monitors.
     """
 
     OS_MONITOR_INFO_CLASS = WindowsOsMonitorInfo

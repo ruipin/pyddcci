@@ -10,6 +10,10 @@ from ..os import OsMonitor
 
 
 class OsMonitorMonitorFilter(BaseMonitorFilter):
+    """
+    Monitor filter that matches a specific OsMonitor instance.
+    Used for direct selection of a known monitor object.
+    """
     def __init__(self, os_monitor : OsMonitor, instance_parent=None):
         super().__init__(instance_parent=instance_parent)
 

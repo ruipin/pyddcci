@@ -12,7 +12,10 @@ from ..enter_exit_call import EnterExitCall
 
 class NamespaceList(Namespace, MutableSequence, metaclass=ABCMeta):
     """
-    list wrapper with extended functionality
+    A list wrapper with extended functionality, supporting both list and namespace behaviors.
+
+    Provides a mutable sequence with attribute access, freezing, and mixin support. Used for ordered collections
+    of configuration or data objects in pyddcci.
     """
 
 

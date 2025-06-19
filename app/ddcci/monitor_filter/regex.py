@@ -11,6 +11,10 @@ from ..os import OsMonitor
 
 
 class RegexMonitorFilter(BaseMonitorFilter):
+    """
+    Monitor filter that matches monitors using regular expressions on monitor information.
+    Used for flexible selection of monitors by pattern matching.
+    """
     def __init__(self, filters : Union[str, re.Pattern, List[Union[str, re.Pattern]]], instance_parent=None):
         if isinstance(filters, str):
             filters = [filters]

@@ -5,6 +5,12 @@ from . import shorten_name
 
 
 class NamedMixin(object):
+    """
+    Mixin that adds a name to a class instance.
+
+    Provides instance_name and related properties for identification, logging, and display purposes.
+    Used for configuration, logging, and user-facing objects in pyddcci.
+    """
     def __init__(self, *args, instance_name=None, **kwargs):
         super().__init__(*args, **kwargs)
 

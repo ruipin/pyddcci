@@ -11,7 +11,8 @@ from app.ddcci.vcp.reply import VcpReply
 # OS Monitor class
 class WindowsOsMonitor(BaseOsMonitor):
     """
-    Windows implementation of BaseOsMonitor
+    Windows-specific implementation of BaseOsMonitor.
+    Provides physical monitor handle access and VCP command support for Windows.
     """
 
     # Physical Monitor Handle

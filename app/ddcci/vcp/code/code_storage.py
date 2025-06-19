@@ -10,6 +10,10 @@ from .code import VcpCode
 
 
 class VcpCodeStorage(VcpStorage):
+    """
+    Storage for VcpCode objects, providing methods to add, retrieve, and manage VCP codes and their metadata.
+    Handles loading from dictionaries, capability parsing, and serialization.
+    """
     # Superclass abstract methods
     def _create_value(self, code : int) -> VcpCode:
         return VcpCode(code, instance_parent=self)

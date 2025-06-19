@@ -19,13 +19,25 @@ from .loggable import LoggableMixin
 
 # Create short-hands
 class HierarchicalNamedMixin(HierarchicalMixin, NamedMixin):
+    """
+    Mixin combining hierarchy and naming support.
+    """
     pass
 
 class LoggableHierarchicalMixin(LoggableMixin, HierarchicalMixin):
+    """
+    Mixin combining logging and hierarchy support.
+    """
     pass
 
 class LoggableNamedMixin(LoggableMixin, NamedMixin):
+    """
+    Mixin combining logging and naming support.
+    """
     pass
 
 class LoggableHierarchicalNamedMixin(LoggableMixin, HierarchicalMixin, NamedMixin):
+    """
+    Mixin combining logging, hierarchy, and naming support.
+    """
     pass

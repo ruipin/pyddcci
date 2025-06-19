@@ -7,6 +7,12 @@ from . import shorten_name
 from .named import NamedMixin
 
 class HierarchicalMixin(object):
+    """
+    Mixin that adds parent/child hierarchy support to a class.
+
+    Provides instance_parent and instance_hierarchy properties, allowing objects to be organized in a tree structure.
+    Used for logging, naming, and configuration inheritance in pyddcci.
+    """
     def __init__(self, *args, instance_parent: 'T_Hierarchical' = None, **kwargs):
         super().__init__(*args, **kwargs)
 

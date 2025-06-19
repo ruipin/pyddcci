@@ -11,6 +11,13 @@ from ordered_set import OrderedSet
 from app.util import HierarchicalMixin
 
 class VcpStorageStorable(metaclass=ABCMeta):
+    """
+    Abstract base for objects that can be stored in a VcpStorage.
+
+    Provides naming, serialization, and key management for VCP codes and values.
+    Used as a base for VcpCode and VcpValue.
+    """
+
     """ Methods that modify the instance. This list is used to generate wrapper methods automatically in the FallbackVcpStorageStorable classes """
     WRITE_METHODS = ('add_name', 'add_names', 'remove_name', 'remove_names', 'clear_names')
 

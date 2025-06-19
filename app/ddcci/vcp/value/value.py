@@ -11,7 +11,8 @@ from app.util import HierarchicalMixin, NamedMixin
 
 class VcpValue(VcpStorageStorable, HierarchicalMixin, NamedMixin):
     """
-    Class that represents a valid value for a given VcpCode, including name aliases
+    Represents a valid value for a given VcpCode, including its integer value and name aliases.
+    Supports serialization and deserialization for configuration and communication.
     """
 
     def __init__(self, value : int, instance_parent : HierarchicalMixin):

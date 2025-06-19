@@ -21,8 +21,8 @@ class VcpError(RuntimeError):
 # Monitor class
 class BaseOsMonitor(Namespace, LoggableHierarchicalNamedMixin, metaclass=ABCMeta):
     """
-    Represents a monitor reported by the Operating System
-    This is a base class, and should be inherited by a OS-specific class
+    Base class representing a monitor reported by the Operating System.
+    Should be subclassed for OS-specific implementations. Provides device info, capabilities, and VCP access.
     """
 
     def __init__(self, info : BaseOsMonitorInfo, *args, instance_parent=None, **kwargs):

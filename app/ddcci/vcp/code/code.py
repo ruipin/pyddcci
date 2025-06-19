@@ -10,6 +10,10 @@ from app.util import Namespace, HierarchicalMixin, NamedMixin
 
 
 class VcpCode(VcpStorageStorable, HierarchicalMixin, NamedMixin):
+    """
+    Represents a VCP (Virtual Control Panel) code, including its value, type, description, and aliases.
+    Provides access to associated values and supports serialization and deserialization.
+    """
     def __init__(self, code : int, instance_parent: HierarchicalMixin = None):
         super().__init__(instance_name=f"VcpCode0x{code:X}", instance_parent=instance_parent)
 

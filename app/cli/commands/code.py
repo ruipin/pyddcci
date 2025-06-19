@@ -12,6 +12,13 @@ class CodeCliCommandMixin(metaclass=ABCMeta):
     Resolves and validates the code argument for the command.
     """
     def __init__(self, code : Union[str, int], *args, **kwargs):
+        """
+        Initialize the mixin and resolve the VCP code.
+        Args:
+            code: The VCP code (alias or int).
+        Raises:
+            ValueError: If the code is not valid for the monitor.
+        """
         try:
             self.code = self.monitor.codes[code]
         except KeyError as e:
@@ -22,6 +29,13 @@ class CodeCliCommandMixin(metaclass=ABCMeta):
 
     @classmethod
     def constructor_args_from_argparse(cls, code : Union[str, int], *args, **kwargs) -> Dict[str, Any]:
+        """
+        Build constructor arguments from argparse for this mixin.
+        Args:
+            code: The code string from argparse.
+        Returns:
+            dict: Constructor arguments.
+        """
         d = super(CodeCliCommandMixin, cls).constructor_args_from_argparse(*args, **kwargs)
 
         d['code'] = code

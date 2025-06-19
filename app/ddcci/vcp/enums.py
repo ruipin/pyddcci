@@ -7,6 +7,10 @@ from enum import Enum
 class VcpControlType(Enum):
     """
     Enum for VCP control types.
+
+    - VCP_TABLE: Table controls (not supported by this application)
+    - VCP_NON_CONTINUOUS: Controls that accept only specific values (may be read/write, read-only, or write-only)
+    - VCP_CONTINUOUS: Controls that accept any value from zero to a maximum (always read/write)
     """
 
     # Table controls - these are not supported by this application
@@ -25,6 +29,9 @@ class VcpControlType(Enum):
 class VcpCodeType(Enum):
     """
     Enum for VCP code types.
+
+    - VCP_MOMENTARY: Momentary VCP code (self-timed operation, then revert)
+    - VCP_SET_PARAMETER: Set Parameter VCP code (changes monitor operation)
     """
 
     # Momentary VCP code. Sending a command of this type causes the monitor to initiate a self-timed operation and then revert to its original state.

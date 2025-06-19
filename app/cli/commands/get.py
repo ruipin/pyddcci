@@ -14,12 +14,24 @@ class GetCliCommand(FilterCliCommandMixin, CodeCliCommandMixin, CliCommand):
     Supports raw and formatted output.
     """
     def __init__(self, *args, raw : bool = False, **kwargs):
+        """
+        Initialize the GetCliCommand.
+        Args:
+            raw: If True, output the raw VCP code value.
+        """
         super().__init__(*args, **kwargs)
 
         self.raw = raw
 
     @classmethod
     def constructor_args_from_argparse(cls, *args, raw : bool, **kwargs) -> Dict[str, Any]:
+        """
+        Build constructor arguments from argparse for this command.
+        Args:
+            raw: If True, output the raw VCP code value.
+        Returns:
+            dict: Constructor arguments.
+        """
         d = super(GetCliCommand, cls).constructor_args_from_argparse(*args, **kwargs)
 
         d['raw'] = raw
@@ -29,6 +41,9 @@ class GetCliCommand(FilterCliCommandMixin, CodeCliCommandMixin, CliCommand):
 
     # Execute
     def execute(self) -> None:
+        """
+        Execute the get command: read and print the VCP value from the monitor.
+        """
         value = self.monitor.vcp_read(self.code)
 
         if self.raw:

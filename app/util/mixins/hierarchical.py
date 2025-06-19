@@ -14,6 +14,12 @@ class HierarchicalMixin(object):
     Used for logging, naming, and configuration inheritance in pyddcci.
     """
     def __init__(self, *args, instance_parent: 'T_Hierarchical' = None, **kwargs):
+        """
+        Initialize the mixin and set the instance parent.
+
+        Args:
+            instance_parent: Optional parent for the instance.
+        """
         super().__init__(*args, **kwargs)
 
         # Sanity check: We must come before Named
@@ -25,25 +31,55 @@ class HierarchicalMixin(object):
 
     @classmethod
     def class_short_name(cls) -> str:
+        """
+        Get a shortened class name for display/logging.
+
+        Returns:
+            str: The shortened class name.
+        """
         return shorten_name(cls.__name__)
 
 
     # Parent
     def _set_instance_parent(self, new_parent : 'T_Hierarchical') -> None:
+        """
+        Set the instance parent.
+
+        Args:
+            new_parent: The new parent object.
+        """
         if new_parent is not None and not isinstance(new_parent, HierarchicalMixin):
             raise TypeError("'new_parent' must be a class that extends 'HierarchicalMixin'")
         self.__parent = new_parent
 
     @property
     def instance_parent(self) -> 'T_Hierarchical':
+        """
+        Get the instance parent.
+
+        Returns:
+            T_Hierarchical: The parent object.
+        """
         return self.__parent
     @instance_parent.setter
     def instance_parent(self, new_parent : 'T_Hierarchical') -> None:
+        """
+        Set the instance parent.
+
+        Args:
+            new_parent: The new parent object.
+        """
         self._set_instance_parent(new_parent)
 
 
     @property
     def instance_hierarchy(self) -> str:
+        """
+        Get the hierarchy of the instance as a string.
+
+        Returns:
+            str: The hierarchy string.
+        """
         hier = self.instance_name if isinstance(self, NamedMixin) else self.__class__.__name__
         if self.__parent is None:
             return hier
@@ -54,6 +90,12 @@ class HierarchicalMixin(object):
     # Printing
     @property
     def __repr_name(self) -> str:
+        """
+        Get the representation name of the instance.
+
+        Returns:
+            str: The representation name.
+        """
         nm = self.instance_hierarchy
         cnm = self.__class__.__name__
 
@@ -63,16 +105,34 @@ class HierarchicalMixin(object):
             return f"{cnm} {nm}"
 
     def __repr__(self) -> str:
+        """
+        Get the string representation of the instance.
+
+        Returns:
+            str: The string representation.
+        """
         return f"<{self.__repr_name}>"
 
     @property
     def __str_name(self) -> str:
+        """
+        Get the string name of the instance.
+
+        Returns:
+            str: The string name.
+        """
         if isinstance(self, NamedMixin):
             return self._NamedMixin__str_name
 
         return f"{self.__class__.__name__}"
 
     def __str__(self) -> str:
+        """
+        Get the string representation of the instance.
+
+        Returns:
+            str: The string representation.
+        """
         return f"<{self.__str_name}>"
 
 T_Hierarchical = TypeVar('T_Hierarchical', bound=HierarchicalMixin, covariant=True)

@@ -13,6 +13,10 @@ class VcpCode(VcpStorageStorable, HierarchicalMixin, NamedMixin):
     """
     Represents a VCP (Virtual Control Panel) code, including its value, type, description, and aliases.
     Provides access to associated values and supports serialization and deserialization.
+
+    Args:
+        code: The VCP code integer value.
+        instance_parent: Optional parent for hierarchy.
     """
     def __init__(self, code : int, instance_parent: HierarchicalMixin = None):
         super().__init__(instance_name=f"VcpCode0x{code:X}", instance_parent=instance_parent)
@@ -29,42 +33,92 @@ class VcpCode(VcpStorageStorable, HierarchicalMixin, NamedMixin):
 
     # Code
     def vcp_storage_key(self):
+        """
+        Return the integer key for storage (the VCP code).
+        Returns:
+            int: The VCP code value.
+        """
         return self.code
+
     def vcp_storage_key_name(self):
+        """
+        Return the name of the storage key ("code").
+        Returns:
+            str: The key name.
+        """
         return 'code'
 
 
     # Aliases
     @property
     def values(self):
+        """
+        Get the value storage for this VCP code.
+        Returns:
+            VcpValueStorage: The value storage object.
+        """
         return self._values
+
     def add_value(self, name : T_VcpStorageName, new_value : T_VcpStorageKey):
+        """
+        Add a value alias for this VCP code.
+        Args:
+            name: Alias name for the value.
+            new_value: Integer value.
+        """
         self._values[name] = new_value
 
 
 
     # Magic methods (wrap Value Storage)
     def __getitem__(self, identifier : T_VcpStorageIdentifier):
-        """ Get an attribute using dictionary syntax obj[key] """
+        """
+        Get a value by alias or integer using dictionary syntax.
+        Args:
+            identifier: Alias or integer value.
+        Returns:
+            VcpValue: The value object.
+        """
         return self._values.get(identifier)
 
     def __setitem__(self, identifier : T_VcpStorageIdentifier, value : T_VcpStorageKey):
-        """ Modify an attribute using dictionary syntax obj[key] = value """
+        """
+        Set a value by alias using dictionary syntax.
+        Args:
+            identifier: Alias name.
+            value: Integer value.
+        """
         self._values.set(identifier, value)
 
     def __delitem__(self, identifier : T_VcpStorageIdentifier):
-        """ Delete an attribute using dictionary syntax """
+        """
+        Delete a value alias using dictionary syntax.
+        Args:
+            identifier: Alias name.
+        """
         self._values.remove(identifier)
 
     def contains(self, identifier : T_VcpStorageIdentifier):
         return self._values.contains(identifier)
 
     def __contains__(self, identifier : T_VcpStorageIdentifier):
+        """
+        Check if a value alias or integer exists for this code.
+        Args:
+            identifier: Alias or integer value.
+        Returns:
+            bool: True if present, False otherwise.
+        """
         return self.contains(identifier)
 
 
     # Copying
     def copy_storable(self, other : 'VcpCode') -> None:
+        """
+        Copy all attributes and values from another VcpCode.
+        Args:
+            other: The VcpCode to copy from.
+        """
         super().copy_storable(other)
 
         self.type        = other.type
@@ -76,6 +130,13 @@ class VcpCode(VcpStorageStorable, HierarchicalMixin, NamedMixin):
 
     # Conversion
     def asdict(self, recursive=True, **kwargs) -> Dict[str, Any]:
+        """
+        Convert this VcpCode to a dictionary representation.
+        Args:
+            recursive: If True, include values recursively.
+        Returns:
+            dict: The dictionary representation.
+        """
         d = super().asdict(**kwargs)
 
         if recursive:
@@ -90,6 +151,13 @@ class VcpCode(VcpStorageStorable, HierarchicalMixin, NamedMixin):
 
     # Import / Export
     def serialize(self, diff : 'VcpCode' = None) -> Union[Dict[str, Any], str]:
+        """
+        Serialize this VcpCode, optionally as a diff from another VcpCode.
+        Args:
+            diff: Another VcpCode to diff against.
+        Returns:
+            dict or str: The serialized representation.
+        """
         if diff is None:
             return self.asdict()
 
@@ -122,6 +190,12 @@ class VcpCode(VcpStorageStorable, HierarchicalMixin, NamedMixin):
         return res
 
     def deserialize(self, data : Union[Dict, str], diff : Optional['VcpCode'] = None) -> None:
+        """
+        Deserialize this VcpCode from a dictionary or string, optionally using a diff.
+        Args:
+            data: The data to deserialize from.
+            diff: Optional diff VcpCode.
+        """
         if isinstance(data, str):
             data = {'name': data}
 

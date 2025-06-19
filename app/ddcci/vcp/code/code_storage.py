@@ -14,13 +14,28 @@ class VcpCodeStorage(VcpStorage):
     Storage for VcpCode objects, providing methods to add, retrieve, and manage VCP codes and their metadata.
     Handles loading from dictionaries, capability parsing, and serialization.
     """
-    # Superclass abstract methods
     def _create_value(self, code : int) -> VcpCode:
+        """
+        Create a new VcpCode instance for the given code.
+
+        Args:
+            code: The VCP code integer value.
+
+        Returns:
+            VcpCode: The created VcpCode instance.
+        """
         return VcpCode(code, instance_parent=self)
 
 
-    # Add from dictionary
     def _add_dictionary_key(self, value: int, details: Dict[str, Any], category: Optional[str]):
+        """
+        Add a VCP code and its details from a dictionary entry.
+
+        Args:
+            value: The VCP code integer value.
+            details: Dictionary of code details (name, type, aliases, etc.).
+            category: Optional category name.
+        """
         name = details["name"]
 
         try:
@@ -61,6 +76,12 @@ class VcpCodeStorage(VcpStorage):
 
 
     def add_dictionary(self, d):
+        """
+        Add multiple VCP codes from a dictionary.
+
+        Args:
+            d: Dictionary of codes and details.
+        """
         for k, v in d.items():
             # String keys are categories
             if isinstance(k, str):
@@ -73,8 +94,13 @@ class VcpCodeStorage(VcpStorage):
             self._add_dictionary_key(k, v, None)
 
 
-    # Capabilities
     def load_capabilities(self, capabilities):
+        """
+        Update the code storage to match the monitor's reported capabilities.
+
+        Args:
+            capabilities: Capabilities object with VCP code info.
+        """
         cap_codes = capabilities.get_vcp_codes()
 
         # Remove codes that do not exist
@@ -105,9 +131,19 @@ class VcpCodeStorage(VcpStorage):
                         # value.add_name(f'Unknown Value 0x{value_i:X}')
 
 
-    # Serialization
     @classmethod
     def deserialize_construct(cls, data : Dict, diff : Optional['VcpCodeStorage'] = None, instance_parent=None) -> 'VcpCodeStorage':
+        """
+        Construct a VcpCodeStorage from serialized data, optionally using a diff and parent.
+
+        Args:
+            data: Serialized dictionary.
+            diff: Optional diff VcpCodeStorage.
+            instance_parent: Optional parent for hierarchy.
+
+        Returns:
+            VcpCodeStorage: The constructed storage.
+        """
         self = VcpCodeStorage(instance_parent=instance_parent)
         super(VcpCodeStorage, self).deserialize(data, diff)
         return self

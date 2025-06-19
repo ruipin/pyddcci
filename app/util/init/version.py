@@ -9,6 +9,11 @@ import subprocess
 VERSION = "0.1"
 
 def git_revision():
+    """
+    Get the current git revision string, if available.
+    Returns:
+        str or None: The git revision string, or None if not available.
+    """
     def _minimal_ext_cmd(cmd):
         # construct minimal environment
         env = {}
@@ -52,6 +57,11 @@ GIT_REVISION = git_revision()
 
 
 def get_version_string():
+    """
+    Get the full version string, including git revision if available.
+    Returns:
+        str: The version string.
+    """
     ver = VERSION
 
     if GIT_REVISION:

@@ -13,6 +13,10 @@ class VcpValue(VcpStorageStorable, HierarchicalMixin, NamedMixin):
     """
     Represents a valid value for a given VcpCode, including its integer value and name aliases.
     Supports serialization and deserialization for configuration and communication.
+
+    Args:
+        value: The integer value for this VCP value.
+        instance_parent: Optional parent for hierarchy.
     """
 
     def __init__(self, value : int, instance_parent : HierarchicalMixin):
@@ -25,16 +29,44 @@ class VcpValue(VcpStorageStorable, HierarchicalMixin, NamedMixin):
     # Value
     @property
     def value(self):
+        """
+        Get the integer value for this VCP value.
+
+        Returns:
+            int: The value.
+        """
         return self._value
 
     def vcp_storage_key(self):
+        """
+        Return the integer key for storage (the value).
+
+        Returns:
+            int: The value.
+        """
         return self._value
+
     def vcp_storage_key_name(self):
+        """
+        Return the name of the storage key ("value").
+
+        Returns:
+            str: The key name.
+        """
         return 'value'
 
 
     # Import / Export
     def serialize(self, diff : 'VcpValue' =None) -> Union[Dict, str]:
+        """
+        Serialize this VcpValue, optionally as a diff from another VcpValue.
+
+        Args:
+            diff: Optional VcpValue to diff against.
+
+        Returns:
+            dict or str: The serialized representation.
+        """
         if diff is None:
             res = self.asdict()
 
@@ -61,6 +93,13 @@ class VcpValue(VcpStorageStorable, HierarchicalMixin, NamedMixin):
         return res
 
     def deserialize(self, data : Union[Dict, str], diff : Optional['VcpValue'] = None) -> None:
+        """
+        Deserialize this VcpValue from a dictionary or string, optionally using a diff.
+
+        Args:
+            data: The data to deserialize from.
+            diff: Optional diff VcpValue.
+        """
         if isinstance(data, str):
             data = {'name': data}
 

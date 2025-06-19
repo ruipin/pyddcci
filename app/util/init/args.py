@@ -27,9 +27,11 @@ HOME = os.path.realpath(os.path.join(__file__, '../../../..'))
 
 ###################
 # Unit test
-def is_unit_test():
+def is_unit_test() -> bool:
     """
-    Return True if running in a unit test environment, else False.
+    Test whether running in a unit test environment.
+    Returns:
+        bool: True if running in a unit test environment, False otherwise.
     """
     env = os.environ.get("UNIT_TEST", None)
     if env is not None:
@@ -51,12 +53,13 @@ _PARSER = argparse.ArgumentParser()
 
 def add_arg(name, *args, default=None, **kwargs):
     """
-    Examples:
-    >>> add_arg('BASIC'  , '-b', '--basic', help='Does XYZ')
-    >>> add_arg('STORE_TRUE'    , '-st', '--store-true', action='store_true', default=False, help="Defaults to False. Becomes True if arg supplied")
-    >>> add_arg('APPEND', '-a', '--append', action='append', default=None, help="Append to array")
+    Add a command-line argument to the global parser.
+    Args:
+        name: The destination variable name.
+        *args: Argument flags (e.g., '-v', '--verbosity').
+        default: Default value if not set elsewhere.
+        **kwargs: Additional argparse options.
     """
-
     _PARSER.add_argument(*args,
         dest=name,
         default=os.getenv("PYDDCCI_{}".format(name.upper()).replace('.','_'), default),
@@ -73,6 +76,10 @@ add_arg('app.cli.list_monitors', '-l', '--list', '--list-monitors', action='stor
 
 # CLI commands
 class CommandAction(argparse.Action):
+    """
+    Custom argparse action for handling CLI command arguments (get, set, multi-set, toggle).
+    Parses and validates command arguments and stores them in the namespace.
+    """
     GET_PARSER = argparse.ArgumentParser(prefix_chars='+')
     GET_PARSER.add_argument('+r', '+raw', dest='raw', action='store_const', const=True, default=False)
 
@@ -83,6 +90,16 @@ class CommandAction(argparse.Action):
     TOGGLE_PARSER = SET_PARSER
 
     def __call__(self, parser, namespace, values, option_string=None):
+        """
+        Parse and validate CLI command arguments, storing them in the namespace.
+        Args:
+            parser: The argparse parser instance.
+            namespace: The argparse namespace.
+            values: The argument values.
+            option_string: The option string used (e.g., '-g', '-s').
+        Raises:
+            ValueError: If the command arguments are invalid.
+        """
         if option_string in ('-s', '--set'):
             typ = 'set'
             args, unknown = self.__class__.SET_PARSER.parse_known_args(values)
@@ -142,9 +159,21 @@ if getattr(ARGS, 'app.cli.commands', None) is None:
 ###################
 # Wrap 'ARGS' accesses
 def __getattr__(name):
-    """ Get an attribute using attribute syntax obj.name """
+    """
+    Get an attribute using attribute syntax obj.name.
+    Args:
+        name: The attribute name.
+    Returns:
+        The attribute value.
+    """
     return getattr(ARGS, name)
 
 def __getitem__(key):
-    """ Get an attribute using dictionary syntax obj[key] """
+    """
+    Get an attribute using dictionary syntax obj[key].
+    Args:
+        key: The attribute name.
+    Returns:
+        The attribute value.
+    """
     return getattr(ARGS, key)

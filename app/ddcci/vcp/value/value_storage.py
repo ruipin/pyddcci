@@ -13,4 +13,11 @@ class VcpValueStorage(VcpStorage):
     Used for storing possible values for a given VCP code.
     """
     def _create_value(self, value : int) -> VcpValue:
+        """
+        Create a new VcpValue instance for the given value.
+        Args:
+            value: The integer value for the VCP value.
+        Returns:
+            VcpValue: The created VcpValue instance.
+        """
         return VcpValue(value, instance_parent=self)

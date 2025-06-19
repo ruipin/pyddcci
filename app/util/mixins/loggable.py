@@ -16,6 +16,9 @@ class LoggableMixin(object):
     Used throughout pyddcci for consistent, contextual logging.
     """
     def __init__(self, *args, **kwargs):
+        """
+        Initialize the mixin and set up the logger.
+        """
         super().__init__(*args, **kwargs)
 
         # Sanity check: We must come before Named
@@ -29,15 +32,33 @@ class LoggableMixin(object):
 
     @classmethod
     def class_short_name(cls) -> str:
+        """
+        Get a shortened class name for logging.
+
+        Returns:
+            str: The shortened class name.
+        """
         return shorten_name(cls.__name__)
 
 
     # Support for Hierarchical/Named
     def _set_instance_parent(self, new_parent : HierarchicalMixin) -> None:
+        """
+        Set the instance parent and reset the logger.
+
+        Args:
+            new_parent: The new parent object.
+        """
         super()._set_instance_parent(new_parent)
         self.__log = None
 
     def _set_instance_name(self, new_name : str) -> None:
+        """
+        Set the instance name and reset the logger.
+
+        Args:
+            new_name: The new name to set.
+        """
         super()._set_instance_name(new_name)
         self.__log = None
 
@@ -45,7 +66,12 @@ class LoggableMixin(object):
     # Logging
     @property
     def log(self) -> logging.Logger:
-        """ Returns a logger for the current object. If self.name is 'None', uses the class name """
+        """
+        Returns a logger for the current object. If self.name is 'None', uses the class name.
+
+        Returns:
+            logging.Logger: The logger instance for the object.
+        """
         if self.__log is None:
             from ..init import getLogger
             parent = self.instance_parent if isinstance(self, HierarchicalMixin) else None
@@ -54,15 +80,33 @@ class LoggableMixin(object):
 
     @property
     def __log_name__(self) -> str:
+        """
+        Get the log name for the current object.
+
+        Returns:
+            str: The log name.
+        """
         return self.instance_name if isinstance(self, NamedMixin) else self.__class__.__name__
 
     @property
     def __log_hierarchy__(self) -> str:
+        """
+        Get the log hierarchy for the current object.
+
+        Returns:
+            str: The log hierarchy.
+        """
         return self.instance_hierarchy if isinstance(self, HierarchicalMixin) else self.__log_name__
 
     # Printing
     @property
     def __repr_name(self) -> str:
+        """
+        Get the representation name for the current object.
+
+        Returns:
+            str: The representation name.
+        """
         nm = self.__log_hierarchy__
         cnm = self.__class__.__name__
 
@@ -72,14 +116,32 @@ class LoggableMixin(object):
             return f"{cnm}:{nm}"
 
     def __repr__(self) -> str:
+        """
+        Get the string representation of the current object.
+
+        Returns:
+            str: The string representation.
+        """
         return f"<{self.__repr_name}>"
 
     @property
     def __str_name(self) -> str:
+        """
+        Get the string name for the current object.
+
+        Returns:
+            str: The string name.
+        """
         if isinstance(self, NamedMixin):
             return self._NamedMixin__str_name
 
         return f"{self.__class__.__name__}"
 
     def __str__(self) -> str:
+        """
+        Get the string representation of the current object.
+
+        Returns:
+            str: The string representation.
+        """
         return f"<{self.__str_name}>"

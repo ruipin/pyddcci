@@ -14,12 +14,24 @@ class SetCliCommand(FilterCliCommandMixin, CodeCliCommandMixin, ValueCliCommandM
     Supports optional verification after setting the value.
     """
     def __init__(self, *args, verify : bool = False, **kwargs):
+        """
+        Initialize the SetCliCommand.
+        Args:
+            verify: If True, verify the VCP value after setting.
+        """
         super().__init__(*args, **kwargs)
 
         self.verify = verify
 
     @classmethod
     def constructor_args_from_argparse(cls, *args, verify : bool, **kwargs) -> Dict[str, Any]:
+        """
+        Build constructor arguments from argparse for this command.
+        Args:
+            verify: If True, verify the VCP value after setting.
+        Returns:
+            dict: Constructor arguments.
+        """
         d = super(SetCliCommand, cls).constructor_args_from_argparse(*args, **kwargs)
 
         d['verify'] = verify
@@ -29,6 +41,9 @@ class SetCliCommand(FilterCliCommandMixin, CodeCliCommandMixin, ValueCliCommandM
 
     # Execute
     def execute(self) -> None:
+        """
+        Execute the set command: write the VCP value to the monitor.
+        """
         self.monitor.vcp_write(self.code, self.value, verify=self.verify)
 
 CliCommand.CLI_COMMAND_TYPES['set'] = SetCliCommand

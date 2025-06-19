@@ -18,6 +18,10 @@ class MonitorConfigEntry(NamespaceMap, LoggableMixin, HierarchicalMixin):
     """
     Represents a single monitor configuration entry, including its filter and additional settings.
     Used for matching and managing configuration for a specific monitor.
+
+    Args:
+        filter: Monitor filter (dict or BaseMonitorFilter).
+        instance_parent: Optional parent for hierarchy.
     """
     def __init__(self, filter : Union[Dict, BaseMonitorFilter], instance_parent=None, **kwargs):
         super().__init__(instance_parent=instance_parent)
@@ -29,21 +33,45 @@ class MonitorConfigEntry(NamespaceMap, LoggableMixin, HierarchicalMixin):
     # Filter
     @property
     def filter(self) -> BaseMonitorFilter:
+        """
+        Get the filter object for this config entry.
+        Returns:
+            BaseMonitorFilter: The filter object.
+        """
         return self._filter
     @filter.setter
     def filter(self, new_filter : Union[Dict, BaseMonitorFilter]):
+        """
+        Set the filter for this config entry.
+        Args:
+            new_filter: The new filter (dict or BaseMonitorFilter).
+        """
         if isinstance(new_filter, Dict):
             new_filter = BaseMonitorFilter.deserialize(new_filter, instance_parent=self)
         self._filter : BaseMonitorFilter = new_filter
 
 
     def get_os_monitor(self, enumerate=True):
+        """
+        Return the OS monitor matching this config entry's filter.
+        Args:
+            enumerate: If True, refresh the OS monitor list before searching.
+        Returns:
+            OsMonitor: The matched OS monitor object.
+        """
         if enumerate:
             OS_MONITORS.enumerate()
 
         return self.filter.find_one(OS_MONITORS)
 
     def match(self, os_monitor):
+        """
+        Check if the given OS monitor matches this config entry's filter.
+        Args:
+            os_monitor: The OS monitor to check.
+        Returns:
+            bool: True if the monitor matches, False otherwise.
+        """
         return self.filter.match(os_monitor)
 
 
@@ -57,6 +85,11 @@ class MonitorConfigEntry(NamespaceMap, LoggableMixin, HierarchicalMixin):
 
     # Serialization
     def serialize(self) -> Dict:
+        """
+        Serialize this config entry to a dictionary.
+        Returns:
+            dict: The serialized representation.
+        """
         out = OrderedDict()
         out['filter'] = self.filter.serialize()
 
@@ -67,6 +100,14 @@ class MonitorConfigEntry(NamespaceMap, LoggableMixin, HierarchicalMixin):
 
     @classmethod
     def deserialize(cls, data : Dict, instance_parent = None) -> 'MonitorConfigEntry':
+        """
+        Deserialize a config entry from a dictionary.
+        Args:
+            data: The dictionary to deserialize from.
+            instance_parent: Optional parent for hierarchy.
+        Returns:
+            MonitorConfigEntry: The deserialized entry.
+        """
         if not isinstance(data, dict):
             raise ValueError(f"'data' must be a dictionary")
 
@@ -81,6 +122,11 @@ class MonitorConfig(NamespaceSet, LoggableMixin, HierarchicalMixin, NamedMixin):
     """
     Collection of monitor configuration entries, loaded from and saved to a YAML file.
     Provides methods for loading, saving, and managing monitor configurations.
+
+    Args:
+        file_path: Path to the YAML file.
+        instance_name: Optional name for the config.
+        instance_parent: Optional parent for hierarchy.
     """
     def __init__(self, file_path=os.path.join(CFG.app.dirs.data, 'monitors.yaml'), instance_name=None, instance_parent=None):
         super().__init__(instance_name=instance_name, instance_parent=instance_parent)
@@ -90,6 +136,11 @@ class MonitorConfig(NamespaceSet, LoggableMixin, HierarchicalMixin, NamedMixin):
 
     # Add
     def add(self, obj : Union[BaseMonitorFilter, OsMonitor]) -> None:
+        """
+        Add a monitor filter or OS monitor to the config.
+        Args:
+            obj: The filter or OS monitor to add.
+        """
         filter = obj
 
         if isinstance(obj, OsMonitor):
@@ -101,6 +152,14 @@ class MonitorConfig(NamespaceSet, LoggableMixin, HierarchicalMixin, NamedMixin):
         super().add(entry)
 
     def get(self, obj : Union[BaseMonitorFilter, OsMonitor], add : bool = True) -> Optional[MonitorConfigEntry]:
+        """
+        Get the config entry for a given filter or OS monitor.
+        Args:
+            obj: The filter or OS monitor to look up.
+            add: If True, add the entry if not found.
+        Returns:
+            MonitorConfigEntry or None: The found entry, or None if not found and add is False.
+        """
         if isinstance(obj, OsMonitor):
             for entry in self:
                 if isinstance(entry.filter, (OsMonitorMonitorFilter, MonitorInfoMonitorFilter)) and entry.match(obj):
@@ -125,6 +184,11 @@ class MonitorConfig(NamespaceSet, LoggableMixin, HierarchicalMixin, NamedMixin):
 
     # Loading
     def load_from_list(self, lst : List) -> None:
+        """
+        Load config entries from a list of dictionaries.
+        Args:
+            lst: List of dictionaries to load from.
+        """
         if not isinstance(lst, list):
             raise ValueError(f"'lst' must be a list")
 
@@ -133,6 +197,9 @@ class MonitorConfig(NamespaceSet, LoggableMixin, HierarchicalMixin, NamedMixin):
 
 
     def load(self) -> None:
+        """
+        Load the monitor configuration from the YAML file.
+        """
         if self.file_path is None or not os.path.exists(self.file_path):
             return
 
@@ -145,6 +212,11 @@ class MonitorConfig(NamespaceSet, LoggableMixin, HierarchicalMixin, NamedMixin):
 
     # Saving
     def serialize(self) -> List:
+        """
+        Serialize all config entries to a list of dictionaries.
+        Returns:
+            list: The serialized config entries.
+        """
         out = []
 
         for entry in self:
@@ -154,10 +226,18 @@ class MonitorConfig(NamespaceSet, LoggableMixin, HierarchicalMixin, NamedMixin):
 
 
     def yaml_str(self) -> str:
+        """
+        Get the YAML string representation of the config.
+        Returns:
+            str: The YAML string.
+        """
         return yaml.dump(self.serialize())
 
 
     def save(self):
+        """
+        Save the monitor configuration to the YAML file.
+        """
         if self.file_path is None:
             return
 

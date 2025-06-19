@@ -23,6 +23,12 @@ class VcpStorageStorable(metaclass=ABCMeta):
 
 
     def __init__(self, *args, **kwargs):
+        """
+        Initialize the VcpStorageStorable object.
+
+        Args:
+            instance_parent: Optional parent instance for hierarchical storage.
+        """
         instance_parent = None
         if not isinstance(self, HierarchicalMixin):
             instance_parent = kwargs.pop('instance_parent', None)
@@ -35,33 +41,72 @@ class VcpStorageStorable(metaclass=ABCMeta):
         self._initialize()
 
     def _initialize(self):
+        """
+        Internal initialization method for setting up names.
+        """
         self._names = OrderedSet()
 
     @abstractmethod
     def vcp_storage_key(self) -> T_VcpStorageKey:
+        """
+        Return the integer key for storage (code or value).
+
+        Returns:
+            int: The storage key.
+        """
         pass
 
     @abstractmethod
     def vcp_storage_key_name(self) -> str:
+        """
+        Return the name of the storage key (e.g., "code" or "value").
+
+        Returns:
+            str: The key name.
+        """
         pass
 
 
     # Name(s)
     @property
     def has_name(self) -> bool:
+        """
+        Check if this object has a name.
+
+        Returns:
+            bool: True if named, False otherwise.
+        """
         return len(self._names) > 0
 
     @property
     def name(self) -> T_VcpStorageName:
+        """
+        Get the primary name for this object.
+
+        Returns:
+            str: The primary name or hex value.
+        """
         if self.has_name:
             return str(self._names[0])
         return f"0x{self.vcp_storage_key():X}"
 
     @property
     def names(self) -> Iterable[T_VcpStorageName]:
+        """
+        Get all names/aliases for this object.
+
+        Returns:
+            Iterable[str]: All names.
+        """
         return OrderedSet(self._names)
 
     def add_name(self, new_name : T_VcpStorageName) -> None:
+        """
+        Add a new alias name for this object.
+
+        Args:
+            new_name: The alias name to add.
+        """
         if isinstance(new_name, int):
             raise ValueError(f"new_name={new_name} cannot be an integer")
 
@@ -72,10 +117,22 @@ class VcpStorageStorable(metaclass=ABCMeta):
             self.instance_parent[new_name] = self.vcp_storage_key()
 
     def add_names(self, *names : Iterable[T_VcpStorageName]) -> None:
+        """
+        Add multiple alias names for this object.
+
+        Args:
+            names: The alias names to add.
+        """
         for name in names:
             self.add_name(name)
 
     def remove_name(self, name : T_VcpStorageName) -> None:
+        """
+        Remove an alias name from this object.
+
+        Args:
+            name: The alias name to remove.
+        """
         if isinstance(name, int):
             raise ValueError(f"name={name} cannot be an integer")
 
@@ -89,15 +146,33 @@ class VcpStorageStorable(metaclass=ABCMeta):
             del self.instance_parent[name]
 
     def remove_names(self, *names : Iterable[T_VcpStorageName]) -> None:
+        """
+        Remove multiple alias names from this object.
+
+        Args:
+            names: The alias names to remove.
+        """
         for name in names:
             self.remove_name(name)
 
     def clear_names(self) -> None:
+        """
+        Remove all alias names from this object.
+        """
         self.remove_names(*list(self._names))
 
 
     # Comparison, etc
     def __eq__(self, other : Union['VcpStorageStorable', T_VcpStorageIdentifier]) -> bool:
+        """
+        Compare this object with another object or identifier.
+
+        Args:
+            other: The object or identifier to compare.
+
+        Returns:
+            bool: True if equal, False otherwise.
+        """
         if isinstance(other, self.__class__):
             return other is self
 
@@ -118,11 +193,23 @@ class VcpStorageStorable(metaclass=ABCMeta):
         return False
 
     def __hash__(self) -> int:
+        """
+        Generate a hash for this object.
+
+        Returns:
+            int: The hash value.
+        """
         return self.vcp_storage_key()
 
 
     # Copying
     def copy_storable(self, other : 'VcpStorageStorable') -> None:
+        """
+        Copy all names from another storable object.
+
+        Args:
+            other: The object to copy from.
+        """
         assert self.vcp_storage_key() == other.vcp_storage_key()
         assert self.__class__ is other.__class__
 
@@ -132,6 +219,15 @@ class VcpStorageStorable(metaclass=ABCMeta):
 
     # Conversion
     def asdict(self, include_key=False) -> Dict[str, Any]:
+        """
+        Convert this object to a dictionary representation.
+
+        Args:
+            include_key: If True, include the storage key in the dict.
+
+        Returns:
+            dict: The dictionary representation.
+        """
         d = {}
 
         if self.has_name:
@@ -158,6 +254,12 @@ class VcpStorageStorable(metaclass=ABCMeta):
 
 
     def _fromdict(self, data : Dict) -> None:
+        """
+        Populate this object from a dictionary.
+
+        Args:
+            data: The dictionary to populate from.
+        """
         self.clear_names()
 
         if 'name' in data:
@@ -176,4 +278,10 @@ class VcpStorageStorable(metaclass=ABCMeta):
 
     # Printing
     def __str__(self) -> str:
+        """
+        Return the primary name as a string.
+
+        Returns:
+            str: The primary name.
+        """
         return self.name

@@ -11,6 +11,13 @@ class ValueCliCommandMixin(metaclass=ABCMeta):
     Resolves and validates the value argument for the command.
     """
     def __init__(self, value : Union[str, int], *args, **kwargs):
+        """
+        Initialize the mixin and resolve the VCP value.
+        Args:
+            value: The VCP value (alias or int).
+        Raises:
+            ValueError: If the value is not valid for the code.
+        """
         try:
             self.value = self.code[value]
         except KeyError as e:
@@ -21,6 +28,13 @@ class ValueCliCommandMixin(metaclass=ABCMeta):
 
     @classmethod
     def constructor_args_from_argparse(cls, value : Union[str, int], *args, **kwargs) -> Dict[str, Any]:
+        """
+        Build constructor arguments from argparse for this mixin.
+        Args:
+            value: The value string from argparse.
+        Returns:
+            dict: Constructor arguments.
+        """
         d = super(ValueCliCommandMixin, cls).constructor_args_from_argparse(*args, **kwargs)
 
         d['value'] = value
@@ -34,6 +48,13 @@ class ValuesCliCommandMixin(metaclass=ABCMeta):
     Resolves and validates the values argument for the command.
     """
     def __init__(self, values : List[Union[str, int]], **kwargs):
+        """
+        Initialize the mixin and resolve the VCP values.
+        Args:
+            values: List of VCP values (aliases or ints).
+        Raises:
+            ValueError: If any value is not valid for the code.
+        """
         self.values = []
         for value in values:
             try:
@@ -46,6 +67,15 @@ class ValuesCliCommandMixin(metaclass=ABCMeta):
 
     @classmethod
     def constructor_args_from_argparse(cls, *values : List[Union[str, int]], **kwargs) -> Dict[str, Any]:
+        """
+        Build constructor arguments from argparse for this mixin.
+        Args:
+            values: The value strings from argparse.
+        Returns:
+            dict: Constructor arguments.
+        Raises:
+            ValueError: If no values are provided.
+        """
         d = super(ValuesCliCommandMixin, cls).constructor_args_from_argparse(**kwargs)
 
         if len(values) == 0:

@@ -22,6 +22,9 @@ class CliCommand(LoggableMixin, metaclass=ABCMeta):
     def constructor_args_from_argparse(cls) -> Dict[str, Any]:
         """
         Return a dictionary of constructor arguments from argparse (override in subclasses).
+
+        Returns:
+            dict: Constructor arguments for the command.
         """
         return {}
 
@@ -29,6 +32,15 @@ class CliCommand(LoggableMixin, metaclass=ABCMeta):
     def from_argparse(cls, command : Dict) -> 'CliCommand':
         """
         Factory method to instantiate a CLI command from an argparse-parsed command dict.
+
+        Args:
+            command: Dictionary from argparse containing command info.
+
+        Returns:
+            CliCommand: The instantiated command object.
+
+        Raises:
+            ValueError: If the command dict is missing required keys or type is invalid.
         """
         if 'type' not in command:
             raise ValueError("'command' dictionary must contain key 'type'")
@@ -53,46 +65,3 @@ class CliCommand(LoggableMixin, metaclass=ABCMeta):
         Execute the CLI command. Must be implemented by subclasses.
         """
         pass
-
-
-"""
-for i, command in enumerate(commands):
-    try:
-        cmd = command[0]
-        args = command[1:]
-
-        # Set VCP code
-        if cmd == 'set':
-            if len(args) != 3:
-                raise RuntimeError("'set' commands require 3 arguments: filter, code, value")
-
-            filter = args[0]
-            code = args[1]
-            value = args[2]
-
-            from app.ddcci.monitor import Monitor
-
-            monitor = Monitor(filter)
-            monitor.vcp_write(code, value)
-
-        # Get VCP code
-        elif cmd == 'get':
-            if len(args) != 2:
-                raise RuntimeError("'get' commands require 2 arguments: filter, code")
-
-            filter = args[0]
-            code = args[1]
-
-            from app.ddcci.monitor import Monitor
-
-            monitor = Monitor(filter)
-            print(monitor.vcp_read(code))
-
-        # Error
-        else:
-            raise ValueError(f"Invalid command '{cmd}'")
-
-    except Exception as e:
-        if not CFG.app.cli.ignore_errors:
-            raise RuntimeError(f"Failed to execute command #{i}: {command}") from e
-"""

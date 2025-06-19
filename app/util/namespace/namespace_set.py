@@ -19,11 +19,17 @@ class NamespaceSet(Namespace, MutableSet, metaclass=ABCMeta):
     of configuration or data objects in pyddcci.
     """
 
-
-    # Constructor
     def __init__(self, *args, frozen_schema=False, frozen_namespace=False, frozen_set=False, **kwargs):
-        """ Initializes a list """
+        """
+        Initializes a NamespaceSet instance.
 
+        Args:
+            frozen_schema (bool): If True, freeze the schema.
+            frozen_namespace (bool): If True, freeze the namespace.
+            frozen_set (bool): If True, freeze the set.
+            *args: Positional arguments for set initialization.
+            **kwargs: Keyword arguments for set initialization.
+        """
         # Call super-class
         super_params = {'frozen_schema': frozen_schema, 'frozen_namespace': frozen_namespace}
         if isinstance(self, LoggableMixin):
@@ -39,38 +45,93 @@ class NamespaceSet(Namespace, MutableSet, metaclass=ABCMeta):
         self.__frozen_set = frozen_set
 
 
-    # Abstract methods implementation
     def add(self, m):
+        """
+        Adds an element to the set.
+
+        Args:
+            m: The element to add.
+
+        Raises:
+            RuntimeError: If the set is frozen.
+        """
         if self.frozen_set:
             raise RuntimeError(f"{self.__class__.__name__} is frozen")
         self._set.add(m)
 
     def discard(self, m):
+        """
+        Removes an element from the set if it exists.
+
+        Args:
+            m: The element to remove.
+
+        Raises:
+            RuntimeError: If the set is frozen.
+        """
         if self.frozen_set:
             raise RuntimeError(f"{self.__class__.__name__} is frozen")
         self._set.discard(m)
 
     def __len__(self):
+        """
+        Returns the number of elements in the set.
+
+        Returns:
+            int: The number of elements in the set.
+        """
         return len(self._set)
 
     def __iter__(self):
+        """
+        Returns an iterator over the set.
+
+        Returns:
+            iterator: An iterator over the set.
+        """
         return iter(self._set)
 
     def __contains__(self, m):
+        """
+        Checks if an element is in the set.
+
+        Args:
+            m: The element to check.
+
+        Returns:
+            bool: True if the element is in the set, False otherwise.
+        """
         return m in self._set
 
 
-    # Set utilities
     def replace(self, other_set):
+        """
+        Replaces the current set with another set.
+
+        Args:
+            other_set (set): The set to replace with.
+
+        Raises:
+            RuntimeError: If the set is frozen.
+        """
         if self.frozen_set:
             raise RuntimeError(f"{self.__class__.__name__} is frozen")
 
         self._set = set(other_set)
 
 
-    # Freezing
     def freeze_set(self, freeze=True, *, recursive=False, temporary=False):
-        """ Freezes this object, so new attributes cannot be added """
+        """
+        Freezes or unfreezes the set.
+
+        Args:
+            freeze (bool): If True, freeze the set. If False, unfreeze the set.
+            recursive (bool): If True, apply the freeze/unfreeze operation recursively.
+            temporary (bool): If True, apply the freeze/unfreeze operation temporarily.
+
+        Returns:
+            EnterExitCall: Context manager for temporary freeze/unfreeze.
+        """
         if temporary:
             return EnterExitCall(
                 self.freeze_set, self.freeze_set,
@@ -85,18 +146,52 @@ class NamespaceSet(Namespace, MutableSet, metaclass=ABCMeta):
         self.__frozen_set = freeze
 
     def unfreeze_set(self, recursive=False, temporary=False):
+        """
+        Unfreezes the set.
+
+        Args:
+            recursive (bool): If True, apply the unfreeze operation recursively.
+            temporary (bool): If True, apply the unfreeze operation temporarily.
+
+        Returns:
+            EnterExitCall: Context manager for temporary unfreeze.
+        """
         return self.freeze_set(False, recursive=recursive, temporary=temporary)
 
     @property
     def frozen_set(self):
+        """
+        Indicates whether the set is frozen.
+
+        Returns:
+            bool: True if the set is frozen, False otherwise.
+        """
         return self.__frozen_set
+
     @frozen_set.setter
     def frozen_set(self, val):
+        """
+        Sets the frozen state of the set.
+
+        Args:
+            val (bool): The frozen state to set.
+        """
         self.freeze_set(val, temporary=False)
 
 
-    # Printing
     def asset(self, recursive=True, private=False, protected=True, public=True):
+        """
+        Returns the set as a collection of assets.
+
+        Args:
+            recursive (bool): If True, include nested assets.
+            private (bool): If True, include private attributes.
+            protected (bool): If True, include protected attributes.
+            public (bool): If True, include public attributes.
+
+        Returns:
+            set: The set as a collection of assets.
+        """
         if not recursive:
             return set(self._set)
 
@@ -114,6 +209,18 @@ class NamespaceSet(Namespace, MutableSet, metaclass=ABCMeta):
         return s
 
     def asdict(self, recursive=True, private=False, protected=True, public=True):
+        """
+        Returns the set as a dictionary.
+
+        Args:
+            recursive (bool): If True, include nested dictionaries.
+            private (bool): If True, include private attributes.
+            protected (bool): If True, include protected attributes.
+            public (bool): If True, include public attributes.
+
+        Returns:
+            dict: The set as a dictionary.
+        """
         d = super().asdict(recursive=recursive, private=private, protected=protected, public=public)
 
         if not recursive:
@@ -123,7 +230,11 @@ class NamespaceSet(Namespace, MutableSet, metaclass=ABCMeta):
         return d
 
 
-
-
     def __repr__(self):
+        """
+        Returns a string representation of the set.
+
+        Returns:
+            str: A string representation of the set.
+        """
         return f"<{self._Namespace__repr_name}:{repr(self.asset(recursive=False))}>"

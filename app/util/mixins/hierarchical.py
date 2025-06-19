@@ -19,14 +19,14 @@ class HierarchicalMixin(object):
 
         Args:
             instance_parent: Optional parent for the instance.
+            *args: Additional positional arguments for superclasses.
+            **kwargs: Additional keyword arguments for superclasses.
         """
         super().__init__(*args, **kwargs)
-
         # Sanity check: We must come before Named
         mro = self.__class__.__mro__
         if NamedMixin in mro and mro.index(NamedMixin) < mro.index(HierarchicalMixin):
             raise TypeError(f"'HierarchicalMixin' must come *before* 'NamedMixin' in the MRO")
-
         self.__parent = instance_parent
 
     @classmethod
@@ -46,7 +46,9 @@ class HierarchicalMixin(object):
         Set the instance parent.
 
         Args:
-            new_parent: The new parent object.
+            new_parent (T_Hierarchical): The new parent object.
+        Raises:
+            TypeError: If new_parent is not a HierarchicalMixin.
         """
         if new_parent is not None and not isinstance(new_parent, HierarchicalMixin):
             raise TypeError("'new_parent' must be a class that extends 'HierarchicalMixin'")
@@ -61,6 +63,7 @@ class HierarchicalMixin(object):
             T_Hierarchical: The parent object.
         """
         return self.__parent
+
     @instance_parent.setter
     def instance_parent(self, new_parent : 'T_Hierarchical') -> None:
         """
@@ -70,7 +73,6 @@ class HierarchicalMixin(object):
             new_parent: The new parent object.
         """
         self._set_instance_parent(new_parent)
-
 
     @property
     def instance_hierarchy(self) -> str:

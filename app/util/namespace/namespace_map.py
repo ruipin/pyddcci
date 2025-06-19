@@ -24,6 +24,15 @@ class NamespaceMap(Namespace):
 
     # Constructor
     def __init__(self, *, frozen_schema=False, frozen_namespace=False, frozen_map=False, **kwargs):
+        """
+        Initialize a NamespaceMap instance.
+
+        Args:
+            frozen_schema (bool): If True, freeze the schema (no new keys allowed).
+            frozen_namespace (bool): If True, freeze the namespace (no changes allowed).
+            frozen_map (bool): If True, freeze the mapping (no changes allowed).
+            **kwargs: Initial key-value pairs to populate the namespace map.
+        """
         # Call super-class
         super_params = {'frozen_schema': frozen_schema, 'frozen_namespace': frozen_namespace}
         if isinstance(self, NamedMixin):
@@ -85,12 +94,40 @@ class NamespaceMap(Namespace):
 
     # Read accesses
     def get(self, key : str, default=Namespace.NO_DEFAULT):
+        """
+        Retrieve the value associated with a key.
+
+        Args:
+            key (str): The key to look up.
+            default: The default value to return if the key is not found.
+
+        Returns:
+            The value associated with the key, or the default value if the key is not found.
+        """
         return self._Namespace__get(key, default=default)
 
     def _get_read_target(self, key):
+        """
+        Determine the target object for read operations.
+
+        Args:
+            key: The key to read.
+
+        Returns:
+            The target object for the read operation.
+        """
         return self
 
     def _Namespace__get_read_target(self, key):
+        """
+        Determine the target object for read operations in the namespace.
+
+        Args:
+            key: The key to read.
+
+        Returns:
+            The target object for the read operation.
+        """
         if key and key[0] == '_':
             return self
         else:
@@ -99,40 +136,101 @@ class NamespaceMap(Namespace):
 
     # Iteration
     def __iter__(self):
-        """ Returns an iterator to the internal dictionary """
+        """
+        Returns an iterator to the internal dictionary.
+
+        Returns:
+            An iterator over the keys of the internal dictionary.
+        """
         return iter(self.__dict__)
 
     def __len__(self):
-        """ Returns the length of the internal dictionary """
+        """
+        Returns the length of the internal dictionary.
+
+        Returns:
+            The number of items in the internal dictionary.
+        """
         return len(self.__dict__)
 
     def keys(self):
+        """
+        Retrieve the keys of the internal dictionary.
+
+        Returns:
+            A view object containing the keys of the internal dictionary.
+        """
         return self.__dict__.keys()
 
     def items(self):
+        """
+        Retrieve the items of the internal dictionary.
+
+        Returns:
+            A view object containing the key-value pairs of the internal dictionary.
+        """
         return self.__dict__.items()
 
     def values(self):
+        """
+        Retrieve the values of the internal dictionary.
+
+        Returns:
+            A view object containing the values of the internal dictionary.
+        """
         return self.__dict__.values()
 
 
     # Comparison
     def __eq__(self, other):
+        """
+        Compare this object with another for equality.
+
+        Args:
+            other: The object to compare with.
+
+        Returns:
+            True if the objects are the same, False otherwise.
+        """
         return self is other
         # return hash(self) == hash(other)
 
     def __ne__(self, other):
+        """
+        Compare this object with another for inequality.
+
+        Args:
+            other: The object to compare with.
+
+        Returns:
+            True if the objects are not the same, False otherwise.
+        """
         return not self.__eq__(other)
         # return hash(self) != hash(other)
 
     def __hash__(self):
-        """ Calculates a hash of the internal dictionary """
+        """
+        Calculate a hash of the internal dictionary.
+
+        Returns:
+            The hash value of the internal dictionary.
+        """
         return hash(frozenset(self.__dict__.items()))
 
 
     # Freezing
     def freeze_map(self, freeze=True, /, recursive=False, temporary=False):
-        """ Freezes this object, so new attributes cannot be added """
+        """
+        Freeze or unfreeze the mapping.
+
+        Args:
+            freeze (bool): If True, freeze the mapping. If False, unfreeze it.
+            recursive (bool): If True, apply the operation recursively to nested objects.
+            temporary (bool): If True, apply the operation temporarily.
+
+        Returns:
+            An EnterExitCall object if temporary is True, otherwise None.
+        """
         if temporary:
             return EnterExitCall(
                 self.freeze_schema, self.freeze_schema,
@@ -150,19 +248,53 @@ class NamespaceMap(Namespace):
         self.__frozen_map = freeze
 
     def unfreeze_map(self, recursive=False, temporary=False):
+        """
+        Unfreeze the mapping.
+
+        Args:
+            recursive (bool): If True, apply the operation recursively to nested objects.
+            temporary (bool): If True, apply the operation temporarily.
+
+        Returns:
+            An EnterExitCall object if temporary is True, otherwise None.
+        """
         return self.freeze_map(False, recursive=recursive, temporary=temporary)
 
 
     @property
     def frozen_map(self):
+        """
+        Check if the mapping is frozen.
+
+        Returns:
+            True if the mapping is frozen, False otherwise.
+        """
         return self.__frozen_map
     @frozen_map.setter
     def frozen_map(self, val):
+        """
+        Set the frozen state of the mapping.
+
+        Args:
+            val (bool): The new frozen state.
+        """
         self.freeze_map(val, temporary=False)
 
 
     # Utilities
     def asdict(self, recursive=True, private=False, protected=True, public=True):
+        """
+        Convert the namespace map to a dictionary.
+
+        Args:
+            recursive (bool): If True, convert nested objects recursively.
+            private (bool): If True, include private attributes.
+            protected (bool): If True, include protected attributes.
+            public (bool): If True, include public attributes.
+
+        Returns:
+            A dictionary representation of the namespace map.
+        """
         if private or protected:
             d = super().asdict(recursive=recursive, private=private, protected=protected, public=public)
         else:
@@ -191,10 +323,22 @@ class NamespaceMap(Namespace):
         return d
 
     def merge(self, d):
+        """
+        Merge a dictionary into the namespace map.
+
+        Args:
+            d (dict): The dictionary to merge.
+        """
         for k, v in d.items():
             self[k] = v
 
 
     # Printing
     def __repr__(self):
+        """
+        Generate a string representation of the namespace map.
+
+        Returns:
+            A string representation of the namespace map.
+        """
         return f"<{self._Namespace__repr_name}{repr(self.asdict(recursive=False))}>"

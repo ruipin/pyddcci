@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: GPLv3-or-later
 # Copyright © 2020 pyddcci Rui Pinheiro
 
+"""
+Version and revision utilities for pyddcci.
+Provides version string and git revision helpers.
+"""
+
 import os
 import subprocess
 
@@ -11,6 +16,7 @@ VERSION = "0.1"
 def git_revision():
     """
     Get the current git revision string, if available.
+
     Returns:
         str or None: The git revision string, or None if not available.
     """
@@ -59,6 +65,7 @@ GIT_REVISION = git_revision()
 def get_version_string():
     """
     Get the full version string, including git revision if available.
+
     Returns:
         str: The version string.
     """

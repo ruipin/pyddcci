@@ -30,6 +30,7 @@ HOME = os.path.realpath(os.path.join(__file__, '../../../..'))
 def is_unit_test() -> bool:
     """
     Test whether running in a unit test environment.
+
     Returns:
         bool: True if running in a unit test environment, False otherwise.
     """
@@ -54,8 +55,9 @@ _PARSER = argparse.ArgumentParser()
 def add_arg(name, *args, default=None, **kwargs):
     """
     Add a command-line argument to the global parser.
+
     Args:
-        name: The destination variable name.
+        name (str): The destination variable name.
         *args: Argument flags (e.g., '-v', '--verbosity').
         default: Default value if not set elsewhere.
         **kwargs: Additional argparse options.
@@ -92,11 +94,13 @@ class CommandAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         """
         Parse and validate CLI command arguments, storing them in the namespace.
+
         Args:
             parser: The argparse parser instance.
             namespace: The argparse namespace.
             values: The argument values.
             option_string: The option string used (e.g., '-g', '-s').
+
         Raises:
             ValueError: If the command arguments are invalid.
         """
@@ -161,8 +165,10 @@ if getattr(ARGS, 'app.cli.commands', None) is None:
 def __getattr__(name):
     """
     Get an attribute using attribute syntax obj.name.
+
     Args:
         name: The attribute name.
+
     Returns:
         The attribute value.
     """
@@ -171,8 +177,10 @@ def __getattr__(name):
 def __getitem__(key):
     """
     Get an attribute using dictionary syntax obj[key].
+
     Args:
         key: The attribute name.
+
     Returns:
         The attribute value.
     """

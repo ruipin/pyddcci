@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: GPLv3-or-later
 # Copyright © 2020 pyddcci Rui Pinheiro
 
+"""
+Logging configuration and utilities for pyddcci.
+Configures file and TTY logging, log levels, and custom handlers.
+"""
+
 import logging
 import sys
 import os
@@ -14,6 +19,16 @@ LOG_FILE = os.path.join(CFG.logging.dir, LOG_FILE_NAME)
 
 # Grab verbosity from config files
 def arg_to_log_level(arg):
+    """
+    Convert a string or integer argument to a logging level.
+
+    Args:
+        arg (str|int): The argument to convert (e.g., 'INFO', 20, -1).
+    Returns:
+        int: The corresponding logging level.
+    Raises:
+        RuntimeError: If the argument is not a valid logging level.
+    """
     # Try to convert to Integer
     try:
         arg = int(arg)
@@ -74,11 +89,17 @@ sys.excepthook = handle_exception
 
 # Add our custom handler to keep track of log messages
 class CustomHandler(logging.Handler):
+    """
+    Custom logging handler to track log message counts and handle application exit status.
+    """
     class ExitStatusFormatter(logging.Formatter):
         def format(self, record):
             return record.msg
 
     def atexit(self):
+        """
+        Handle application exit, print summary, and save config if appropriate.
+        """
         success = True if self.num_error == 0 and self.num_critical == 0 else False
 
         # Make sure to save configuration when we exit, as long as we didn't fail due to a critical error (and this isn't a unit test)

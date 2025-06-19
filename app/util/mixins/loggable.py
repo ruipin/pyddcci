@@ -15,9 +15,14 @@ class LoggableMixin(object):
     Provides a .log property for hierarchical logging, and integrates with instance naming and hierarchy if present.
     Used throughout pyddcci for consistent, contextual logging.
     """
+
     def __init__(self, *args, **kwargs):
         """
         Initialize the mixin and set up the logger.
+
+        Args:
+            *args: Additional positional arguments for superclasses.
+            **kwargs: Additional keyword arguments for superclasses.
         """
         super().__init__(*args, **kwargs)
 
@@ -57,7 +62,7 @@ class LoggableMixin(object):
         Set the instance name and reset the logger.
 
         Args:
-            new_name: The new name to set.
+            new_name (str): The new name to set.
         """
         super()._set_instance_name(new_name)
         self.__log = None

@@ -43,6 +43,16 @@ class Namespace(object):
 
     # Constructor
     def __init__(self, *, frozen_schema=False, frozen_namespace=False, **kwargs):
+        """
+        Initialize a Namespace instance.
+
+        Args:
+            frozen_schema (bool): If True, freeze the schema (no new keys allowed).
+            frozen_namespace (bool): If True, freeze the namespace (no changes allowed).
+            **kwargs: Initial key-value pairs to populate the namespace.
+        Raises:
+            TypeError: If mixin order is incorrect in the MRO.
+        """
         # Sanity check: We must come before Named/Hierarchical/Loggable
         def _check_mro(mro, mixin):
             if mixin in mro and mro.index(mixin) < mro.index(Namespace):
@@ -107,8 +117,20 @@ class Namespace(object):
         return self
 
     def __set(self, key : str, value : Any) -> Any:
-        """ Add a new attribute."""
+        """
+        Add a new attribute to the namespace.
 
+        Args:
+            key (str): The key for the attribute.
+            value (Any): The value to associate with the key.
+
+        Returns:
+            Any: The value that was set.
+
+        Raises:
+            TypeError: If the namespace is frozen and the key cannot be added.
+            ValueError: If the key is invalid.
+        """
         # Handle a __slots__ keys
         if self.__is_slots_key(key):
             return super().__setattr__(key, value)
@@ -156,8 +178,18 @@ class Namespace(object):
         return value
 
     def __remove(self, key, fail=True):
-        """ Remove an attribute."""
+        """
+        Remove an attribute from the namespace.
 
+        Args:
+            key (str): The key of the attribute to remove.
+            fail (bool): If True, raise an exception if the key does not exist.
+
+        Raises:
+            TypeError: If the namespace is frozen and the key cannot be removed.
+            ValueError: If the key is invalid.
+            KeyError: If the key does not exist and fail is True.
+        """
         # Handle a __slots__ key
         if self.__is_slots_key(key):
             return super.__delattr__(key)
@@ -202,6 +234,19 @@ class Namespace(object):
         return self
 
     def __get(self, key : str, default=NO_DEFAULT):
+        """
+        Retrieve an attribute from the namespace.
+
+        Args:
+            key (str): The key of the attribute to retrieve.
+            default (Any): The default value to return if the key does not exist.
+
+        Returns:
+            Any: The value associated with the key, or the default value.
+
+        Raises:
+            KeyError: If the key does not exist and no default value is provided.
+        """
         # Handle a __slots__ key
         if self.__is_slots_key(key):
             return super().__getattr__(key)
@@ -243,9 +288,24 @@ class Namespace(object):
     # Sticky
     @classmethod
     def _sticky_construct_class(cls) -> type:
+        """
+        Get the class to use for constructing sticky namespaces.
+
+        Returns:
+            type: The class to use for sticky namespaces.
+        """
         return cls
 
     def __sticky_construct_namespace(self, key):
+        """
+        Construct a sticky namespace.
+
+        Args:
+            key (str): The key for the sticky namespace.
+
+        Returns:
+            Namespace: The constructed sticky namespace.
+        """
         super_params = {}
         if isinstance(self, HierarchicalMixin):
             super_params['instance_parent'] = self
@@ -256,6 +316,17 @@ class Namespace(object):
         return self._sticky_construct_class()(**super_params)
 
     def __sticky_create_namespace(self, key, sub_key, value):
+        """
+        Create a sticky namespace.
+
+        Args:
+            key (str): The key for the sticky namespace.
+            sub_key (str): The sub-key for the sticky namespace.
+            value (Any): The value to associate with the sub-key.
+
+        Returns:
+            Namespace: The created sticky namespace.
+        """
         inst = self.__sticky_construct_namespace(key)
 
         if sub_key is None:
@@ -266,29 +337,75 @@ class Namespace(object):
         return inst
 
     def _sticky_ignore_key(self, key : str) -> bool:
+        """
+        Determine whether to ignore a key for sticky processing.
+
+        Args:
+            key (str): The key to check.
+
+        Returns:
+            bool: True if the key should be ignored, False otherwise.
+        """
         return False
 
 
     # Dictionary Magic Methods
     def __getitem__(self, key : str):
-        """ Get an attribute using dictionary syntax obj[key] """
+        """
+        Get an attribute using dictionary syntax obj[key].
+
+        Args:
+            key (str): The key of the attribute to retrieve.
+
+        Returns:
+            Any: The value associated with the key.
+
+        Raises:
+            KeyError: If the key does not exist.
+        """
         if self.__is_slots_key(key):
             raise KeyError
         return self.__get(key)
 
     def __setitem__(self, key : str, value):
-        """ Modify an attribute using dictionary syntax obj[key] = value """
+        """
+        Modify an attribute using dictionary syntax obj[key] = value.
+
+        Args:
+            key (str): The key of the attribute to modify.
+            value (Any): The new value to associate with the key.
+
+        Raises:
+            KeyError: If the key is invalid.
+        """
         if self.__is_slots_key(key):
             raise KeyError
         self.__set(key, value)
 
     def __delitem__(self, key : str):
-        """ Delete an attribute using dictionary syntax """
+        """
+        Delete an attribute using dictionary syntax.
+
+        Args:
+            key (str): The key of the attribute to delete.
+
+        Raises:
+            KeyError: If the key is invalid.
+        """
         if self.__is_slots_key(key):
             raise KeyError
         self.__remove(key)
 
     def __contains__(self, m):
+        """
+        Check if a key exists in the namespace.
+
+        Args:
+            m (str): The key to check.
+
+        Returns:
+            bool: True if the key exists, False otherwise.
+        """
         try:
             self.__getitem__(m)
             return True
@@ -298,57 +415,141 @@ class Namespace(object):
 
     # Attribute Magic Methods
     def __getattr__(self, key : str):
-        """ Get an attribute, redirected to the internal dictionary """
+        """
+        Get an attribute, redirected to the internal dictionary.
+
+        Args:
+            key (str): The key of the attribute to retrieve.
+
+        Returns:
+            Any: The value associated with the key.
+
+        Raises:
+            AttributeError: If the attribute does not exist.
+        """
         try:
             return self.__get(key)
         except KeyError:
             raise AttributeError(f"Attribute '{key}' does not exist")
 
     def __setattr__(self, key : str, value):
-        """ Set an attribute, redirected to the internal dictionary """
+        """
+        Set an attribute, redirected to the internal dictionary.
+
+        Args:
+            key (str): The key of the attribute to set.
+            value (Any): The value to associate with the key.
+        """
         self.__set(key, value)
 
     def __delattr__(self, key):
-        """ Delete an attribute using attribute syntax """
+        """
+        Delete an attribute using attribute syntax.
+
+        Args:
+            key (str): The key of the attribute to delete.
+        """
         self.__remove(key)
 
 
     # Iteration
     def __iter__(self):
-        """ Returns an iterator to the internal dictionary """
+        """
+        Returns an iterator to the internal dictionary.
+
+        Returns:
+            Iterator: An iterator over the keys in the namespace.
+        """
         return iter(self.__namespace)
 
     def __len__(self):
-        """ Returns the length of the internal dictionary """
+        """
+        Returns the length of the internal dictionary.
+
+        Returns:
+            int: The number of keys in the namespace.
+        """
         return len(self.__namespace)
 
     def __keys(self):
+        """
+        Get the keys of the internal dictionary.
+
+        Returns:
+            KeysView: The keys of the namespace.
+        """
         return self.__namespace.keys()
 
     def __items(self):
+        """
+        Get the items of the internal dictionary.
+
+        Returns:
+            ItemsView: The items of the namespace.
+        """
         return self.__namespace.items()
 
     def __values(self):
+        """
+        Get the values of the internal dictionary.
+
+        Returns:
+            ValuesView: The values of the namespace.
+        """
         return self.__namespace.values()
 
 
     # Comparison
     def __eq__(self, other):
+        """
+        Check if two namespaces are equal.
+
+        Args:
+            other (Namespace): The other namespace to compare.
+
+        Returns:
+            bool: True if the namespaces are equal, False otherwise.
+        """
         return self is other
         # return hash(self) == hash(other)
 
     def __ne__(self, other):
+        """
+        Check if two namespaces are not equal.
+
+        Args:
+            other (Namespace): The other namespace to compare.
+
+        Returns:
+            bool: True if the namespaces are not equal, False otherwise.
+        """
         return not self.__eq__(other)
         # return hash(self) != hash(other)
 
     def __hash__(self):
-        """ We just return the id which is guaranteed to be unique per object """
+        """
+        Get the hash of the namespace.
+
+        Returns:
+            int: The hash of the namespace.
+        """
+        # The object id is guaranteed to be unique for the lifetime of the object
         return id(self)
 
 
     # Freezing
     def freeze_schema(self, freeze=True, *, recursive=False, temporary=False):
-        """ Freezes this object, so new attributes cannot be added """
+        """
+        Freeze the schema of the namespace.
+
+        Args:
+            freeze (bool): If True, freeze the schema.
+            recursive (bool): If True, apply freezing recursively to nested namespaces.
+            temporary (bool): If True, apply freezing temporarily.
+
+        Returns:
+            EnterExitCall: A context manager for temporary freezing.
+        """
         if temporary:
             return EnterExitCall(
                 self.freeze_schema, self.freeze_schema,
@@ -363,18 +564,50 @@ class Namespace(object):
         self.__frozen_schema = freeze
 
     def unfreeze_schema(self, recursive=False, temporary=False):
+        """
+        Unfreeze the schema of the namespace.
+
+        Args:
+            recursive (bool): If True, apply unfreezing recursively to nested namespaces.
+            temporary (bool): If True, apply unfreezing temporarily.
+
+        Returns:
+            EnterExitCall: A context manager for temporary unfreezing.
+        """
         return self.freeze_schema(False, recursive=recursive, temporary=temporary)
 
     @property
     def frozen_schema(self):
+        """
+        Get the frozen state of the schema.
+
+        Returns:
+            bool: True if the schema is frozen, False otherwise.
+        """
         return self.__frozen_schema
     @frozen_schema.setter
     def frozen_schema(self, val):
+        """
+        Set the frozen state of the schema.
+
+        Args:
+            val (bool): The new frozen state.
+        """
         self.freeze_schema(val, temporary=False)
 
 
     def freeze_namespace(self, freeze=True, *, recursive=False, temporary=False):
-        """ Freezes this object, so new attributes cannot be added """
+        """
+        Freeze the namespace.
+
+        Args:
+            freeze (bool): If True, freeze the namespace.
+            recursive (bool): If True, apply freezing recursively to nested namespaces.
+            temporary (bool): If True, apply freezing temporarily.
+
+        Returns:
+            EnterExitCall: A context manager for temporary freezing.
+        """
         if temporary:
             return EnterExitCall(
                 self.freeze_namespace, self.freeze_namespace,
@@ -389,18 +622,52 @@ class Namespace(object):
         self.__frozen_namespace = freeze
 
     def unfreeze_namespace(self, recursive=False, temporary=False):
+        """
+        Unfreeze the namespace.
+
+        Args:
+            recursive (bool): If True, apply unfreezing recursively to nested namespaces.
+            temporary (bool): If True, apply unfreezing temporarily.
+
+        Returns:
+            EnterExitCall: A context manager for temporary unfreezing.
+        """
         return self.freeze_schema(False, recursive=recursive, temporary=temporary)
 
     @property
     def frozen_namespace(self):
+        """
+        Get the frozen state of the namespace.
+
+        Returns:
+            bool: True if the namespace is frozen, False otherwise.
+        """
         return self.__frozen_namespace
     @frozen_namespace.setter
     def frozen_namespace(self, val):
+        """
+        Set the frozen state of the namespace.
+
+        Args:
+            val (bool): The new frozen state.
+        """
         self.freeze_namespace(val, temporary=False)
 
 
     # Utilities
     def asdict(self, recursive=True, private=False, protected=True, public=True):
+        """
+        Convert the namespace to a dictionary.
+
+        Args:
+            recursive (bool): If True, convert nested namespaces recursively.
+            private (bool): If True, include private attributes.
+            protected (bool): If True, include protected attributes.
+            public (bool): If True, include public attributes.
+
+        Returns:
+            dict: The namespace as a dictionary.
+        """
         d = {}
         for k, v in self.__namespace.items():
             if k[0] == '_':
@@ -425,6 +692,12 @@ class Namespace(object):
         return d
 
     def merge(self, d):
+        """
+        Merge a dictionary into the namespace.
+
+        Args:
+            d (dict): The dictionary to merge.
+        """
         for k, v in d.items():
             self[k] = v
 
@@ -432,6 +705,12 @@ class Namespace(object):
     # Printing
     @property
     def __repr_name(self):
+        """
+        Get the name to use in the representation.
+
+        Returns:
+            str: The name to use in the representation.
+        """
         if isinstance(self, LoggableMixin):
             return self._LoggableMixin__repr_name
         if isinstance(self, HierarchicalMixin):
@@ -439,4 +718,10 @@ class Namespace(object):
         return self.__class__.__name__
 
     def __repr__(self):
+        """
+        Get the string representation of the namespace.
+
+        Returns:
+            str: The string representation of the namespace.
+        """
         return f"<{self.__repr_name}{repr(self.asdict(recursive=False))}>"

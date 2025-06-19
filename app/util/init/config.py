@@ -30,8 +30,9 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
     def __init__(self, instance_name, *args, **kwargs):
         """
         Initialize the ConfigMap with an instance name and optional arguments.
+
         Args:
-            instance_name: The name for this config map.
+            instance_name (str): The name for this config map.
             *args: Additional positional arguments.
             **kwargs: Additional keyword arguments.
         """
@@ -42,8 +43,10 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
     def _get_write_target(self, key):
         """
         Get the write target for a given key (default or self).
+
         Args:
-            key: The key to check.
+            key (str): The key to check.
+
         Returns:
             NamespaceMap: The write target.
         """
@@ -55,9 +58,11 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
     def _sanity_check_key(self, key, delete=False):
         """
         Check if a key is valid and not reserved.
+
         Args:
-            key: The key to check.
-            delete: If True, check for deletion.
+            key (str): The key to check.
+            delete (bool): If True, check for deletion.
+
         Raises:
             ValueError: If the key is reserved.
         """
@@ -72,8 +77,10 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
     def _get_read_target(self, key):
         """
         Get the read target for a given key (default or self).
+
         Args:
-            key: The key to check.
+            key (str): The key to check.
+
         Returns:
             NamespaceMap: The read target.
         """
@@ -86,6 +93,7 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
     def _sticky_construct_class(cls) -> type:
         """
         Return the class to use for sticky construction.
+
         Returns:
             type: The class type.
         """
@@ -103,6 +111,9 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
     def __iter__(self):
         """
         Returns an iterator to the internal dictionary.
+
+        Returns:
+            iterator: An iterator over the keys.
         """
         for k in self.keys():
             yield k
@@ -110,26 +121,49 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
     def __len__(self):
         """
         Returns the length of the internal dictionary.
+
+        Returns:
+            int: The number of keys.
         """
         return len(self.keys())
 
     def keys(self):
+        """
+        Get all keys in the config map.
+
+        Returns:
+            OrderedSet: A set of all keys.
+        """
         return OrderedSet.union(self._default.keys(), self.__dict__.keys())
 
     def items(self):
+        """
+        Get all items in the config map.
+
+        Returns:
+            iterator: An iterator over key-value pairs.
+        """
         for k in self.keys():
             yield k, self.get(k)
 
     def values(self):
+        """
+        Get all values in the config map.
+
+        Returns:
+            list: A list of all values.
+        """
         return self._dict.values()
 
     def asdict(self, recursive=True, user=True, default=True):
         """
         Convert the config map to a dictionary, optionally recursively.
+
         Args:
-            recursive: If True, convert recursively.
-            user: Include user values.
-            default: Include default values.
+            recursive (bool): If True, convert recursively.
+            user (bool): Include user values.
+            default (bool): Include default values.
+
         Returns:
             dict: The dictionary representation.
         """
@@ -161,8 +195,10 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
     def is_reserved_key(self, key : str) -> bool:
         """
         Check if a key is inside a reserved hierarchy.
+
         Args:
-            key: The key to check.
+            key (str): The key to check.
+
         Returns:
             bool: True if reserved, False otherwise.
         """
@@ -178,8 +214,10 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
     def _sticky_ignore_key(self, key : str) -> bool:
         """
         Whether a key should be ignored for sticky construction.
+
         Args:
-            key: The key to check.
+            key (str): The key to check.
+
         Returns:
             bool: True if this key should be ignored, False otherwise.
         """
@@ -205,9 +243,11 @@ class MasterConfigMap(ConfigMap):
     def yaml_str(self, user=True, default=True):
         """
         Get the YAML string representation of the config.
+
         Args:
-            user: Include user values.
-            default: Include default values.
+            user (bool): Include user values.
+            default (bool): Include default values.
+
         Returns:
             str: The YAML string.
         """
@@ -217,9 +257,10 @@ class MasterConfigMap(ConfigMap):
     def debug(self, user=True, default=True):
         """
         Log the YAML string representation of the config for debugging.
+
         Args:
-            user: Include user values.
-            default: Include default values.
+            user (bool): Include user values.
+            default (bool): Include default values.
         """
         dump = self.yaml_str(user=user, default=default)
         typ = 'All'  if user and default else \
@@ -230,8 +271,9 @@ class MasterConfigMap(ConfigMap):
     def load_path(self, file_path):
         """
         Load config from a YAML file at the given path.
+
         Args:
-            file_path: Path to the YAML file.
+            file_path (str): Path to the YAML file.
         """
         if not os.path.exists(file_path):
             return
@@ -301,8 +343,10 @@ CONFIG.load()
 def __getattr__(name):
     """
     Get a config attribute using attribute syntax obj.name.
+
     Args:
-        name: The attribute name.
+        name (str): The attribute name.
+
     Returns:
         The attribute value or method.
     """
@@ -318,8 +362,10 @@ def __getattr__(name):
 def __getitem__(key):
     """
     Get a config attribute using dictionary syntax obj[key].
+
     Args:
-        key: The attribute name.
+        key (str): The attribute name.
+
     Returns:
         The attribute value.
     """

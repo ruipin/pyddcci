@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: GPLv3-or-later
 # Copyright © 2020 pyddcci Rui Pinheiro
 
+"""
+Mock implementation of BaseOsMonitorInfo for use in OS-related unit tests in pyddcci.
+Provides mock monitor information and utilities for generating mock monitors.
+"""
+
 import logging
 logging.getLogger('faker').setLevel(logging.ERROR)
 

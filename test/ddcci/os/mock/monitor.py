@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: GPLv3-or-later
 # Copyright © 2020 pyddcci Rui Pinheiro
 
+"""
+Mock implementation of BaseOsMonitor for use in OS-related unit tests in pyddcci.
+Implements VCP query and write methods for testing.
+"""
+
 from app.ddcci.os.monitor import BaseOsMonitor
 from app.ddcci.vcp.reply import VcpReply
 

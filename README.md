@@ -146,6 +146,52 @@ Configuration is managed via YAML files in the `data/` directory. Do not modify 
 - [oyaml](https://pypi.org/project/oyaml/)
 - [ordered-set](https://pypi.org/project/ordered-set/)
 
+## Running Tests
+
+To run the testcases in the `test` folder, use Python's built-in unittest module. From the project root directory, run:
+
+```sh
+python -m unittest discover -s test
+```
+
+This will automatically discover and run all tests in the `test` directory and its subdirectories.
+
+You can also run a specific test file, for example:
+
+```sh
+python -m unittest test.ddcci.test_monitor
+```
+
+For more verbose output, add the `-v` flag:
+
+```sh
+python -m unittest discover -s test -v
+```
+
+### Test Suite Structure
+
+The `test` folder contains unit tests for the main components of pyddcci:
+
+- `test/ddcci/` — Tests for DDC/CI protocol implementation, monitor management, and configuration (e.g., `test_monitor.py`, `test_monitor_config.py`).
+- `test/ddcci/cli/` — Tests for the command-line interface and CLI commands.
+- `test/ddcci/os/` — Tests for OS-specific monitor detection and mock monitor info.
+- `test/ddcci/vcp/` — Tests for VCP code and value storage.
+- `test/util/` — Tests for utility modules, including argument parsing and mixins.
+
+Each test file targets a specific module or feature. For example, `test_monitor_config.py` verifies monitor configuration loading, saving, and filtering logic. Mock objects are used where appropriate to simulate monitor hardware and OS behavior.
+
+To contribute new tests, add them to the appropriate subdirectory and follow the structure of existing test files.
+
+### Additional Requirements for Unit Tests
+
+Some unit tests (e.g., those using mock monitor data) require the [faker](https://pypi.org/project/Faker/) library.
+
+Install it with:
+
+```sh
+pip install Faker
+```
+
 ## License
 
 This project is licensed under the GNU General Public License v3.0 or later. See the [LICENSE](LICENSE) file for details.

@@ -13,7 +13,7 @@ class HierarchicalMixin(object):
     Provides instance_parent and instance_hierarchy properties, allowing objects to be organized in a tree structure.
     Used for logging, naming, and configuration inheritance in pyddcci.
     """
-    def __init__(self, *args, instance_parent: 'T_Hierarchical' = None, **kwargs):
+    def __init__(self, *args, instance_parent: 'HierarchicalMixin|None' = None, **kwargs):
         """
         Initialize the mixin and set the instance parent.
 
@@ -23,11 +23,13 @@ class HierarchicalMixin(object):
             **kwargs: Additional keyword arguments for superclasses.
         """
         super().__init__(*args, **kwargs)
+
         # Sanity check: We must come before Named
         mro = self.__class__.__mro__
         if NamedMixin in mro and mro.index(NamedMixin) < mro.index(HierarchicalMixin):
             raise TypeError(f"'HierarchicalMixin' must come *before* 'NamedMixin' in the MRO")
-        self.__parent = instance_parent
+
+        self.__parent : 'HierarchicalMixin|None' = instance_parent
 
     @classmethod
     def class_short_name(cls) -> str:
@@ -41,12 +43,12 @@ class HierarchicalMixin(object):
 
 
     # Parent
-    def _set_instance_parent(self, new_parent : 'T_Hierarchical') -> None:
+    def _set_instance_parent(self, new_parent : 'HierarchicalMixin | None') -> None:
         """
         Set the instance parent.
 
         Args:
-            new_parent (T_Hierarchical): The new parent object.
+            new_parent (HierarchicalMixin | None): The new parent object.
         Raises:
             TypeError: If new_parent is not a HierarchicalMixin.
         """
@@ -55,17 +57,17 @@ class HierarchicalMixin(object):
         self.__parent = new_parent
 
     @property
-    def instance_parent(self) -> 'T_Hierarchical':
+    def instance_parent(self) -> 'HierarchicalMixin|None':
         """
         Get the instance parent.
 
         Returns:
-            T_Hierarchical: The parent object.
+            HierarchicalMixin | None: The parent object.
         """
         return self.__parent
 
     @instance_parent.setter
-    def instance_parent(self, new_parent : 'T_Hierarchical') -> None:
+    def instance_parent(self, new_parent : 'HierarchicalMixin') -> None:
         """
         Set the instance parent.
 
@@ -136,5 +138,3 @@ class HierarchicalMixin(object):
             str: The string representation.
         """
         return f"<{self.__str_name}>"
-
-T_Hierarchical = TypeVar('T_Hierarchical', bound=HierarchicalMixin, covariant=True)

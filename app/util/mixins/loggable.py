@@ -54,7 +54,7 @@ class LoggableMixin(object):
         Args:
             new_parent: The new parent object.
         """
-        super()._set_instance_parent(new_parent)
+        super()._set_instance_parent(new_parent) # type: ignore[reportUndefinedVariable]
         self.__log = None
 
     def _set_instance_name(self, new_name : str) -> None:
@@ -64,7 +64,7 @@ class LoggableMixin(object):
         Args:
             new_name (str): The new name to set.
         """
-        super()._set_instance_name(new_name)
+        super()._set_instance_name(new_name) # type: ignore[reportUndefinedVariable]
         self.__log = None
 
 
@@ -77,11 +77,13 @@ class LoggableMixin(object):
         Returns:
             logging.Logger: The logger instance for the object.
         """
-        if self.__log is None:
+        log = getattr(self, '__log', None)
+        if log is None:
             from ..init import getLogger
             parent = self.instance_parent if isinstance(self, HierarchicalMixin) else None
-            self.__log = getLogger(self.__log_name__, parent=parent)
-        return self.__log
+            log = getLogger(self.__log_name__, parent=parent)
+            setattr(self, '__log', log)
+        return log
 
     @property
     def __log_name__(self) -> str:

@@ -87,7 +87,7 @@ class NamespaceList(Namespace, MutableSequence, metaclass=ABCMeta):
             raise RuntimeError(f"{self.__class__.__name__} is frozen")
         del self._list[i]
 
-    def insert(self, i, v):
+    def insert(self, index, value):
         """
         Insert an item into the list at a specific index.
 
@@ -100,7 +100,7 @@ class NamespaceList(Namespace, MutableSequence, metaclass=ABCMeta):
         """
         if self.frozen_list:
             raise RuntimeError(f"{self.__class__.__name__} is frozen")
-        self._list.insert(i, v)
+        self._list.insert(index, value)
 
     def __len__(self):
         """
@@ -170,8 +170,8 @@ class NamespaceList(Namespace, MutableSequence, metaclass=ABCMeta):
                 kwargs_exit={'freeze': not freeze, 'recursive': recursive, 'temporary': False})
 
         if recursive:
-            for obj in self.values():
-                if hasattr(obj, 'frozen_list') and obj.frozen_list != freeze:
+            for obj in self.__values():
+                if hasattr(obj, 'frozen_list') and obj.frozen_list != freeze and callable(getattr(obj, 'freeze_list', None)):
                     obj.freeze_list(freeze=freeze, recursive=True, temporary=False)
 
         self.__frozen_list = freeze

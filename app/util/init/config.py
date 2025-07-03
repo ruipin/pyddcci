@@ -55,7 +55,7 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
         else:
             return self
 
-    def _sanity_check_key(self, key, delete=False):
+    def _sanity_check_public_key(self, key, *, delete: bool = False):
         """
         Check if a key is valid and not reserved.
 
@@ -66,13 +66,13 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
         Raises:
             ValueError: If the key is reserved.
         """
-        super()._sanity_check_key(key)
+        super()._sanity_check_public_key(key, delete=delete)
 
         if self._get_write_target(key) is self.get('_default', None):
             return
 
         if self.is_reserved_key(key):
-            raise ValueError(f"key'{key}' is inside a reserved hierarchy")
+            raise ValueError(f"key '{key}' is inside a reserved hierarchy")
 
     def _get_read_target(self, key):
         """

@@ -14,4 +14,4 @@ from app.util.init import args
 args.is_unit_test = lambda: True
 
 import test.ddcci.os.mock
-from .testcase import TestCase
+from .ddcci.testcase import TestCase

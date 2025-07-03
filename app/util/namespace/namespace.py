@@ -85,11 +85,22 @@ class Namespace(object):
 
 
     # Utilities
-    def __sanity_check_key(self, key : str, *, delete: bool =False) -> bool:
+    def _sanity_check_public_key(self, key : str, *, delete: bool =False) -> None:
+        pass
+
+    def _sanity_check_private_key(self, key : str, *, delete: bool =False) -> None:
+        pass
+
+    def _sanity_check_key(self, key : str, *, delete: bool =False):
         if not key:
             raise ValueError(f"key must be defined")
 
-    def __is_frozen_key(self, key : str) -> bool:
+        if key[0] == '_':
+            self._sanity_check_private_key(key, delete=delete)
+        else:
+            self._sanity_check_public_key(key, delete=delete)
+
+    def _is_frozen_key(self, key : str) -> bool:
         if self.frozen_namespace:
             if not self.__class__.NAMESPACE__FROZEN_SCHEMA__ALLOW_PRIVATE or not key or key[0] != '_':
                 return True
@@ -105,10 +116,10 @@ class Namespace(object):
 
         return True
 
-    def __is_slots_key(self, key : str) -> bool:
+    def _is_slots_key(self, key : str) -> bool:
         return key in Namespace.__slots__
 
-    def __get_access_dict(self, key : str) -> dict:
+    def _get_access_dict(self, key : str) -> dict:
         return self.__namespace
 
 
@@ -132,7 +143,7 @@ class Namespace(object):
             ValueError: If the key is invalid.
         """
         # Handle a __slots__ keys
-        if self.__is_slots_key(key):
+        if self._is_slots_key(key):
             return super().__setattr__(key, value)
 
         # Handle @property.setter
@@ -143,9 +154,9 @@ class Namespace(object):
                 return value
 
         # Sanity checks
-        if self.__is_frozen_key(key):
+        if self._is_frozen_key(key):
             raise TypeError(f"{str(self)} is frozen, can't add key '{key}'")
-        self.__sanity_check_key(key)
+        self._sanity_check_key(key)
 
         # Sticky
         if self.__class__.NAMESPACE__STICKY and not self._sticky_ignore_key(key):
@@ -157,7 +168,7 @@ class Namespace(object):
                     self._sanity_check_key(key)
 
                     if key in self:
-                        self[key][sub_key] = value
+                        setattr(self[key], sub_key, value)
                         return
 
                     value = self.__sticky_create_namespace(key, sub_key, value)
@@ -174,7 +185,7 @@ class Namespace(object):
                 return tgt.__set(key, value)
 
         # Add to dictionary
-        self.__get_access_dict(key)[key] = value
+        self._get_access_dict(key)[key] = value
         return value
 
     def __remove(self, key, fail=True):
@@ -191,13 +202,13 @@ class Namespace(object):
             KeyError: If the key does not exist and fail is True.
         """
         # Handle a __slots__ key
-        if self.__is_slots_key(key):
-            return super.__delattr__(key)
+        if self._is_slots_key(key):
+            raise RuntimeError("Cannot delete __slots__ keys using __remove")
 
         # Sanity checks
-        if self.__is_frozen_key(key):
+        if self._is_frozen_key(key):
             raise TypeError(f"{repr(self)} is frozen, can't delete key '{key}'")
-        self.__sanity_check_key(key, delete=True)
+        self._sanity_check_key(key, delete=True)
 
         # Sticky
         if self.__class__.NAMESPACE__STICKY and not self._sticky_ignore_key(key):
@@ -206,13 +217,9 @@ class Namespace(object):
                 if len(split_key) > 1:
                     self_key = split_key[0]
                     sub_key  = split_key[1]
-                    self.__sanity_check_key(self_key, delete=True)
+                    self._sanity_check_key(self_key, delete=True)
 
-                    sub_namespace : Namespace = self[self_key]
-                    if not isinstance(sub_namespace, Namespace):
-                        raise ValueError(f"Cannot delete delimited key '{key}', as '{self_key}' is not a member of class '{self._sticky_construct_class().__name__}")
-
-                    sub_namespace.__remove(sub_key)
+                    delattr(self[self_key], sub_key)
                     return
 
         # Handle custom target
@@ -223,7 +230,7 @@ class Namespace(object):
 
         # Remove from dictionary
         try:
-            del self.__get_access_dict(key)[key]
+            del self._get_access_dict(key)[key]
         except KeyError:
             if fail:
                 raise
@@ -233,7 +240,7 @@ class Namespace(object):
     def __get_read_target(self, key):
         return self
 
-    def __get(self, key : str, default=NO_DEFAULT):
+    def _Namespace__get(self, key : str, default=NO_DEFAULT):
         """
         Retrieve an attribute from the namespace.
 
@@ -248,8 +255,8 @@ class Namespace(object):
             KeyError: If the key does not exist and no default value is provided.
         """
         # Handle a __slots__ key
-        if self.__is_slots_key(key):
-            return super().__getattr__(key)
+        if self._is_slots_key(key):
+            raise RuntimeError("Cannot access __slots__ keys using __get")
 
         # Handle default value
         if default is Namespace.NO_DEFAULT:
@@ -262,7 +269,7 @@ class Namespace(object):
                 if len(split_key) > 1:
                     self_key = split_key[0]
                     sub_key = split_key[1]
-                    self.__sanity_check_key(self_key, delete=True)
+                    self._sanity_check_key(self_key, delete=True)
 
                     if self_key not in self:
                         if default is Namespace.NO_DEFAULT:
@@ -270,7 +277,7 @@ class Namespace(object):
                         else:
                             return default
 
-                    return self[self_key][sub_key]
+                    return getattr(self[self_key], sub_key)
 
         # Handle custom target
         tgt: Namespace = self.__get_read_target(key)
@@ -278,7 +285,7 @@ class Namespace(object):
             return tgt.__get(key, default=default)
 
         """ Get an entry from the internal dictionary """
-        d = self.__get_access_dict(key)
+        d = self._get_access_dict(key)
         if default is Namespace.NO_DEFAULT:
             return d[key]
         else:
@@ -363,7 +370,7 @@ class Namespace(object):
         Raises:
             KeyError: If the key does not exist.
         """
-        if self.__is_slots_key(key):
+        if self._is_slots_key(key):
             raise KeyError
         return self.__get(key)
 
@@ -378,7 +385,7 @@ class Namespace(object):
         Raises:
             KeyError: If the key is invalid.
         """
-        if self.__is_slots_key(key):
+        if self._is_slots_key(key):
             raise KeyError
         self.__set(key, value)
 
@@ -392,7 +399,7 @@ class Namespace(object):
         Raises:
             KeyError: If the key is invalid.
         """
-        if self.__is_slots_key(key):
+        if self._is_slots_key(key):
             raise KeyError
         self.__remove(key)
 
@@ -557,8 +564,8 @@ class Namespace(object):
                 kwargs_exit={'freeze': not freeze, 'recursive': recursive, 'temporary': False})
 
         if recursive:
-            for obj in self.values():
-                if hasattr(obj, 'frozen_schema') and obj.frozen_schema != freeze:
+            for obj in self.__values():
+                if hasattr(obj, 'frozen_schema') and obj.frozen_schema != freeze and callable(getattr(obj, 'freeze_schema', None)):
                     obj.freeze_schema(freeze=freeze, recursive=True, temporary=False)
 
         self.__frozen_schema = freeze
@@ -615,8 +622,8 @@ class Namespace(object):
                 kwargs_exit={'freeze': not freeze, 'recursive': recursive, 'temporary': False})
 
         if recursive:
-            for obj in self.values():
-                if hasattr(obj, 'freeze_namespace') and obj.freeze_namespace != freeze:
+            for obj in self.__values():
+                if hasattr(obj, 'freeze_namespace') and obj.freeze_namespace != freeze and callable(getattr(obj, 'freeze_namespace', None)):
                     obj.freeze_namespace(freeze=freeze, recursive=True, temporary=False)
 
         self.__frozen_namespace = freeze

@@ -53,23 +53,14 @@ class NamespaceMap(Namespace):
 
 
     # Accesses
-    def _sanity_check_key(self, key : str, *, delete: bool =False) -> bool:
-        pass
+    def _is_slots_key(self, key : str) -> bool:
+        return key in NamespaceMap.__slots__ or super()._is_slots_key(key)
 
-    def _Namespace__sanity_check_key(self, key : str, *, delete: bool =False) -> None:
-        super()._Namespace__sanity_check_key(key, delete=delete)
-
-        if key and key[0] != '_':
-            self._sanity_check_key(key, delete=delete)
-
-    def _Namespace__is_slots_key(self, key : str) -> bool:
-        return key in NamespaceMap.__slots__ or super()._Namespace__is_slots_key(key)
-
-    def _Namespace__get_access_dict(self, key: str) -> dict:
+    def _get_access_dict(self, key: str) -> dict:
         if key and key[0] != '_':
             return self.__dict__
         else:
-            return super()._Namespace__get_access_dict(key)
+            return super()._get_access_dict(key)
 
 
     # Write Accesses
@@ -82,8 +73,8 @@ class NamespaceMap(Namespace):
         else:
             return self._get_write_target(key)
 
-    def _Namespace__is_frozen_key(self, key : str) -> bool:
-        if super()._Namespace__is_frozen_key(key):
+    def _is_frozen_key(self, key : str) -> bool:
+        if super()._is_frozen_key(key):
             return True
 
         if self.frozen_map and self._get_access_dict(key) is self.__dict__:

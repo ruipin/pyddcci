@@ -8,11 +8,8 @@ Sets up test configuration and environment for consistent test runs.
 
 import unittest
 
-from app.util import CFG
-
 from app.ddcci import monitor_config
 
 class TestCase(unittest.TestCase):
     def setUp(self):
-        CFG.app._default.test = True
         monitor_config.MONITOR_CONFIG = monitor_config.MonitorConfig(None)

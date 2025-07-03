@@ -72,7 +72,22 @@ if FILE_LOGGING_LEVEL >= 0:
 
 # Create tty handler
 if TTY_LOGGING_LEVEL >= 0:
-    ch = logging.StreamHandler(sys.stderr)
+    ch = None
+
+    # The unittest module mocks stderr when the test starts, so we need to dynamically use sys.stderr instead of being able to use the current sys.stderr
+    if CFG.app.test:
+        class UnitTestStreamHandler(logging.StreamHandler):
+            @property
+            def stream(self):
+                return sys.stderr
+
+            @stream.setter
+            def stream(self, value):
+                pass
+        ch = UnitTestStreamHandler()
+    else:
+        ch = logging.StreamHandler(sys.stderr)
+
     ch.setLevel(TTY_LOGGING_LEVEL)
     ch_formatter = logging.Formatter('[%(levelname)s:%(name)s] %(message)s')
     ch.setFormatter(ch_formatter)
@@ -103,7 +118,7 @@ class CustomHandler(logging.Handler):
         success = True if self.num_error == 0 and self.num_critical == 0 else False
 
         # Make sure to save configuration when we exit, as long as we didn't fail due to a critical error (and this isn't a unit test)
-        if self.num_critical == 0 and not os.environ.get("UNIT_TEST", None) and not CFG.app.test:
+        if self.num_critical == 0 and not CFG.app.test:
             print()  # Line break
             CFG.save()
 

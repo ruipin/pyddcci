@@ -60,10 +60,12 @@ class MockMonitorData(object):
             number  = self.adapter_number
         )
 
+        self._model_words = fake.words(nb=3)
+
         self.adapter = BaseOsMonitorInfo.Adapter(
             device  = self.adapter_device,
             guid    = '{' + fake.uuid4() + '}',
-            model   = ' '.join([x.capitalize() for x in fake.words(nb=3)]),
+            model   = ' '.join([x.capitalize() for x in self._model_words]),
             name    = None,
             primary = False,
             type    = 'PCI',

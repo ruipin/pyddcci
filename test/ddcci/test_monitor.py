@@ -62,7 +62,7 @@ class MonitorTest(TestCase):
         self.assertEqual(input3, 99)
 
         # Test another monitor with a different input
-        monitor2 = Monitor('Hospital')
+        monitor2 = Monitor(monitor_info.MOCK_MONITORS[1]._model_words[1])
         monitor2['input'] = 'analog1'
         input4 = monitor2['input']
         self.assertNotEqual(input4, 'DP1')

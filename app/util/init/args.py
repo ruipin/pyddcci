@@ -15,7 +15,7 @@ import re
 # Script name corresponds to argv[0] (without the '.py' extension, if present)
 if len(sys.argv) > 0 and sys.argv[0]:
     EXE_NAME = os.path.basename(sys.argv[0])
-    NAME = re.sub('\.py$', '', EXE_NAME, flags=re.I)
+    NAME = re.sub('\\.py$', '', EXE_NAME, flags=re.I)
 else:
     NAME = 'pyddcci'
 
@@ -153,7 +153,7 @@ _PARSER.add_argument('-ie', '--ignore-errors', dest='app.cli.ignore_errors', act
 
 ###################
 # End of argument definitions
-ARGS = _PARSER.parse_args()
+ARGS = _PARSER.parse_args(sys.argv[1:] if not UNIT_TEST else '')
 
 if getattr(ARGS, 'app.cli.commands', None) is None:
     setattr(ARGS, 'app.cli.commands', [])

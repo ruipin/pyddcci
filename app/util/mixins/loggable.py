@@ -33,7 +33,7 @@ class LoggableMixin(object):
         if HierarchicalMixin in mro and mro.index(HierarchicalMixin) < mro.index(LoggableMixin):
             raise TypeError(f"'LoggableMixin' must come *before* 'NamedMixin' in the MRO")
 
-        self.__log = None
+        setattr(self, '__log', None)
 
     @classmethod
     def class_short_name(cls) -> str:
@@ -47,7 +47,7 @@ class LoggableMixin(object):
 
 
     # Support for Hierarchical/Named
-    def _set_instance_parent(self, new_parent : HierarchicalMixin) -> None:
+    def _set_instance_parent(self, new_parent : 'HierarchicalMixin | None') -> None:
         """
         Set the instance parent and reset the logger.
 
@@ -55,7 +55,7 @@ class LoggableMixin(object):
             new_parent: The new parent object.
         """
         super()._set_instance_parent(new_parent) # type: ignore[reportUndefinedVariable]
-        self.__log = None
+        setattr(self, '__log', None)
 
     def _set_instance_name(self, new_name : str) -> None:
         """
@@ -65,7 +65,7 @@ class LoggableMixin(object):
             new_name (str): The new name to set.
         """
         super()._set_instance_name(new_name) # type: ignore[reportUndefinedVariable]
-        self.__log = None
+        setattr(self, '__log', None)
 
 
     # Logging
@@ -140,7 +140,7 @@ class LoggableMixin(object):
             str: The string name.
         """
         if isinstance(self, NamedMixin):
-            return self._NamedMixin__str_name
+            return self._NamedMixin__str_name # type: ignore[reportAttributeAccessIssue]
 
         return f"{self.__class__.__name__}"
 

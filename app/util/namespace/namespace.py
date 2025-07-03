@@ -256,7 +256,7 @@ class Namespace(object):
         """
         # Handle a __slots__ key
         if self._is_slots_key(key):
-            raise RuntimeError("Cannot access __slots__ keys using __get")
+            raise RuntimeError(f"Cannot access __slots__ key '{key}' using __get")
 
         # Handle default value
         if default is Namespace.NO_DEFAULT:

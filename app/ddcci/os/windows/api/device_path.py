@@ -18,7 +18,7 @@ class DevicePath:
     def _parse(self, path):
         """
         The device paths obtained from display_config are in the format:
-            \\?\DISPLAY#<model>#<UID>#<GUID>
+            \\?\\DISPLAY#<model>#<UID>#<GUID>
         """
 
         # Sanity check prefix, then remove it

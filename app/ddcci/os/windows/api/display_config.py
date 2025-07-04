@@ -240,14 +240,14 @@ class DisplayConfigPathInfo:
         self.target  = get_display_config_target_device_name(raw_path.targetInfo.adapterId, raw_path.targetInfo.id)
         self.monitor = DevicePath(str(self.target['monitorDevicePath']))
         if self.monitor.type != 'DISPLAY':
-            raise ValueError(f"Expected target.monitorDevicePath to have type 'DISPLAY', got '{self.monitor['display']}' instead")
+            raise ValueError(f"Expected target.monitorDevicePath to have type 'DISPLAY', got '{self.monitor.type}' instead")
         if self.monitor.guid != GUID_DEVINTERFACE_MONITOR:
-            raise ValueError(f"Expected target.monitorDevicePath to have GUID 'GUID_DEVINTERFACE_MONITOR', got '{self.monitor['guid']}' instead")
+            raise ValueError(f"Expected target.monitorDevicePath to have GUID 'GUID_DEVINTERFACE_MONITOR', got '{self.monitor.guid}' instead")
 
         adapter_path = get_display_config_adapter_name(raw_path.targetInfo.adapterId, raw_path.targetInfo.id)
         self.adapter = DevicePath(adapter_path)
         if self.adapter.guid != GUID_DEVINTERFACE_DISPLAY_ADAPTER:
-            raise ValueError(f"Expected target.monitorDevicePath to have GUID 'GUID_DEVINTERFACE_MONITOR', got '{self.adapter['guid']}' instead")
+            raise ValueError(f"Expected target.monitorDevicePath to have GUID 'GUID_DEVINTERFACE_MONITOR', got '{self.adapter.guid}' instead")
 
 
 ############

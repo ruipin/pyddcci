@@ -9,7 +9,7 @@ from ..storage import VcpStorageStorable
 from app.util import HierarchicalMixin, NamedMixin
 
 
-class VcpValue(VcpStorageStorable, HierarchicalMixin, NamedMixin):
+class VcpValue(VcpStorageStorable['VcpValue'], HierarchicalMixin, NamedMixin):
     """
     Represents a valid value for a given VcpCode, including its integer value and name aliases.
     Supports serialization and deserialization for configuration and communication.
@@ -23,7 +23,7 @@ class VcpValue(VcpStorageStorable, HierarchicalMixin, NamedMixin):
         super().__init__(instance_name=fr"VcpValue0x{value:X}", instance_parent=instance_parent)
 
         self._value = value
-        self._names = OrderedSet()
+        self._names = OrderedSet() # type: ignore - OrderedSet can indeed be used with empty parameters
 
 
     # Value
@@ -57,7 +57,7 @@ class VcpValue(VcpStorageStorable, HierarchicalMixin, NamedMixin):
 
 
     # Import / Export
-    def serialize(self, diff : 'VcpValue' =None) -> Union[Dict, str]:
+    def serialize(self, diff : 'VcpValue|None' = None) -> Union[Dict, str]: # type: ignore - changing 'diff' type to VcpValue on purpose
         """
         Serialize this VcpValue, optionally as a diff from another VcpValue.
 
@@ -71,6 +71,9 @@ class VcpValue(VcpStorageStorable, HierarchicalMixin, NamedMixin):
             res = self.asdict()
 
         else:
+            if not isinstance(diff, VcpValue):
+                raise TypeError(f"Expected VcpValue for diff parameter, got {type(diff).__name__}")
+
             d = self.asdict()
             d_diff = diff.asdict()
             res = {}
@@ -92,7 +95,7 @@ class VcpValue(VcpStorageStorable, HierarchicalMixin, NamedMixin):
 
         return res
 
-    def deserialize(self, data : Union[Dict, str], diff : Optional['VcpValue'] = None) -> None:
+    def deserialize(self, data : Union[Dict, str], diff : Optional['VcpValue'] = None) -> None: # type: ignore - changing 'diff' type to VcpValue on purpose
         """
         Deserialize this VcpValue from a dictionary or string, optionally using a diff.
 
@@ -106,5 +109,7 @@ class VcpValue(VcpStorageStorable, HierarchicalMixin, NamedMixin):
         self._fromdict(data)
 
         if diff is not None:
+            if not isinstance(diff, VcpValue):
+                raise TypeError(f"Expected VcpValue for diff parameter, got {type(diff).__name__}")
             if not self.has_name:
                 self.add_names(*diff.names)

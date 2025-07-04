@@ -18,7 +18,7 @@ class VcpCode(VcpStorageStorable, HierarchicalMixin, NamedMixin):
         code: The VCP code integer value.
         instance_parent: Optional parent for hierarchy.
     """
-    def __init__(self, code : int, instance_parent: HierarchicalMixin = None):
+    def __init__(self, code : int, instance_parent: HierarchicalMixin | None = None):
         super().__init__(instance_name=f"VcpCode0x{code:X}", instance_parent=instance_parent)
 
         self.code = code
@@ -113,12 +113,15 @@ class VcpCode(VcpStorageStorable, HierarchicalMixin, NamedMixin):
 
 
     # Copying
-    def copy_storable(self, other : 'VcpCode') -> None:
+    def copy_storable(self, other : 'VcpCode') -> None: # type: ignore - changing 'other' type to VcpCode on purpose
         """
         Copy all attributes and values from another VcpCode.
         Args:
             other: The VcpCode to copy from.
         """
+        if not isinstance(other, VcpCode):
+            raise TypeError(f"Cannot copy from {type(other)} to VcpCode")
+
         super().copy_storable(other)
 
         self.type        = other.type
@@ -129,7 +132,7 @@ class VcpCode(VcpStorageStorable, HierarchicalMixin, NamedMixin):
 
 
     # Conversion
-    def asdict(self, recursive=True, **kwargs) -> Dict[str, Any]:
+    def asdict(self, recursive=True, **kwargs) -> Dict[str, Any]: # type: ignore - changing signature on purpose
         """
         Convert this VcpCode to a dictionary representation.
         Args:
@@ -150,7 +153,7 @@ class VcpCode(VcpStorageStorable, HierarchicalMixin, NamedMixin):
 
 
     # Import / Export
-    def serialize(self, diff : 'VcpCode' = None) -> Union[Dict[str, Any], str]:
+    def serialize(self, diff : 'VcpCode|None' = None) -> Union[Dict[str, Any], str]: # type: ignore - changing 'diff' type to VcpCode on purpose
         """
         Serialize this VcpCode, optionally as a diff from another VcpCode.
         Args:
@@ -160,6 +163,9 @@ class VcpCode(VcpStorageStorable, HierarchicalMixin, NamedMixin):
         """
         if diff is None:
             return self.asdict()
+
+        if not isinstance(diff, VcpCode):
+            raise TypeError(f"Expected VcpCode for diff parameter, got {type(diff).__name__}")
 
         d = self.asdict(recursive=False)
         d_diff = diff.asdict(recursive=False)
@@ -189,13 +195,16 @@ class VcpCode(VcpStorageStorable, HierarchicalMixin, NamedMixin):
 
         return res
 
-    def deserialize(self, data : Union[Dict, str], diff : Optional['VcpCode'] = None) -> None:
+    def deserialize(self, data : Union[Dict, str], diff : Optional['VcpCode'] = None) -> None: # type: ignore - changing 'diff' type to VcpCode on purpose
         """
         Deserialize this VcpCode from a dictionary or string, optionally using a diff.
         Args:
             data: The data to deserialize from.
             diff: Optional diff VcpCode.
         """
+        if diff is not None and not isinstance(diff, VcpCode):
+            raise TypeError(f"Expected VcpCode for diff parameter, got {type(diff).__name__}")
+
         if isinstance(data, str):
             data = {'name': data}
 

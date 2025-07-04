@@ -50,12 +50,12 @@ class OsMonitorPhysicalHandle(object):
         # We need to find the hMonitor for the desired monitor using EnumDisplayMonitors
         virtual_handle = HMONITOR()
 
-        def callback(hMonitor : HMONITOR, hdcMonitor : HDC, lprcMonitor : POINTER(RECT), dwData : LPARAM) -> bool:
+        def callback(hMonitor : int, hdcMonitor : HDC, lprcMonitor : 'ctypes._Pointer[RECT]', dwData : LPARAM) -> bool:
             info = None
             try:
                 info = monitor_info.win32_get_monitor_info(hMonitor)
             except Exception as e:
-                log.warn(f"Error calling win32_get_monitor_info({hMonitor}): {e}")
+                log.warning(f"Error calling win32_get_monitor_info({hMonitor}): {e}")
                 return True
 
             if info.szDevice == desired_device_name:

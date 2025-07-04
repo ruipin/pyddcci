@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPLv3-or-later
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-from typing import Any
+from collections.abc import ItemsView, KeysView
 from dataclasses import is_dataclass, asdict as dataclass_asdict
 
 from . import Namespace
@@ -10,7 +10,7 @@ from .. import LoggableMixin, HierarchicalMixin, NamedMixin
 from ..enter_exit_call import EnterExitCall
 
 
-class NamespaceMap(Namespace):
+class NamespaceMap[K,T](Namespace):
     """
     A namespace that behaves like a dictionary or object, allowing both attribute and key-based access.
 
@@ -77,7 +77,7 @@ class NamespaceMap(Namespace):
         if super()._is_frozen_key(key):
             return True
 
-        if self.frozen_map and self._get_access_dict(key) is self.__dict__:
+        if self.get('frozen_map', False) and self._get_access_dict(key) is self.__dict__:
             return True
 
         return False
@@ -97,7 +97,7 @@ class NamespaceMap(Namespace):
         """
         return self._Namespace__get(key, default=default)
 
-    def _get_read_target(self, key):
+    def _get_read_target(self, key) -> 'NamespaceMap|None':
         """
         Determine the target object for read operations.
 
@@ -109,7 +109,7 @@ class NamespaceMap(Namespace):
         """
         return self
 
-    def _Namespace__get_read_target(self, key):
+    def _Namespace__get_read_target(self, key) -> Namespace|None:
         """
         Determine the target object for read operations in the namespace.
 
@@ -144,7 +144,7 @@ class NamespaceMap(Namespace):
         """
         return len(self.__dict__)
 
-    def keys(self):
+    def keys(self) -> KeysView:
         """
         Retrieve the keys of the internal dictionary.
 
@@ -153,7 +153,7 @@ class NamespaceMap(Namespace):
         """
         return self.__dict__.keys()
 
-    def items(self):
+    def items(self) -> ItemsView:
         """
         Retrieve the items of the internal dictionary.
 
@@ -273,7 +273,7 @@ class NamespaceMap(Namespace):
 
 
     # Utilities
-    def asdict(self, recursive=True, private=False, protected=True, public=True):
+    def asdict(self, recursive=True, private=False, protected=True, public=True) -> dict:
         """
         Convert the namespace map to a dictionary.
 

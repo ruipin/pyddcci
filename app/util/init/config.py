@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPLv3-or-later
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-import os
+import os, sys
 import oyaml as yaml
-from ordered_set import OrderedSet
+from typing import Iterable, Any, Callable
 
 from . import version, args
 from .. import NamespaceMap, LoggableHierarchicalNamedMixin
@@ -74,7 +74,7 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
         if self.is_reserved_key(key):
             raise ValueError(f"key '{key}' is inside a reserved hierarchy")
 
-    def _get_read_target(self, key):
+    def _get_read_target(self, key) -> NamespaceMap | None:
         """
         Get the read target for a given key (default or self).
 
@@ -85,7 +85,10 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
             NamespaceMap: The read target.
         """
         if key not in self.__dict__:
-            return self._default
+            default = self.get('_default', None)
+            if default is not None and not isinstance(default, NamespaceMap):
+                raise KeyError(f"self._default must be of type 'NamespaceMap', not {type(default).__name__}")
+            return default
         else:
             return self
 
@@ -125,16 +128,21 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
         Returns:
             int: The number of keys.
         """
-        return len(self.keys())
+        return sum(1 for _ in self.keys())
 
-    def keys(self):
+    def keys(self) -> Iterable:
         """
         Get all keys in the config map.
 
         Returns:
             OrderedSet: A set of all keys.
         """
-        return OrderedSet.union(self._default.keys(), self.__dict__.keys())
+        for k in self._default.keys():
+            if k not in self.__dict__:
+                yield k
+        for k in self.__dict__.keys():
+            yield k
+
 
     def items(self):
         """
@@ -155,7 +163,7 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
         """
         return self._dict.values()
 
-    def asdict(self, recursive=True, user=True, default=True):
+    def asdict(self, recursive=True, user=True, default=True): # type: ignore - independent implementation of asdict
         """
         Convert the config map to a dictionary, optionally recursively.
 
@@ -328,49 +336,14 @@ class MasterConfigMap(ConfigMap):
         Save the user configuration to the user configuration file.
         """
         self.log.debug("Saving user configuration...")
-        assert not CONFIG.app.test
+        assert not CFG.app.test
         with open(self.__class__.USER_CONFIG_FILE, 'w') as file:
             yaml_str = self.yaml_str(user=True, default=False)
             file.write(yaml_str)
 
 # Initialize
-CONFIG = MasterConfigMap("config")
-CONFIG.load()
-
-
-####################
-# Helpers
-def __getattr__(name):
-    """
-    Get a config attribute using attribute syntax obj.name.
-
-    Args:
-        name (str): The attribute name.
-
-    Returns:
-        The attribute value or method.
-    """
-    # Handle methods first
-    if hasattr(CONFIG, name):
-        mthd = getattr(CONFIG, name)
-        if callable(mthd):
-            return mthd
-
-    # Do a normal namespace access
-    return CONFIG.get(name)
-
-def __getitem__(key):
-    """
-    Get a config attribute using dictionary syntax obj[key].
-
-    Args:
-        key (str): The attribute name.
-
-    Returns:
-        The attribute value.
-    """
-    return CONFIG.get(key)
-
+CFG = MasterConfigMap("config")
+CFG.load()
 
 # Cleanup
 del args

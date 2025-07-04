@@ -4,13 +4,14 @@
 from abc import ABCMeta
 from collections.abc import MutableSequence
 from dataclasses import is_dataclass, asdict as dataclass_asdict
+from typing import Any, Dict, Iterator, List
 
 from .namespace import Namespace
 from ..mixins import *
 from ..enter_exit_call import EnterExitCall
 
 
-class NamespaceList(Namespace, MutableSequence, metaclass=ABCMeta):
+class NamespaceList[T](Namespace, MutableSequence, metaclass=ABCMeta):
     """
     A list wrapper with extended functionality, supporting both list and namespace behaviors.
 
@@ -22,7 +23,6 @@ class NamespaceList(Namespace, MutableSequence, metaclass=ABCMeta):
     def __init__(self, *args, frozen_schema=False, frozen_namespace=False, frozen_list=False, **kwargs):
         """
         Initializes a NamespaceList instance.
-
         Args:
             frozen_schema (bool): If True, freeze the schema.
             frozen_namespace (bool): If True, freeze the namespace.
@@ -40,32 +40,28 @@ class NamespaceList(Namespace, MutableSequence, metaclass=ABCMeta):
 
         self.__frozen_list   = False
 
-        self._list = list(*args, **kwargs)
+        self._list : List[T] = list(*args, **kwargs)
 
         self.__frozen_list = frozen_list
 
 
     # Abstract methods implementation
-    def __getitem__(self, i):
+    def __getitem__(self, i : int) -> T:
         """
         Get an item from the list by index.
-
         Args:
             i (int): Index of the item.
-
         Returns:
             object: The item at the specified index.
         """
         return self._list[i]
 
-    def __setitem__(self, i, v):
+    def __setitem__(self, i : int, v : T) -> None:
         """
         Set an item in the list by index.
-
         Args:
             i (int): Index of the item.
             v (object): Value to set.
-
         Raises:
             RuntimeError: If the list is frozen.
         """
@@ -73,13 +69,11 @@ class NamespaceList(Namespace, MutableSequence, metaclass=ABCMeta):
             raise RuntimeError(f"{self.__class__.__name__} is frozen")
         self._list[i] = v
 
-    def __delitem__(self, i):
+    def __delitem__(self, i : int) -> None:
         """
         Delete an item from the list by index.
-
         Args:
             i (int): Index of the item.
-
         Raises:
             RuntimeError: If the list is frozen.
         """
@@ -87,14 +81,12 @@ class NamespaceList(Namespace, MutableSequence, metaclass=ABCMeta):
             raise RuntimeError(f"{self.__class__.__name__} is frozen")
         del self._list[i]
 
-    def insert(self, index, value):
+    def insert(self, index, value : T) -> None:
         """
         Insert an item into the list at a specific index.
-
         Args:
             i (int): Index to insert at.
             v (object): Value to insert.
-
         Raises:
             RuntimeError: If the list is frozen.
         """
@@ -102,31 +94,27 @@ class NamespaceList(Namespace, MutableSequence, metaclass=ABCMeta):
             raise RuntimeError(f"{self.__class__.__name__} is frozen")
         self._list.insert(index, value)
 
-    def __len__(self):
+    def __len__(self) -> int:
         """
         Get the length of the list.
-
         Returns:
             int: The number of items in the list.
         """
         return len(self._list)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[T]:
         """
         Get an iterator for the list.
-
         Returns:
             iterator: An iterator for the list.
         """
         return iter(self._list)
 
-    def __contains__(self, m):
+    def __contains__(self, m : T) -> bool:
         """
         Check if an item is in the list.
-
         Args:
             m (object): The item to check.
-
         Returns:
             bool: True if the item is in the list, False otherwise.
         """
@@ -134,13 +122,11 @@ class NamespaceList(Namespace, MutableSequence, metaclass=ABCMeta):
 
 
     # List utilities
-    def replace(self, other_list):
+    def replace(self, other_list : List[T]) -> None:
         """
         Replace the contents of this list with another list.
-
         Args:
             other_list (list): The list to copy from.
-
         Raises:
             RuntimeError: If the list is frozen.
         """
@@ -151,15 +137,13 @@ class NamespaceList(Namespace, MutableSequence, metaclass=ABCMeta):
 
 
     # Freezing
-    def freeze_list(self, freeze=True, *, recursive=False, temporary=False):
+    def freeze_list(self, freeze:bool=True, *, recursive:bool=False, temporary:bool=False) -> None:
         """
         Freeze or unfreeze the list (optionally recursively or temporarily).
-
         Args:
             freeze (bool): If True, freeze the list.
             recursive (bool): If True, apply recursively to contained objects.
             temporary (bool): If True, use a context manager for temporary freezing.
-
         Returns:
             EnterExitCall or None: Context manager if temporary, else None.
         """
@@ -176,14 +160,12 @@ class NamespaceList(Namespace, MutableSequence, metaclass=ABCMeta):
 
         self.__frozen_list = freeze
 
-    def unfreeze_list(self, recursive=False, temporary=False):
+    def unfreeze_list(self, recursive:bool=False, temporary:bool=False) -> None:
         """
         Unfreeze the list (optionally recursively or temporarily).
-
         Args:
             recursive (bool): If True, apply recursively.
             temporary (bool): If True, use a context manager for temporary unfreezing.
-
         Returns:
             EnterExitCall or None: Context manager if temporary, else None.
         """
@@ -193,16 +175,14 @@ class NamespaceList(Namespace, MutableSequence, metaclass=ABCMeta):
     def frozen_list(self):
         """
         Check if the list is currently frozen.
-
         Returns:
             bool: True if frozen, False otherwise.
         """
         return self.__frozen_list
     @frozen_list.setter
-    def frozen_list(self, val):
+    def frozen_list(self, val:bool):
         """
         Set the frozen state of the list.
-
         Args:
             val (bool): True to freeze, False to unfreeze.
         """
@@ -210,16 +190,14 @@ class NamespaceList(Namespace, MutableSequence, metaclass=ABCMeta):
 
 
     # Printing
-    def aslist(self, recursive=True, private=False, protected=True, public=True):
+    def aslist(self, recursive:bool=True, private:bool=False, protected:bool=True, public:bool=True) -> List[T]:
         """
         Convert the NamespaceList to a list, optionally recursively.
-
         Args:
             recursive (bool): If True, convert contained objects recursively.
             private (bool): Include private attributes.
             protected (bool): Include protected attributes.
             public (bool): Include public attributes.
-
         Returns:
             list: The list representation.
         """
@@ -239,16 +217,14 @@ class NamespaceList(Namespace, MutableSequence, metaclass=ABCMeta):
 
         return l
 
-    def asdict(self, recursive=True, private=False, protected=True, public=True):
+    def asdict(self, recursive:bool=True, private:bool=False, protected:bool=True, public:bool=True) -> Dict[str, Any]:
         """
         Convert the NamespaceList to a dictionary, optionally recursively.
-
         Args:
             recursive (bool): If True, convert contained objects recursively.
             private (bool): Include private attributes.
             protected (bool): Include protected attributes.
             public (bool): Include public attributes.
-
         Returns:
             dict: The dictionary representation.
         """
@@ -263,7 +239,7 @@ class NamespaceList(Namespace, MutableSequence, metaclass=ABCMeta):
 
 
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Get the string representation of the NamespaceList.
 

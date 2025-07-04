@@ -126,7 +126,7 @@ class HierarchicalMixin(object):
             str: The string name.
         """
         if isinstance(self, NamedMixin):
-            return self._NamedMixin__str_name # type: ignore[reportAttributeAccessIssue]
+            return self._NamedMixin__str_name # type: ignore - NamedMixin provides __str_name
 
         return f"{self.__class__.__name__}"
 

@@ -22,9 +22,9 @@ A Python application to control your monitor(s) using DDC/CI.
    git clone https://github.com/yourusername/pyddcci.git
    cd pyddcci
    ```
-2. Install dependencies (Python 3.7+ required):
+2. Install dependencies (Python 3.13+ required):
    ```sh
-   pip install oyaml ordered-set
+   pip install -r requirements.txt
    ```
    (You may need additional dependencies depending on your OS and monitor hardware.)
 
@@ -139,12 +139,6 @@ Configuration is managed via YAML files in the `data/` directory. Do not modify 
   - `util/` — Utilities, configuration, and logging
 - `data/` — Default configuration files
 - `test/` — Unit tests
-
-## Requirements
-
-- Python 3.7 or newer
-- [oyaml](https://pypi.org/project/oyaml/)
-- [ordered-set](https://pypi.org/project/ordered-set/)
 
 ## Running Tests
 

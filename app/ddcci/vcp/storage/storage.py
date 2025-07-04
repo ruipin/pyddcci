@@ -3,15 +3,15 @@
 
 import re
 
-from typing import Optional, Iterable, Any, Union, Set, NewType, ItemsView, Dict
-from . import VcpStorageStorable, T_VcpStorageStorable, T_VcpStorageName, T_VcpStorageKey, T_VcpStorageIdentifier, T_VcpStorageStandardIdentifier
+from typing import Optional, Iterable, Any, Union, Set, ItemsView, Dict
+from . import VcpStorageStorable, T_VcpStorageName, T_VcpStorageKey, T_VcpStorageIdentifier
 
 from abc import ABCMeta, abstractmethod
 
 from app.util import LoggableMixin, HierarchicalMixin, NamedMixin
 
 
-class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta):
+class VcpStorage[Storable : VcpStorageStorable](LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta):
     """
     Abstract base for a collection of VCP storable objects (codes or values).
 
@@ -25,13 +25,13 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
         self._initialize()
 
     def _initialize(self):
-        self._dict : Dict[T_VcpStorageStandardIdentifier, T_VcpStorageStorable] = {}
-        self._set  : Set[T_VcpStorageStorable]                                  = set()
+        self._dict : Dict[T_VcpStorageKey, Storable] = {}
+        self._set  : Set [Storable]           = set()
 
 
     # Utility methods
     @abstractmethod
-    def _create_value(self, value : T_VcpStorageKey) -> T_VcpStorageStorable:
+    def _create_value(self, key : T_VcpStorageKey) -> Storable:
         """
         Create a new storable object for the given value.
         Args:
@@ -42,7 +42,7 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
         pass
 
     @classmethod
-    def standardise_identifier(cls, identifier : T_VcpStorageIdentifier) -> T_VcpStorageStandardIdentifier:
+    def standardise_identifier(cls, identifier : T_VcpStorageIdentifier) -> T_VcpStorageIdentifier:
         """
         Normalize an identifier to a standard form (int or str).
         Args:
@@ -71,7 +71,7 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
 
 
     # Accesses
-    def get(self, identifier : T_VcpStorageIdentifier, add=True) -> T_VcpStorageStorable:
+    def get(self, identifier : T_VcpStorageIdentifier, add=True) -> VcpStorageStorable:
         """
         Get a storable object by identifier, optionally adding if not found.
         Args:
@@ -96,7 +96,7 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
         raise KeyError(identifier)
 
 
-    def add(self, key : T_VcpStorageKey) -> T_VcpStorageStorable:
+    def add(self, key : T_VcpStorageKey) -> VcpStorageStorable:
         """
         Add a new storable object for the given key.
         Args:
@@ -129,14 +129,14 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
 
         del self._dict[key]
 
-        if isinstance(key, int):
+        if isinstance(key, T_VcpStorageKey):
             obj.clear_names()
             self._set.remove(obj)
         else:
             obj.remove_name(key)
 
 
-    def set(self, name : T_VcpStorageName, value : Optional[T_VcpStorageKey]) -> Optional[T_VcpStorageStorable]:
+    def set(self, name : T_VcpStorageName, value : Optional[T_VcpStorageKey]) -> Optional[VcpStorageStorable]:
         """
         Set an alias for a value, or remove if value is None.
         Args:
@@ -146,12 +146,12 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
             VcpStorageStorable or None: The set object, or None if removed.
         """
         # Sanity checks
-        if not isinstance(name, str):
-            raise ValueError(f"'name'={name} must be of type 'str'")
+        if not isinstance(name, T_VcpStorageName):
+            raise ValueError(f"'name'={name} must be of type 'T_VcpStorageName' (str)")
 
         # Sanity checks
-        if value is not None and not isinstance(value, int):
-            raise ValueError(f"'value'={value} must be of type 'int'")
+        if value is not None and not isinstance(value, T_VcpStorageKey):
+            raise ValueError(f"'value'={value} must be of type 'T_VcpStorageKey' (int)")
 
         # Convert to key
         identifier = self.standardise_identifier(name)
@@ -176,7 +176,7 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
         return obj
 
 
-    def contains(self, obj : Union[T_VcpStorageIdentifier, T_VcpStorageStorable]):
+    def contains(self, obj : T_VcpStorageIdentifier|Storable):
         """
         Check if an object or identifier exists in storage.
         Args:
@@ -185,13 +185,13 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
             bool: True if present, False otherwise.
         """
         if isinstance(obj, VcpStorageStorable):
-            return obj in set
+            return obj in self._set
         return self.standardise_identifier(obj) in self._dict
 
 
 
     # Magic methods
-    def __getitem__(self, identifier : T_VcpStorageIdentifier) -> T_VcpStorageStorable:
+    def __getitem__(self, identifier : T_VcpStorageIdentifier) -> Storable:
         """
         Get a storable object using dictionary syntax.
         Args:
@@ -218,7 +218,7 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
         """
         self.remove(identifier)
 
-    def __contains__(self, identifier : Union[T_VcpStorageIdentifier, T_VcpStorageStorable]):
+    def __contains__(self, identifier : T_VcpStorageIdentifier|Storable):
         """
         Check if an identifier or object exists in storage.
         Args:
@@ -230,7 +230,7 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
 
 
     # Iteration
-    def __iter__(self) -> Iterable[T_VcpStorageStorable]:
+    def __iter__(self) -> Iterable[Storable]:
         return self.values()
 
     def __len__(self) -> int:
@@ -245,7 +245,7 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
         for v in self._set:
             yield v.vcp_storage_key()
 
-    def items(self) -> ItemsView[T_VcpStorageKey, T_VcpStorageStorable]:
+    def items(self) -> ItemsView[T_VcpStorageIdentifier, Storable]:
         """
         Get all (key, storable) pairs.
         Returns:
@@ -253,7 +253,7 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
         """
         return self._dict.items()
 
-    def values(self) -> Iterable[T_VcpStorageStorable]:
+    def values(self) -> Iterable[Storable]:
         """
         Iterate over all storable objects.
         Returns:
@@ -268,18 +268,18 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
             Iterable[str]: All alias names.
         """
         for k in self._dict.keys():
-            if isinstance(k, str):
+            if isinstance(k, T_VcpStorageName):
                 yield k
 
 
     # Copying
-    def copy_storable(self, other_storable: T_VcpStorageStorable) -> T_VcpStorageStorable:
+    def copy_storable(self, other_storable: Storable) -> Storable:
         """
         Copy a storable object from another storage.
         Args:
             other_storable: The object to copy.
         Returns:
-            VcpStorageStorable: The copied object.
+            Storable: The copied object.
         """
         identifier = other_storable.vcp_storage_key()
 
@@ -327,7 +327,7 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
 
 
     # Serialization
-    def serialize(self, diff : 'VcpStorage' = None) -> Union[Dict, str]:
+    def serialize(self, diff : 'VcpStorage | None' = None) -> Union[Dict, str]:
         """
         Serialize the storage, optionally as a diff from another storage.
         Args:
@@ -371,14 +371,14 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
 
         return res
 
-    def deserialize(self, data : Union[Dict, str], diff : Optional['VcpStorage'] = None) -> None:
+    def deserialize(self, data : Union[Dict, str], diff : 'VcpStorage | None' = None) -> None:
         """
         Deserialize the storage from a dictionary or string, optionally using a diff.
         Args:
             data: The data to deserialize from.
             diff: Optional diff storage.
         """
-        if isinstance(data, str):
+        if isinstance(data, T_VcpStorageName):
             data = {'default': data}
 
         # Parse defaults
@@ -409,4 +409,4 @@ class VcpStorage(LoggableMixin, HierarchicalMixin, NamedMixin, metaclass=ABCMeta
 
     # Printing
     def __repr__(self) -> str:
-        return f"<{self._LoggableMixin__repr_name}: {str(list(self._set))}>"
+        return f"<{self._LoggableMixin__repr_name}: {str(list(self._set))}>" # type: ignore - LoggableMixin provides __repr_name

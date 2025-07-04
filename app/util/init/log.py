@@ -11,7 +11,7 @@ import sys
 import os
 import atexit
 
-from . import config as CFG
+from . import CFG
 
 # Log file name is hardcoded
 LOG_FILE_NAME = '{}.log'.format(CFG.app.name)
@@ -156,7 +156,7 @@ class CustomHandler(logging.Handler):
 
         atexit.register(self.atexit)
 
-    def handle(self, record):
+    def handle(self, record) -> bool:
         if record.levelno >= logging.CRITICAL:
             self.num_critical += 1
             sys.exit(-1)
@@ -164,6 +164,7 @@ class CustomHandler(logging.Handler):
             self.num_error += 1
         elif record.levelno >= logging.WARNING:
             self.num_warning += 1
+        return True
 
 customHdlr = CustomHandler()
 customHdlr.setLevel(logging.INFO)

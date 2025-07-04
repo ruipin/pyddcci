@@ -3,14 +3,14 @@
 
 
 from typing import Iterable, Dict, Any, Union
-from . import T_VcpStorageKey, T_VcpStorageName, T_VcpStorageIdentifier
+from . import T_VcpStorageKey, T_VcpStorageName
 
 from abc import ABCMeta, abstractmethod
 from ordered_set import OrderedSet
 
 from app.util import HierarchicalMixin
 
-class VcpStorageStorable(metaclass=ABCMeta):
+class VcpStorageStorable[Storable : VcpStorageStorable](metaclass=ABCMeta):
     """
     Abstract base for objects that can be stored in a VcpStorage.
 
@@ -44,7 +44,7 @@ class VcpStorageStorable(metaclass=ABCMeta):
         """
         Internal initialization method for setting up names.
         """
-        self._names = OrderedSet()
+        self._names = OrderedSet({})
 
     @abstractmethod
     def vcp_storage_key(self) -> T_VcpStorageKey:
@@ -57,7 +57,7 @@ class VcpStorageStorable(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def vcp_storage_key_name(self) -> str:
+    def vcp_storage_key_name(self) -> T_VcpStorageName:
         """
         Return the name of the storage key (e.g., "code" or "value").
 
@@ -107,8 +107,8 @@ class VcpStorageStorable(metaclass=ABCMeta):
         Args:
             new_name: The alias name to add.
         """
-        if isinstance(new_name, int):
-            raise ValueError(f"new_name={new_name} cannot be an integer")
+        if isinstance(new_name, T_VcpStorageKey):
+            raise ValueError(f"new_name={new_name} cannot be a Key type")
 
         self._names.add(new_name)
 
@@ -116,7 +116,7 @@ class VcpStorageStorable(metaclass=ABCMeta):
         if isinstance(self.instance_parent, VcpStorage):
             self.instance_parent[new_name] = self.vcp_storage_key()
 
-    def add_names(self, *names : Iterable[T_VcpStorageName]) -> None:
+    def add_names(self, *names : T_VcpStorageName) -> None:
         """
         Add multiple alias names for this object.
 
@@ -133,8 +133,8 @@ class VcpStorageStorable(metaclass=ABCMeta):
         Args:
             name: The alias name to remove.
         """
-        if isinstance(name, int):
-            raise ValueError(f"name={name} cannot be an integer")
+        if isinstance(name, T_VcpStorageKey):
+            raise ValueError(f"name={name} cannot be a Key type")
 
         if name not in self._names:
             return
@@ -145,7 +145,7 @@ class VcpStorageStorable(metaclass=ABCMeta):
         if isinstance(self.instance_parent, VcpStorage):
             del self.instance_parent[name]
 
-    def remove_names(self, *names : Iterable[T_VcpStorageName]) -> None:
+    def remove_names(self, *names : T_VcpStorageName) -> None:
         """
         Remove multiple alias names from this object.
 
@@ -163,7 +163,7 @@ class VcpStorageStorable(metaclass=ABCMeta):
 
 
     # Comparison, etc
-    def __eq__(self, other : Union['VcpStorageStorable', T_VcpStorageIdentifier]) -> bool:
+    def __eq__(self, other) -> bool:
         """
         Compare this object with another object or identifier.
 
@@ -176,10 +176,10 @@ class VcpStorageStorable(metaclass=ABCMeta):
         if isinstance(other, self.__class__):
             return other is self
 
-        if isinstance(other, int):
+        if isinstance(other, T_VcpStorageKey):
             return other == self.vcp_storage_key()
 
-        if isinstance(other, str):
+        if isinstance(other, T_VcpStorageName):
             from .storage import VcpStorage
             key = VcpStorage.standardise_identifier(other)
 
@@ -203,7 +203,7 @@ class VcpStorageStorable(metaclass=ABCMeta):
 
 
     # Copying
-    def copy_storable(self, other : 'VcpStorageStorable') -> None:
+    def copy_storable(self, other : Storable) -> None:
         """
         Copy all names from another storable object.
 
@@ -274,6 +274,24 @@ class VcpStorageStorable(metaclass=ABCMeta):
                 attr = data.get(attr_nm, None)
                 if attr is not None:
                     setattr(self, attr_nm, attr)
+
+
+    # Serialisation
+    def serialize(self, diff : Storable|None = None) -> Union[Dict[str, Any], str]:
+        """
+        Serialise this object to a dictionary.
+        Returns:
+            dict: The serialised representation.
+        """
+        raise NotImplementedError(f"{self.__class__.__name__}.serialize() must be implemented by subclasses")
+
+    def deserialize(self, data: Union[Dict, str], diff: Storable|None = None):
+        """
+        Deserialise this object from a dictionary.
+        Args:
+            data: The dictionary to deserialise from.
+        """
+        raise NotImplementedError(f"{self.__class__.__name__}.deserialize() must be implemented by subclasses")
 
 
     # Printing

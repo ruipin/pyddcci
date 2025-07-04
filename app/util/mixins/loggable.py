@@ -54,7 +54,7 @@ class LoggableMixin(object):
         Args:
             new_parent: The new parent object.
         """
-        super()._set_instance_parent(new_parent) # type: ignore[reportUndefinedVariable]
+        super()._set_instance_parent(new_parent) # type: ignore - HierarchicalMixin provides _set_instance_parent
         setattr(self, '__log', None)
 
     def _set_instance_name(self, new_name : str) -> None:
@@ -64,7 +64,7 @@ class LoggableMixin(object):
         Args:
             new_name (str): The new name to set.
         """
-        super()._set_instance_name(new_name) # type: ignore[reportUndefinedVariable]
+        super()._set_instance_name(new_name) # type: ignore - NamedMixin provides _set_instance_name
         setattr(self, '__log', None)
 
 
@@ -140,7 +140,7 @@ class LoggableMixin(object):
             str: The string name.
         """
         if isinstance(self, NamedMixin):
-            return self._NamedMixin__str_name # type: ignore[reportAttributeAccessIssue]
+            return self._NamedMixin__str_name # type: ignore - NamedMixin provides __str_name
 
         return f"{self.__class__.__name__}"
 

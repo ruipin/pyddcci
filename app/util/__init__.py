@@ -8,5 +8,5 @@ from .mixins import *
 from .namespace import *
 
 # Initialize
-from .init import config as CFG
+from .init import CFG
 from .init import getLogger

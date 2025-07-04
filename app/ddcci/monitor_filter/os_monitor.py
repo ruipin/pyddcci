@@ -26,7 +26,7 @@ class OsMonitorMonitorFilter(BaseMonitorFilter):
         return os_monitor is self.os_monitor
 
     # Custom implementation to avoid an expensive search when we already know which monitor we want
-    def find(self, _) -> List[OsMonitor]:
+    def find(self, os_monitor_list) -> List[OsMonitor]:
         if not self.os_monitor.connected:
             return []
 

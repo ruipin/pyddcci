@@ -55,7 +55,7 @@ class MockMonitorData(object):
         self.adapter_number = number
 
         self.adapter_device = BaseOsMonitorInfo.Device(
-            id      = fake.bothify(text='PCI\VEN_##??&DEV_#?##&SUBSYS_#?####??&REV_?#', letters=ascii_uppercase),
+            id      = fake.bothify(text='PCI\\VEN_##??&DEV_#?##&SUBSYS_#?####??&REV_?#', letters=ascii_uppercase),
             name    = fr'\\.\DISPLAY{number}',
             number  = self.adapter_number
         )

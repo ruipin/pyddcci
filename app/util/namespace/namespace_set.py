@@ -38,40 +38,40 @@ class NamespaceSet(Namespace, MutableSet, metaclass=ABCMeta):
             super_params['instance_parent'] = kwargs.pop('instance_parent', None)
         super().__init__(**super_params)
 
-        self.__frozen_set   = False
+        self.__frozen_set = False
 
         self._set = OrderedSet(*args, **kwargs)
 
         self.__frozen_set = frozen_set
 
 
-    def add(self, m):
+    def add(self, value):
         """
         Adds an element to the set.
 
         Args:
-            m: The element to add.
+            value: The element to add.
 
         Raises:
             RuntimeError: If the set is frozen.
         """
         if self.frozen_set:
             raise RuntimeError(f"{self.__class__.__name__} is frozen")
-        self._set.add(m)
+        self._set.add(value)
 
-    def discard(self, m):
+    def discard(self, value):
         """
         Removes an element from the set if it exists.
 
         Args:
-            m: The element to remove.
+            value: The element to remove.
 
         Raises:
             RuntimeError: If the set is frozen.
         """
         if self.frozen_set:
             raise RuntimeError(f"{self.__class__.__name__} is frozen")
-        self._set.discard(m)
+        self._set.discard(value)
 
     def __len__(self):
         """
@@ -117,7 +117,7 @@ class NamespaceSet(Namespace, MutableSet, metaclass=ABCMeta):
         if self.frozen_set:
             raise RuntimeError(f"{self.__class__.__name__} is frozen")
 
-        self._set = set(other_set)
+        self._set = OrderedSet(other_set)
 
 
     def freeze_set(self, freeze=True, *, recursive=False, temporary=False):

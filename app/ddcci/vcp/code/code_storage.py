@@ -9,12 +9,12 @@ from ..storage.storage import VcpStorage
 from .code import VcpCode
 
 
-class VcpCodeStorage(VcpStorage):
+class VcpCodeStorage(VcpStorage[VcpCode]):
     """
     Storage for VcpCode objects, providing methods to add, retrieve, and manage VCP codes and their metadata.
     Handles loading from dictionaries, capability parsing, and serialization.
     """
-    def _create_value(self, code : int) -> VcpCode:
+    def _create_value(self, key : int) -> VcpCode:
         """
         Create a new VcpCode instance for the given code.
 
@@ -24,7 +24,7 @@ class VcpCodeStorage(VcpStorage):
         Returns:
             VcpCode: The created VcpCode instance.
         """
-        return VcpCode(code, instance_parent=self)
+        return VcpCode(key, instance_parent=self)
 
 
     def _add_dictionary_key(self, value: int, details: Dict[str, Any], category: Optional[str]):
@@ -45,7 +45,7 @@ class VcpCodeStorage(VcpStorage):
 
             description = details.get('description', None)
 
-            aliases : Optional[str, List[str]] = details.get('aliases', None)
+            aliases : str | List[str] | None = details.get('aliases', None)
             if aliases is not None and not isinstance(aliases, list):
                 aliases = [aliases]
 

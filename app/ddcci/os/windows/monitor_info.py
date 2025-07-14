@@ -82,6 +82,8 @@ class WindowsOsMonitorInfo(BaseOsMonitorInfo):
             edid_attr = edid[attr2]
 
             if self_attr is not None:
+                if isinstance(edid_attr, str) and self_attr.startswith(edid_attr):
+                    edid_attr = self_attr
                 if self_attr != edid_attr:
                     raise RuntimeError(f"Had {attr1}='{self_attr}' but got EDID.{attr2}='{edid_attr}'")
             else:

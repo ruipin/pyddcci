@@ -73,18 +73,30 @@ class OsMonitorPhysicalHandle(object):
         physical_count = DWORD()
         if not windll.dxva2.GetNumberOfPhysicalMonitorsFromHMONITOR(virtual_handle, byref(physical_count)):
             raise WinError()
-        assert(physical_count.value > desired_physical_number)
+        if physical_count.value <= desired_physical_number:
+            if physical_count.value == 1:
+                log.warning(f"Only 1 physical monitor found for {self.monitor} even though #{desired_physical_number} was requested. Assuming it is the desired one.")
+                desired_physical_number = 0 # Assume we want the only physical monitor if only one is available
+            else:
+                raise RuntimeError(f"Could not find physical monitor at index {desired_physical_number} for {self.monitor}. Found {physical_count.value} physical monitors.")
 
         # Get physical monitor handles
         physical_array = (_PHYSICAL_MONITOR * physical_count.value)()
         if not windll.dxva2.GetPhysicalMonitorsFromHMONITOR(virtual_handle, physical_count, physical_array):
             raise WinError()
 
+        found = False
         for i, physical in enumerate(physical_array):
             if i != desired_physical_number:
                 self._close(physical.handle)
+            elif found:
+                raise RuntimeError(f"Found multiple physical monitors for {self.monitor} at index {i}, expected only one at index {desired_physical_number}")
+            else:
+                self.handle = physical.handle
+                found = True
 
-            self.handle = physical.handle
+        if not found:
+            raise RuntimeError(f"Could not find physical monitor at index {desired_physical_number} for {self.monitor}")
 
         self.is_open = True
 

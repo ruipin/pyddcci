@@ -66,13 +66,12 @@ class BaseMonitorFilter(NamespaceMap, LoggableMixin, HierarchicalMixin, NamedMix
         match = self.find(os_monitor_list)
         len_match = len(match)
 
-        if len_match > 1:
-            msg = '\n\t'.join([x.instance_name for x in match])
-            self.log.warning(f"Found more than one monitor, returning None. The following monitors matched this filter:\n\t{msg}")
-            return None
-
         if len_match == 0:
             return None
+
+        if len_match > 1:
+            msg = '\n\t'.join([x.instance_name for x in match])
+            self.log.warning(f"Found more than one monitor, returning the first match. The following monitors matched this filter:\n\t{msg}")
 
         return match[0]
 

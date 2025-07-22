@@ -10,12 +10,13 @@ import sys
 import argparse
 import os
 import re
+from typing import override
 
 ###################
 # Script name corresponds to argv[0] (without the '.py' extension, if present)
 if len(sys.argv) > 0 and sys.argv[0]:
     EXE_NAME = os.path.basename(sys.argv[0])
-    NAME = re.sub('\\.py$', '', EXE_NAME, flags=re.I)
+    NAME = re.sub("\\.py$", '', EXE_NAME, flags=re.I)
 else:
     NAME = 'pyddcci'
 
@@ -91,6 +92,7 @@ class CommandAction(argparse.Action):
 
     TOGGLE_PARSER = SET_PARSER
 
+    @override
     def __call__(self, parser, namespace, values, option_string=None):
         """
         Parse and validate CLI command arguments, storing them in the namespace.

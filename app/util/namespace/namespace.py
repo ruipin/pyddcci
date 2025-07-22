@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPLv3-or-later
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-from typing import override
+from typing import override, Protocol, Self, Any, runtime_checkable
 from collections.abc import ItemsView, Iterable, KeysView, ValuesView
 from dataclasses import is_dataclass, asdict as dataclass_asdict
 
@@ -9,7 +9,7 @@ from .. import LoggableMixin, HierarchicalMixin, NamedMixin
 from ..enter_exit_call import EnterExitCall
 
 
-class Namespace[T]:
+class Namespace[T = Any]:
     """
     A flexible namespace object that can be accessed like a dictionary or using attributes.
 
@@ -24,10 +24,9 @@ class Namespace[T]:
     NO_DEFAULT = NoDefault()
 
     # Type aliases for better readability
-    type Self      = Namespace[T]
-    type Attribute = Self | T
-    type Default   = Attribute | NoDefault
-    type DictView  = dict[str, Attribute]
+    type Attribute  = Namespace[T] | T
+    type Default    = Attribute | NoDefault
+    type DictView   = dict[str, Attribute]
 
     # We want to hide some attributes from the dictionary
     # NOTE: We include the log/parent attributes here just in case someone decides to make this class Loggable or Hierarchical
@@ -49,7 +48,8 @@ class Namespace[T]:
     # If not None, this delimiter will cause STICKY=True to also split keys with this delimiter
     NAMESPACE__STICKY__DELIMITER : str|None = None
 
-    # Constructor
+
+    # MARK: Constructor
     def __init__(self, *, frozen_schema=False, frozen_namespace=False, **kwargs : Attribute):
         """
         Initialize a Namespace instance.
@@ -71,10 +71,10 @@ class Namespace[T]:
         _check_mro(mro, LoggableMixin)
 
         # Initialize basic state before calling super constructors
-        self.__frozen_schema    = False
-        self.__frozen_namespace = False
+        self.__frozen_schema    : bool = False
+        self.__frozen_namespace : bool = False
 
-        self.__namespace : Namespace.DictView = {}
+        self.__namespace : Namespace[T].DictView = {}
 
         # Call super-class
         super_params = {}
@@ -92,7 +92,7 @@ class Namespace[T]:
         self.__frozen_namespace = frozen_namespace
 
 
-    # Utilities
+    # MARK: Utilities
     def _sanity_check_public_key(self, key : str, *, delete:bool=False) -> None:
         pass
 
@@ -131,7 +131,7 @@ class Namespace[T]:
         return self.__namespace
 
 
-    # Adding to the namespace
+    # MARK: Adding to the namespace
     def __get_write_target(self, key : str) -> Self:
         return self
 
@@ -250,7 +250,7 @@ class Namespace[T]:
                 raise
 
 
-    # Reading from Namespace
+    # MARK: Reading from Namespace
     def __get_read_target(self, key : str) -> Self|None:
         return self
 
@@ -312,7 +312,7 @@ class Namespace[T]:
             return d.get(key, default)
 
 
-    # Sticky
+    # MARK: Sticky
     @classmethod
     def _sticky_construct_class(cls) -> type:
         """
@@ -378,7 +378,7 @@ class Namespace[T]:
         return False
 
 
-    # Dictionary Magic Methods
+    # MARK: Dictionary Magic Methods
     def __getitem__(self, key : str) -> Attribute:
         """
         Get an attribute using dictionary syntax obj[key].
@@ -411,7 +411,7 @@ class Namespace[T]:
             raise KeyError
         self.__set(key, value)
 
-    def __delitem__(self, key : str):
+    def __delitem__(self, key : str) -> None:
         """
         Delete an attribute using dictionary syntax.
 
@@ -442,7 +442,7 @@ class Namespace[T]:
             return False
 
 
-    # Attribute Magic Methods
+    # MARK: Attribute Magic Methods
     def __getattr__(self, key : str) -> Attribute:
         """
         Get an attribute, redirected to the internal dictionary.
@@ -530,7 +530,7 @@ class Namespace[T]:
         return self.__namespace.values()
 
 
-    # Comparison
+    # MARK: Comparison
     @override
     def __eq__(self, other : object) -> bool:
         """
@@ -571,7 +571,16 @@ class Namespace[T]:
         return id(self)
 
 
-    # Freezing
+    # MARK: Freezing - Schema
+    @runtime_checkable
+    class FreezableSchemaProtocol(Protocol):
+        @property
+        def frozen_schema(self) -> bool: ...
+        @frozen_schema.setter
+        def frozen_schema(self, val:bool) -> None: ...
+        def freeze_schema(self, freeze:bool=True, *, recursive:bool=False, temporary:bool=False) -> EnterExitCall|None: ...
+        def unfreeze_schema(self, recursive:bool=False, temporary:bool=False) -> EnterExitCall|None: ...
+
     def freeze_schema(self, freeze:bool=True, *, recursive:bool=False, temporary:bool=False) -> EnterExitCall|None:
         """
         Freeze the schema of the namespace.
@@ -592,7 +601,7 @@ class Namespace[T]:
 
         if recursive:
             for obj in self.__values():
-                if isinstance(obj, Namespace) and obj.frozen_schema != freeze:
+                if isinstance(obj, self.__class__.FreezableSchemaProtocol) and obj.frozen_schema != freeze:
                     obj.freeze_schema(freeze=freeze, recursive=recursive, temporary=temporary)
 
         self.__frozen_schema = freeze
@@ -630,6 +639,16 @@ class Namespace[T]:
         self.freeze_schema(val, temporary=False)
 
 
+    # MARK: Freezing - Namespace
+    @runtime_checkable
+    class FreezableNamespaceProtocol(Protocol):
+        @property
+        def frozen_namespace(self) -> bool: ...
+        @frozen_namespace.setter
+        def frozen_namespace(self, val:bool) -> None: ...
+        def freeze_namespace(self, freeze:bool=True, *, recursive:bool=False, temporary:bool=False) -> EnterExitCall|None: ...
+        def unfreeze_namespace(self, recursive:bool=False, temporary:bool=False) -> EnterExitCall|None: ...
+
     def freeze_namespace(self, freeze:bool=True, *, recursive:bool=False, temporary:bool=False) -> EnterExitCall|None:
         """
         Freeze the namespace.
@@ -650,7 +669,7 @@ class Namespace[T]:
 
         if recursive:
             for obj in self.__values():
-                if isinstance(obj, Namespace) and obj.frozen_namespace != freeze:
+                if isinstance(obj, self.__class__.FreezableNamespaceProtocol) and obj.frozen_namespace != freeze:
                     obj.freeze_namespace(freeze=freeze, recursive=True, temporary=False)
 
         self.__frozen_namespace = freeze
@@ -688,7 +707,7 @@ class Namespace[T]:
         self.freeze_namespace(val, temporary=False)
 
 
-    # Utilities
+    # MARK: Type conversion
     def asdict(self, recursive:bool=True, private:bool=False, protected:bool=True, public:bool=True) -> DictView:
         """
         Convert the namespace to a dictionary.
@@ -736,7 +755,7 @@ class Namespace[T]:
             self[k] = v
 
 
-    # Printing
+    # MARK: Printing
     @property
     def __repr_name(self) -> str:
         """
@@ -746,9 +765,9 @@ class Namespace[T]:
             str: The name to use in the representation.
         """
         if isinstance(self, LoggableMixin):
-            return self._LoggableMixin__repr_name # type: ignore[reportReturnType] since LoggableMixing provides __repr_name
+            return self._LoggableMixin__repr_name # pyright: ignore[reportReturnType] since LoggableMixing provides __repr_name
         if isinstance(self, HierarchicalMixin):
-            return self._HierarchicalMixin__repr_name # type: ignore[reportReturnType] since HierarchicalMixin provides __repr_name
+            return self._HierarchicalMixin__repr_name # pyright: ignore[reportReturnType] since HierarchicalMixin provides __repr_name
         return self.__class__.__name__
 
     @override

@@ -1,16 +1,17 @@
 # SPDX-License-Identifier: GPLv3-or-later
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-from collections.abc import ItemsView, KeysView
+from abc import ABCMeta
+from collections.abc import ItemsView, KeysView, MutableMapping, ValuesView
 from dataclasses import is_dataclass, asdict as dataclass_asdict
+from typing import Any, Self, override, Iterable, runtime_checkable, Protocol
 
 from . import Namespace
-
 from .. import LoggableMixin, HierarchicalMixin, NamedMixin
 from ..enter_exit_call import EnterExitCall
 
 
-class NamespaceMap[K,T](Namespace):
+class NamespaceMap[K = str, V = Any](Namespace, MutableMapping[K,V], metaclass=ABCMeta):
     """
     A namespace that behaves like a dictionary or object, allowing both attribute and key-based access.
 
@@ -20,9 +21,9 @@ class NamespaceMap[K,T](Namespace):
 
     # We want to hide some attributes from the dictionary
     # NOTE: We include the log/parent attributes here just in case someone decides to make this class Loggable or Hierarchical
-    __slots__ = {'_NamespaceMap__frozen_map', '__dict__'}
+    __slots__ = {'_NamespaceMap__frozen_map', '_dict'}
 
-    # Constructor
+    # MARK: Constructor
     def __init__(self, *, frozen_schema=False, frozen_namespace=False, frozen_map=False, **kwargs):
         """
         Initialize a NamespaceMap instance.
@@ -33,18 +34,19 @@ class NamespaceMap[K,T](Namespace):
             frozen_map (bool): If True, freeze the mapping (no changes allowed).
             **kwargs: Initial key-value pairs to populate the namespace map.
         """
+
+        self._dict : dict[K,V] = {}
+
         # Call super-class
-        super_params = {'frozen_schema': frozen_schema, 'frozen_namespace': frozen_namespace}
+        super_params: Namespace.DictView = {}
         if isinstance(self, NamedMixin):
             super_params['instance_name'] = kwargs.pop('instance_name', None)
         if isinstance(self, HierarchicalMixin):
             super_params['instance_parent'] = kwargs.pop('instance_parent', None)
-        super().__init__(**super_params)
+        super().__init__(frozen_schema=frozen_schema, frozen_namespace=frozen_namespace, **super_params)
 
-        # Initialize basic state before calling super constructors
-        self.__frozen_map = False
-
-        self.__dict__ = {}
+        # Initialize basic state
+        self.__frozen_map : bool = False
 
         # Finish initialization
         self.merge(kwargs)
@@ -52,39 +54,45 @@ class NamespaceMap[K,T](Namespace):
         self.__frozen_map = frozen_map
 
 
-    # Accesses
-    def _is_slots_key(self, key : str) -> bool:
+    # MARK: Accesses
+    @override
+    def _is_slots_key(self, key : K|str) -> bool:
+        if not isinstance(key, str):
+            return False
         return key in NamespaceMap.__slots__ or super()._is_slots_key(key)
 
-    def _get_access_dict(self, key: str) -> dict:
-        if key and key[0] != '_':
-            return self.__dict__
+    @override
+    def _get_access_dict(self, key: K|str) -> dict:
+        if not isinstance(key, str) or (key and key[0] != '_'):
+            return self._dict
         else:
             return super()._get_access_dict(key)
 
 
-    # Write Accesses
-    def _get_write_target(self, key : str) -> 'Namespace':
+    # MARK: Accesses - Write
+    def _get_write_target(self, key : K|str) -> 'Namespace':
         return self
 
-    def _Namespace__get_write_target(self, key : str) -> 'Namespace':
-        if key and key[0] == '_':
+    def _Namespace__get_write_target(self, key : K|str) -> 'Namespace':
+        if not isinstance(key, str) or (key and key[0] == '_'):
             return self
         else:
             return self._get_write_target(key)
 
-    def _is_frozen_key(self, key : str) -> bool:
-        if super()._is_frozen_key(key):
+    @override
+    def _is_frozen_key(self, key : K|str) -> bool:
+        if isinstance(key, str) and super()._is_frozen_key(key):
             return True
 
-        if self.get('frozen_map', False) and self._get_access_dict(key) is self.__dict__:
+        if self.get('frozen_map', False) and self._get_access_dict(key) is self._dict:
             return True
 
         return False
 
 
-    # Read accesses
-    def get(self, key : str, default=Namespace.NO_DEFAULT):
+    # MARK: Accesses - Read
+    @override
+    def get(self, key : K|str, default:Namespace.Default=Namespace.NO_DEFAULT):
         """
         Retrieve the value associated with a key.
 
@@ -95,9 +103,9 @@ class NamespaceMap[K,T](Namespace):
         Returns:
             The value associated with the key, or the default value if the key is not found.
         """
-        return self._Namespace__get(key, default=default)
+        return self._Namespace__get(key, default=default) # pyright: ignore[reportCallIssue] as this method is defined in Namespace
 
-    def _get_read_target(self, key) -> 'NamespaceMap|None':
+    def _get_read_target(self, key : K|str) -> Self|None:
         """
         Determine the target object for read operations.
 
@@ -125,55 +133,61 @@ class NamespaceMap[K,T](Namespace):
             return self._get_read_target(key)
 
 
-    # Iteration
-    def __iter__(self):
+    # MARK: Iteration
+    @override
+    def __iter__(self) -> Iterable[K|str]: # pyright: ignore[reportIncompatibleMethodOverride]
         """
         Returns an iterator to the internal dictionary.
 
         Returns:
             An iterator over the keys of the internal dictionary.
         """
-        return iter(self.__dict__)
+        return iter(self._dict)
 
-    def __len__(self):
+    @override
+    def __len__(self) -> int:
         """
         Returns the length of the internal dictionary.
 
         Returns:
             The number of items in the internal dictionary.
         """
-        return len(self.__dict__)
+        return len(self._dict)
 
-    def keys(self) -> KeysView:
+    @override
+    def keys(self) -> KeysView[K]:
         """
         Retrieve the keys of the internal dictionary.
 
         Returns:
             A view object containing the keys of the internal dictionary.
         """
-        return self.__dict__.keys()
+        return self._dict.keys()
 
-    def items(self) -> ItemsView:
+    @override
+    def items(self) -> ItemsView[K,V]:
         """
         Retrieve the items of the internal dictionary.
 
         Returns:
             A view object containing the key-value pairs of the internal dictionary.
         """
-        return self.__dict__.items()
+        return self._dict.items()
 
-    def values(self):
+    @override
+    def values(self) -> ValuesView[V]:
         """
         Retrieve the values of the internal dictionary.
 
         Returns:
             A view object containing the values of the internal dictionary.
         """
-        return self.__dict__.values()
+        return self._dict.values()
 
 
-    # Comparison
-    def __eq__(self, other):
+    # MARK: Comparison
+    @override
+    def __eq__(self, other) -> bool:
         """
         Compare this object with another for equality.
 
@@ -186,7 +200,8 @@ class NamespaceMap[K,T](Namespace):
         return self is other
         # return hash(self) == hash(other)
 
-    def __ne__(self, other):
+    @override
+    def __ne__(self, other) -> bool:
         """
         Compare this object with another for inequality.
 
@@ -199,18 +214,28 @@ class NamespaceMap[K,T](Namespace):
         return not self.__eq__(other)
         # return hash(self) != hash(other)
 
-    def __hash__(self):
+    @override
+    def __hash__(self) -> int:
         """
         Calculate a hash of the internal dictionary.
 
         Returns:
             The hash value of the internal dictionary.
         """
-        return hash(frozenset(self.__dict__.items()))
+        return hash(frozenset(self._dict.items()))
 
 
-    # Freezing
-    def freeze_map(self, freeze=True, /, recursive=False, temporary=False):
+    # MARK: Freezing - Map
+    @runtime_checkable
+    class FreezableMapProtocol(Protocol):
+        @property
+        def frozen_map(self) -> bool: ...
+        @frozen_map.setter
+        def frozen_map(self, val:bool) -> None: ...
+        def freeze_map(self, freeze:bool=True, *, recursive:bool=False, temporary:bool=False) -> EnterExitCall|None: ...
+        def unfreeze_map(self, recursive:bool=False, temporary:bool=False) -> EnterExitCall|None: ...
+
+    def freeze_map(self, freeze=True, /, recursive=False, temporary=False) -> EnterExitCall|None:
         """
         Freeze or unfreeze the mapping.
 
@@ -224,13 +249,13 @@ class NamespaceMap[K,T](Namespace):
         """
         if temporary:
             return EnterExitCall(
-                self.freeze_schema, self.freeze_schema,
+                self.freeze_map, self.freeze_map,
                 kwargs_enter={'freeze': freeze, 'recursive': recursive, 'temporary': False},
                 kwargs_exit={'freeze': not freeze, 'recursive': recursive, 'temporary': False})
 
         if recursive:
             for obj in self.values():
-                if hasattr(obj, 'frozen_map') and obj.frozen_map != freeze:
+                if isinstance(obj, self.__class__.FreezableMapProtocol) and obj.frozen_map != freeze:
                     obj.freeze_map(freeze, recursive=True, temporary=False)
 
         if freeze and not self.frozen_schema:
@@ -238,7 +263,7 @@ class NamespaceMap[K,T](Namespace):
 
         self.__frozen_map = freeze
 
-    def unfreeze_map(self, recursive=False, temporary=False):
+    def unfreeze_map(self, recursive=False, temporary=False) -> EnterExitCall|None:
         """
         Unfreeze the mapping.
 
@@ -251,9 +276,8 @@ class NamespaceMap[K,T](Namespace):
         """
         return self.freeze_map(False, recursive=recursive, temporary=temporary)
 
-
     @property
-    def frozen_map(self):
+    def frozen_map(self) -> bool:
         """
         Check if the mapping is frozen.
 
@@ -262,7 +286,7 @@ class NamespaceMap[K,T](Namespace):
         """
         return self.__frozen_map
     @frozen_map.setter
-    def frozen_map(self, val):
+    def frozen_map(self, val) -> None:
         """
         Set the frozen state of the mapping.
 
@@ -272,7 +296,8 @@ class NamespaceMap[K,T](Namespace):
         self.freeze_map(val, temporary=False)
 
 
-    # Utilities
+    # MARK: Type conversion
+    @override
     def asdict(self, recursive=True, private=False, protected=True, public=True) -> dict:
         """
         Convert the namespace map to a dictionary.
@@ -287,20 +312,24 @@ class NamespaceMap[K,T](Namespace):
             A dictionary representation of the namespace map.
         """
         if private or protected:
-            d = super().asdict(recursive=recursive, private=private, protected=protected, public=public)
+            d : dict = super().asdict(recursive=recursive, private=private, protected=protected, public=public)
         else:
-            d = {}
+            d : dict = {}
 
-        for k, v in self.__dict__.items():
-            if k[0] == '_':
-                if '__' in k:
-                    if not private:
+        for k, v in self._dict.items():
+            if isinstance(k, str):
+                if not k:
+                    raise ValueError("Key cannot be an empty string")
+
+                if k[0] == '_':
+                    if '__' in k:
+                        if not private:
+                            continue
+                    elif not protected:
                         continue
-                elif not protected:
-                    continue
 
-            if k[0] != '_' and not public:
-                continue
+                if k[0] != '_' and not public:
+                    continue
 
             if recursive:
                 if isinstance(v, Namespace):
@@ -313,7 +342,8 @@ class NamespaceMap[K,T](Namespace):
 
         return d
 
-    def merge(self, d):
+    @override
+    def merge(self, d) -> None:
         """
         Merge a dictionary into the namespace map.
 
@@ -325,7 +355,8 @@ class NamespaceMap[K,T](Namespace):
 
 
     # Printing
-    def __repr__(self):
+    @override
+    def __repr__(self) -> str:
         """
         Generate a string representation of the namespace map.
 

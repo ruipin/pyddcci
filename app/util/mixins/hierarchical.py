@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPLv3
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-from typing import TypeVar
+from typing import override, Self
 
 from . import shorten_name
 from .named import NamedMixin
@@ -13,7 +13,7 @@ class HierarchicalMixin(object):
     Provides instance_parent and instance_hierarchy properties, allowing objects to be organized in a tree structure.
     Used for logging, naming, and configuration inheritance in pyddcci.
     """
-    def __init__(self, *args, instance_parent: 'HierarchicalMixin|None' = None, **kwargs):
+    def __init__(self, *args, instance_parent: Self|None = None, **kwargs):
         """
         Initialize the mixin and set the instance parent.
 
@@ -29,7 +29,7 @@ class HierarchicalMixin(object):
         if NamedMixin in mro and mro.index(NamedMixin) < mro.index(HierarchicalMixin):
             raise TypeError(f"'HierarchicalMixin' must come *before* 'NamedMixin' in the MRO")
 
-        self.__parent : 'HierarchicalMixin|None' = instance_parent
+        self.__parent : Self|None = instance_parent
 
     @classmethod
     def class_short_name(cls) -> str:
@@ -42,8 +42,8 @@ class HierarchicalMixin(object):
         return shorten_name(cls.__name__)
 
 
-    # Parent
-    def _set_instance_parent(self, new_parent : 'HierarchicalMixin | None') -> None:
+    # MARK: Parent
+    def _set_instance_parent(self, new_parent : Self|None) -> None:
         """
         Set the instance parent.
 
@@ -57,7 +57,7 @@ class HierarchicalMixin(object):
         self.__parent = new_parent
 
     @property
-    def instance_parent(self) -> 'HierarchicalMixin|None':
+    def instance_parent(self) -> Self|None:
         """
         Get the instance parent.
 
@@ -67,7 +67,7 @@ class HierarchicalMixin(object):
         return self.__parent
 
     @instance_parent.setter
-    def instance_parent(self, new_parent : 'HierarchicalMixin') -> None:
+    def instance_parent(self, new_parent : Self) -> None:
         """
         Set the instance parent.
 
@@ -91,7 +91,7 @@ class HierarchicalMixin(object):
         return f"{self.__parent.instance_hierarchy}.{hier}"
 
 
-    # Printing
+    # MARK: Printing
     @property
     def __repr_name(self) -> str:
         """
@@ -108,6 +108,7 @@ class HierarchicalMixin(object):
         else:
             return f"{cnm} {nm}"
 
+    @override
     def __repr__(self) -> str:
         """
         Get the string representation of the instance.
@@ -130,6 +131,7 @@ class HierarchicalMixin(object):
 
         return f"{self.__class__.__name__}"
 
+    @override
     def __str__(self) -> str:
         """
         Get the string representation of the instance.

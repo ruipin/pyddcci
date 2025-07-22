@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: GPLv3
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-from typing import Callable, Optional, Iterable, Mapping
+from typing import Self
+from collections.abc import Iterable, Callable, Mapping
 
 
 class EnterExitCall(object):
@@ -11,8 +12,8 @@ class EnterExitCall(object):
     """
 
     def __init__(self, mthd_enter : Callable, mthd_exit : Callable,
-                 args_enter: Optional[Iterable] = None, kwargs_enter: Optional[Mapping] = None,
-                 args_exit : Optional[Iterable] = None, kwargs_exit : Optional[Mapping] = None):
+                 args_enter: Iterable|None = None, kwargs_enter: Mapping|None = None,
+                 args_exit : Iterable|None = None, kwargs_exit : Mapping|None = None):
         """
         Initialize the EnterExitCall context manager.
 
@@ -34,24 +35,24 @@ class EnterExitCall(object):
 
         self.enter()
 
-    def enter(self):
+    def enter(self) -> Self:
         """
         Call the enter method with provided arguments.
         """
         args   = self.args_enter   or ()
         kwargs = self.kwargs_enter or {}
         self.mthd_enter(*args, **kwargs)
+        return self
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         """
         Enter the context (calls enter method).
         Returns:
             EnterExitCall: The context manager instance.
         """
-        self.enter()
-        return self
+        return self.enter()
 
-    def exit(self):
+    def exit(self) -> None:
         """
         Call the exit method with provided arguments.
         """
@@ -59,7 +60,7 @@ class EnterExitCall(object):
         kwargs = self.kwargs_exit or {}
         self.mthd_exit(*args, **kwargs)
 
-    def __exit__(self, _, __, ___):
+    def __exit__(self, _, __, ___) -> None:
         """
         Exit the context (calls exit method).
         Args:

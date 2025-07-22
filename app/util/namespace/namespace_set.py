@@ -5,13 +5,14 @@ from abc import ABCMeta
 from collections.abc import MutableSet
 from ordered_set import OrderedSet
 from dataclasses import is_dataclass, asdict as dataclass_asdict
+from typing import Iterator, override, Any, runtime_checkable, Protocol
 
 from .namespace import Namespace
 from ..mixins import *
-from ..enter_exit_call import EnterExitCall
+from ..enter_exit_call import EnterExitCall, Iterable
 
 
-class NamespaceSet(Namespace, MutableSet, metaclass=ABCMeta):
+class NamespaceSet[T](Namespace, MutableSet[T], metaclass=ABCMeta):
     """
     A set wrapper with extended functionality, supporting both set and namespace behaviors.
 
@@ -31,21 +32,23 @@ class NamespaceSet(Namespace, MutableSet, metaclass=ABCMeta):
             **kwargs: Keyword arguments for set initialization.
         """
         # Call super-class
-        super_params = {'frozen_schema': frozen_schema, 'frozen_namespace': frozen_namespace}
+        super_params = {}
         if isinstance(self, LoggableMixin):
             super_params['instance_name'] = kwargs.pop('instance_name', None)
         if isinstance(self, HierarchicalMixin):
             super_params['instance_parent'] = kwargs.pop('instance_parent', None)
-        super().__init__(**super_params)
+        super().__init__(frozen_schema=frozen_schema, frozen_namespace=frozen_namespace, **super_params)
 
-        self.__frozen_set = False
+        self.__frozen_set : bool = False
 
         self._set = OrderedSet(*args, **kwargs)
 
         self.__frozen_set = frozen_set
 
 
-    def add(self, value):
+    # MARK: Abstract methods implementation
+    @override
+    def add(self, value) -> None:
         """
         Adds an element to the set.
 
@@ -59,7 +62,8 @@ class NamespaceSet(Namespace, MutableSet, metaclass=ABCMeta):
             raise RuntimeError(f"{self.__class__.__name__} is frozen")
         self._set.add(value)
 
-    def discard(self, value):
+    @override
+    def discard(self, value) -> None:
         """
         Removes an element from the set if it exists.
 
@@ -73,7 +77,8 @@ class NamespaceSet(Namespace, MutableSet, metaclass=ABCMeta):
             raise RuntimeError(f"{self.__class__.__name__} is frozen")
         self._set.discard(value)
 
-    def __len__(self):
+    @override
+    def __len__(self) -> int:
         """
         Returns the number of elements in the set.
 
@@ -82,7 +87,8 @@ class NamespaceSet(Namespace, MutableSet, metaclass=ABCMeta):
         """
         return len(self._set)
 
-    def __iter__(self):
+    @override
+    def __iter__(self) -> Iterable[T]: # pyright: ignore[reportIncompatibleMethodOverride]
         """
         Returns an iterator over the set.
 
@@ -91,7 +97,8 @@ class NamespaceSet(Namespace, MutableSet, metaclass=ABCMeta):
         """
         return iter(self._set)
 
-    def __contains__(self, m):
+    @override
+    def __contains__(self, m : object) -> bool:
         """
         Checks if an element is in the set.
 
@@ -104,7 +111,7 @@ class NamespaceSet(Namespace, MutableSet, metaclass=ABCMeta):
         return m in self._set
 
 
-    def replace(self, other_set):
+    def replace(self, other_set) -> None:
         """
         Replaces the current set with another set.
 
@@ -117,16 +124,25 @@ class NamespaceSet(Namespace, MutableSet, metaclass=ABCMeta):
         if self.frozen_set:
             raise RuntimeError(f"{self.__class__.__name__} is frozen")
 
-        self._set = OrderedSet(other_set)
+        self._set : OrderedSet[T] = OrderedSet(other_set)
 
 
-    def freeze_set(self, freeze=True, *, recursive=False, temporary=False):
+    # MARK: Freezing - Set
+    @runtime_checkable
+    class FreezableSetProtocol(Protocol):
+        @property
+        def frozen_set(self) -> bool: ...
+        @frozen_set.setter
+        def frozen_set(self, val:bool) -> None: ...
+        def freeze_set(self, freeze:bool=True, *, temporary:bool=False) -> EnterExitCall|None: ...
+        def unfreeze_set(self, recursive:bool=False, temporary:bool=False) -> EnterExitCall|None: ...
+
+    def freeze_set(self, freeze=True, *, temporary=False) -> EnterExitCall|None:
         """
         Freezes or unfreezes the set.
 
         Args:
             freeze (bool): If True, freeze the set. If False, unfreeze the set.
-            recursive (bool): If True, apply the freeze/unfreeze operation recursively.
             temporary (bool): If True, apply the freeze/unfreeze operation temporarily.
 
         Returns:
@@ -135,31 +151,25 @@ class NamespaceSet(Namespace, MutableSet, metaclass=ABCMeta):
         if temporary:
             return EnterExitCall(
                 self.freeze_set, self.freeze_set,
-                kwargs_enter={'freeze': freeze, 'recursive': recursive, 'temporary': False},
-                kwargs_exit={'freeze': not freeze, 'recursive': recursive, 'temporary': False})
-
-        if recursive:
-            for obj in self.values():
-                if hasattr(obj, 'frozen_set') and obj.frozen_set != freeze:
-                    obj.freeze_set(freeze=freeze, recursive=True, temporary=False)
+                kwargs_enter={'freeze': freeze, 'temporary': False},
+                kwargs_exit={'freeze': not freeze, 'temporary': False})
 
         self.__frozen_set = freeze
 
-    def unfreeze_set(self, recursive=False, temporary=False):
+    def unfreeze_set(self, temporary=False) -> EnterExitCall|None:
         """
         Unfreezes the set.
 
         Args:
-            recursive (bool): If True, apply the unfreeze operation recursively.
             temporary (bool): If True, apply the unfreeze operation temporarily.
 
         Returns:
             EnterExitCall: Context manager for temporary unfreeze.
         """
-        return self.freeze_set(False, recursive=recursive, temporary=temporary)
+        return self.freeze_set(False, temporary=temporary)
 
     @property
-    def frozen_set(self):
+    def frozen_set(self) -> bool:
         """
         Indicates whether the set is frozen.
 
@@ -169,7 +179,7 @@ class NamespaceSet(Namespace, MutableSet, metaclass=ABCMeta):
         return self.__frozen_set
 
     @frozen_set.setter
-    def frozen_set(self, val):
+    def frozen_set(self, val) -> None:
         """
         Sets the frozen state of the set.
 
@@ -179,7 +189,8 @@ class NamespaceSet(Namespace, MutableSet, metaclass=ABCMeta):
         self.freeze_set(val, temporary=False)
 
 
-    def asset(self, recursive=True, private=False, protected=True, public=True):
+    # MARK: Type conversion
+    def asset(self, recursive=True, private=False, protected=True, public=True) -> set[T]:
         """
         Returns the set as a collection of assets.
 
@@ -208,7 +219,8 @@ class NamespaceSet(Namespace, MutableSet, metaclass=ABCMeta):
 
         return s
 
-    def asdict(self, recursive=True, private=False, protected=True, public=True):
+    @override
+    def asdict(self, recursive=True, private=False, protected=True, public=True) -> dict:
         """
         Returns the set as a dictionary.
 
@@ -230,6 +242,8 @@ class NamespaceSet(Namespace, MutableSet, metaclass=ABCMeta):
         return d
 
 
+    # MARK: Printing
+    @override
     def __repr__(self):
         """
         Returns a string representation of the set.

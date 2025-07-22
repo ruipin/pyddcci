@@ -13,14 +13,14 @@ import subprocess
 # Implementation
 VERSION = "0.1"
 
-def git_revision():
+def git_revision() -> str|None:
     """
     Get the current git revision string, if available.
 
     Returns:
         str or None: The git revision string, or None if not available.
     """
-    def _minimal_ext_cmd(cmd):
+    def _minimal_ext_cmd(cmd) -> str|None:
         # construct minimal environment
         env = {}
         for k in ['SYSTEMROOT', 'PATH']:
@@ -36,12 +36,10 @@ def git_revision():
         _out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env).communicate()
         if _out[1]:
             return None
-        return _out[0]
-
-    rev = None
+        return _out[0].strip().decode('ascii')
 
     try:
-        out = _minimal_ext_cmd([
+        return _minimal_ext_cmd([
                 'git', 'describe',
                 '--exclude', '*',
                 '--always',
@@ -49,20 +47,15 @@ def git_revision():
                 '--dirty',
                 '--abbrev=9'
             ])
-
-        if out is None:
-            return None
-
-        rev = out.strip().decode('ascii')
-
     except OSError:
         pass
 
-    return rev
+    return None
+
 GIT_REVISION = git_revision()
 
 
-def get_version_string():
+def get_version_string() -> str:
     """
     Get the full version string, including git revision if available.
 

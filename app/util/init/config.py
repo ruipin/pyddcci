@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: GPLv3-or-later
 # Copyright © 2020 pyddcci Rui Pinheiro
 
-import os, sys
+import os
 import oyaml as yaml
-from typing import Iterable, Any, Callable
+from typing import Any, Iterable, ValuesView, override, Self
 
 from . import version, args
 from .. import NamespaceMap, LoggableHierarchicalNamedMixin
 
 
 ##########
-# Config Namespace Class
+# MARK: Config Namespace Class
 class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
     """
     Storage class for configuration settings.
@@ -40,7 +40,8 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
 
         self._default = NamespaceMap()
 
-    def _get_write_target(self, key):
+    @override
+    def _get_write_target(self, key) -> NamespaceMap:
         """
         Get the write target for a given key (default or self).
 
@@ -55,7 +56,8 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
         else:
             return self
 
-    def _sanity_check_public_key(self, key, *, delete: bool = False):
+    @override
+    def _sanity_check_public_key(self, key, *, delete: bool = False) -> None:
         """
         Check if a key is valid and not reserved.
 
@@ -74,6 +76,7 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
         if self.is_reserved_key(key):
             raise ValueError(f"key '{key}' is inside a reserved hierarchy")
 
+    @override
     def _get_read_target(self, key) -> NamespaceMap | None:
         """
         Get the read target for a given key (default or self).
@@ -84,7 +87,7 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
         Returns:
             NamespaceMap: The read target.
         """
-        if key not in self.__dict__:
+        if key not in self._dict:
             default = self.get('_default', None)
             if default is not None and not isinstance(default, NamespaceMap):
                 raise KeyError(f"self._default must be of type 'NamespaceMap', not {type(default).__name__}")
@@ -93,6 +96,7 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
             return self
 
     @classmethod
+    @override
     def _sticky_construct_class(cls) -> type:
         """
         Return the class to use for sticky construction.
@@ -111,6 +115,7 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
             if isinstance(v, ConfigMap):
                 v.freeze_map()
 
+    @override
     def __iter__(self):
         """
         Returns an iterator to the internal dictionary.
@@ -121,6 +126,7 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
         for k in self.keys():
             yield k
 
+    @override
     def __len__(self):
         """
         Returns the length of the internal dictionary.
@@ -130,7 +136,8 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
         """
         return sum(1 for _ in self.keys())
 
-    def keys(self) -> Iterable:
+    @override
+    def keys(self) -> Iterable[str]: # pyright: ignore[reportIncompatibleMethodOverride] caused by using a generator rather than a KeysView
         """
         Get all keys in the config map.
 
@@ -138,13 +145,13 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
             OrderedSet: A set of all keys.
         """
         for k in self._default.keys():
-            if k not in self.__dict__:
+            if k not in self._dict:
                 yield k
-        for k in self.__dict__.keys():
+        for k in self._dict.keys():
             yield k
 
-
-    def items(self):
+    @override
+    def items(self) -> Iterable[tuple[str, Any]]: # pyright: ignore[reportIncompatibleMethodOverride] caused by using a generator rather than a ItemsView
         """
         Get all items in the config map.
 
@@ -154,7 +161,8 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
         for k in self.keys():
             yield k, self.get(k)
 
-    def values(self):
+    @override
+    def values(self) -> ValuesView:
         """
         Get all values in the config map.
 
@@ -163,7 +171,8 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
         """
         return self._dict.values()
 
-    def asdict(self, recursive=True, user=True, default=True): # type: ignore - independent implementation of asdict
+    @override
+    def asdict(self, recursive=True, user=True, default=True) -> dict: # pyright: ignore[reportIncompatibleMethodOverride] independent implementation
         """
         Convert the config map to a dictionary, optionally recursively.
 
@@ -178,10 +187,10 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
         d = {}
 
         for k in self.keys():
-            in_user    = k in self.__dict__
+            in_user    = k in self._dict
             in_default = k in self._default
 
-            v = self.__dict__[k] if in_user else None
+            v = self._dict[k] if in_user else None
             if isinstance(v, ConfigMap):
                 if recursive:
                     v_d = v.asdict(recursive=True, user=user, default=default)
@@ -219,6 +228,7 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
 
         return False
 
+    @override
     def _sticky_ignore_key(self, key : str) -> bool:
         """
         Whether a key should be ignored for sticky construction.
@@ -239,6 +249,7 @@ class ConfigMap(NamespaceMap, LoggableHierarchicalNamedMixin):
         return False
 
 
+# MARK: Master Config Map Class
 class MasterConfigMap(ConfigMap):
     """
     Storage class for configuration settings, with user and default config file support.
@@ -341,7 +352,8 @@ class MasterConfigMap(ConfigMap):
             yaml_str = self.yaml_str(user=True, default=False)
             file.write(yaml_str)
 
-# Initialize
+
+# MARK: Initialize
 CFG = MasterConfigMap("config")
 CFG.load()
 

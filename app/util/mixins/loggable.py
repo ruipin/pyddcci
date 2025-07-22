@@ -2,7 +2,8 @@
 # Copyright © 2020 pyddcci Rui Pinheiro
 
 import re
-import logging
+from logging import Logger
+from typing import override, Self
 
 from . import shorten_name
 from .named import NamedMixin
@@ -46,8 +47,8 @@ class LoggableMixin(object):
         return shorten_name(cls.__name__)
 
 
-    # Support for Hierarchical/Named
-    def _set_instance_parent(self, new_parent : 'HierarchicalMixin | None') -> None:
+    # MARK: Support for Hierarchical/Named
+    def _set_instance_parent(self, new_parent : Self|None) -> None:
         """
         Set the instance parent and reset the logger.
 
@@ -68,19 +69,19 @@ class LoggableMixin(object):
         setattr(self, '__log', None)
 
 
-    # Logging
+    # MARK: Logging
     @property
-    def log(self) -> logging.Logger:
+    def log(self) -> Logger:
         """
         Returns a logger for the current object. If self.name is 'None', uses the class name.
 
         Returns:
             logging.Logger: The logger instance for the object.
         """
-        log = getattr(self, '__log', None)
+        log : Logger|None = getattr(self, '__log', None)
         if log is None:
             from ..init import getLogger
-            parent = self.instance_parent if isinstance(self, HierarchicalMixin) else None
+            parent : HierarchicalMixin|None = self.instance_parent if isinstance(self, HierarchicalMixin) else None
             log = getLogger(self.__log_name__, parent=parent)
             setattr(self, '__log', log)
         return log
@@ -105,7 +106,8 @@ class LoggableMixin(object):
         """
         return self.instance_hierarchy if isinstance(self, HierarchicalMixin) else self.__log_name__
 
-    # Printing
+
+    # MARK: Printing
     @property
     def __repr_name(self) -> str:
         """
@@ -122,6 +124,7 @@ class LoggableMixin(object):
         else:
             return f"{cnm}:{nm}"
 
+    @override
     def __repr__(self) -> str:
         """
         Get the string representation of the current object.
@@ -144,6 +147,7 @@ class LoggableMixin(object):
 
         return f"{self.__class__.__name__}"
 
+    @override
     def __str__(self) -> str:
         """
         Get the string representation of the current object.

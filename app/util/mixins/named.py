@@ -2,6 +2,7 @@
 # Copyright © 2020 pyddcci Rui Pinheiro
 
 from . import shorten_name
+from typing import override
 
 
 class NamedMixin(object):
@@ -12,7 +13,7 @@ class NamedMixin(object):
     Used for configuration, logging, and user-facing objects in pyddcci.
     """
 
-    def __init__(self, *args, instance_name=None, **kwargs):
+    def __init__(self, *args, instance_name:str|None=None, **kwargs):
         """
         Initialize the mixin and set the instance name.
 
@@ -35,7 +36,7 @@ class NamedMixin(object):
         return shorten_name(cls.__name__)
 
 
-    # Logging
+    # MARK: Logging
     def _set_instance_name(self, new_name : str) -> None:
         """
         Set the instance name.
@@ -76,7 +77,7 @@ class NamedMixin(object):
         return shorten_name(self.instance_name)
 
 
-    # Printing
+    # MARK: Printing
     @property
     def __repr_name(self) -> str:
         """
@@ -93,6 +94,7 @@ class NamedMixin(object):
         else:
             return f"{cnm}:{nm}"
 
+    @override
     def __repr__(self) -> str:
         """
         Get the string representation of the instance.
@@ -118,6 +120,7 @@ class NamedMixin(object):
         else:
             return f"{self.__class__.class_short_name()} {nm}"
 
+    @override
     def __str__(self) -> str:
         """
         Get the string representation of the instance.

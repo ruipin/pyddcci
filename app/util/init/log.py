@@ -11,14 +11,21 @@ import sys
 import os
 import atexit
 
+from typing import override, Protocol, runtime_checkable
+
 from . import CFG
 
 # Log file name is hardcoded
+if not isinstance(CFG.app.name, str):
+    raise TypeError("CFG.app.name must be a string, got: {}".format(type(CFG.app.name)))
 LOG_FILE_NAME = '{}.log'.format(CFG.app.name)
+
+if not isinstance(CFG.logging.dir, str):
+    raise TypeError("CFG.logging.dir must be a string, got: {}".format(type(CFG.logging.dir)))
 LOG_FILE = os.path.join(CFG.logging.dir, LOG_FILE_NAME)
 
 # Grab verbosity from config files
-def arg_to_log_level(arg):
+def arg_to_log_level(arg) -> int:
     """
     Convert a string or integer argument to a logging level.
 
@@ -57,6 +64,7 @@ TTY_LOGGING_LEVEL = min(arg_to_log_level(CFG.logging.levels.tty), logging.CRITIC
 DEFAULT_LOGGING_LEVEL = 0  # To avoid any message being ignored even if the tty logging level changes dynamically
 
 # Configure root logger
+logging.captureWarnings(True)
 logging.root.setLevel(DEFAULT_LOGGING_LEVEL)
 
 # Create file handler
@@ -78,6 +86,7 @@ if TTY_LOGGING_LEVEL >= 0:
     if CFG.app.test:
         class UnitTestStreamHandler(logging.StreamHandler):
             @property
+            @override
             def stream(self):
                 return sys.stderr
 
@@ -108,6 +117,7 @@ class CustomHandler(logging.Handler):
     Custom logging handler to track log message counts and handle application exit status.
     """
     class ExitStatusFormatter(logging.Formatter):
+        @override
         def format(self, record):
             return record.msg
 
@@ -156,6 +166,7 @@ class CustomHandler(logging.Handler):
 
         atexit.register(self.atexit)
 
+    @override
     def handle(self, record) -> bool:
         if record.levelno >= logging.CRITICAL:
             self.num_critical += 1
@@ -172,14 +183,23 @@ logging.root.addHandler(customHdlr)
 
 
 #############
+@runtime_checkable
+class LoggableProtocol(Protocol):
+    @property
+    def log(self) -> logging.Logger: ...
+
 # Helper for class constructors to obtain a logger object
 # Returns a logger object
-def getLogger(obj, parent=None, name=None):
+def getLogger(obj, parent:LoggableProtocol|None=None, name:str|None=None) -> logging.Logger:
     if name is None:
         if isinstance(obj, str):
             name = obj
         else:
-            name = obj.__class__.__name__
+            cls_name = obj.__class__.__name__
+            if isinstance(cls_name, str):
+                name = cls_name
+            else:
+                raise TypeError("Cannot determine logger name from object: {}".format(obj))
 
     if parent is None or not hasattr(parent, 'log'):
         return logging.getLogger(name)
